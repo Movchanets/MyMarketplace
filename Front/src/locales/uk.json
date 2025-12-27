@@ -188,7 +188,12 @@
   "common": {
     "email": "E-mail",
     "empty": "порожньо",
-    "user": "Користувач"
+    "user": "Користувач",
+    "save": "Зберегти",
+    "saving": "Збереження...",
+    "cancel": "Скасувати",
+    "delete": "Видалити",
+    "dismiss": "Закрити"
   },
 
   "notfound": {
@@ -231,7 +236,9 @@
       "dashboard": "Дашборд",
       "categories": "Категорії",
       "tags": "Теги",
-      "stores": "Магазини"
+      "stores": "Магазини",
+      "users": "Користувачі",
+      "roles": "Ролі"
     },
     "cards": {
       "categories": "Категорії",
@@ -241,7 +248,11 @@
       "stores": "Магазини",
       "stores_desc": "Керування магазинами продавців",
       "orders": "Замовлення",
-      "orders_desc": "Перегляд всіх замовлень"
+      "orders_desc": "Перегляд всіх замовлень",
+      "users": "Користувачі",
+      "users_desc": "Керування користувачами системи",
+      "roles": "Ролі та права",
+      "roles_desc": "Керування ролями та правами доступу"
     },
     "catalog": {
       "categories": "Категорії",
@@ -290,6 +301,46 @@
       "of": "з",
       "prev": "Назад",
       "next": "Вперед"
+    },
+    "users": {
+      "title": "Управління користувачами",
+      "total": "Всього користувачів",
+      "search_placeholder": "Пошук за email або ім'ям...",
+      "user": "Користувач",
+      "email": "Email",
+      "roles": "Ролі",
+      "status": "Статус",
+      "created": "Створено",
+      "actions": "Дії",
+      "locked": "Заблоковано",
+      "active": "Активний",
+      "assign_roles": "Призначити ролі",
+      "assign_roles_to": "Призначити ролі для {{email}}",
+      "permissions_count": "{{count}} дозволів",
+      "lock": "Заблокувати",
+      "unlock": "Розблокувати",
+      "load_error": "Помилка завантаження користувачів",
+      "save_error": "Помилка збереження",
+      "lock_error": "Помилка блокування"
+    },
+    "roles": {
+      "title": "Управління ролями",
+      "create": "Створити роль",
+      "edit": "Редагувати роль",
+      "permissions_count": "{{count}} дозволів",
+      "users_count": "{{count}} користувачів",
+      "name": "Назва",
+      "description": "Опис",
+      "permissions": "Дозволи",
+      "name_placeholder": "Введіть назву ролі",
+      "description_placeholder": "Введіть опис ролі",
+      "delete_confirm_title": "Видалити роль?",
+      "delete_confirm_message": "Ви впевнені, що хочете видалити роль \"{{name}}\"? Ця дія незворотня.",
+      "load_error": "Помилка завантаження ролей",
+      "save_error": "Помилка збереження",
+      "delete_error": "Помилка видалення",
+      "built_in": "Системна",
+      "select_all": "Обрати всі"
     }
   },
 

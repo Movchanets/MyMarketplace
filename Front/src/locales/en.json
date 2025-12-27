@@ -187,7 +187,12 @@
   "common": {
     "email": "E-mail",
     "empty": "empty",
-    "user": "User"
+    "user": "User",
+    "save": "Save",
+    "saving": "Saving...",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "dismiss": "Dismiss"
   },
 
   "notfound": {
@@ -230,7 +235,9 @@
       "dashboard": "Dashboard",
       "categories": "Categories",
       "tags": "Tags",
-      "stores": "Stores"
+      "stores": "Stores",
+      "users": "Users",
+      "roles": "Roles"
     },
     "cards": {
       "categories": "Categories",
@@ -240,7 +247,11 @@
       "stores": "Stores",
       "stores_desc": "Manage seller stores",
       "orders": "Orders",
-      "orders_desc": "View all orders"
+      "orders_desc": "View all orders",
+      "users": "Users",
+      "users_desc": "Manage system users",
+      "roles": "Roles & Permissions",
+      "roles_desc": "Manage roles and access permissions"
     },
     "catalog": {
       "categories": "Categories",
@@ -289,6 +300,46 @@
       "of": "of",
       "prev": "Previous",
       "next": "Next"
+    },
+    "users": {
+      "title": "User Management",
+      "total": "Total users",
+      "search_placeholder": "Search by email or name...",
+      "user": "User",
+      "email": "Email",
+      "roles": "Roles",
+      "status": "Status",
+      "created": "Created",
+      "actions": "Actions",
+      "locked": "Locked",
+      "active": "Active",
+      "assign_roles": "Assign Roles",
+      "assign_roles_to": "Assign Roles to {{email}}",
+      "permissions_count": "{{count}} permissions",
+      "lock": "Lock",
+      "unlock": "Unlock",
+      "load_error": "Failed to load users",
+      "save_error": "Failed to save",
+      "lock_error": "Failed to lock/unlock"
+    },
+    "roles": {
+      "title": "Role Management",
+      "create": "Create Role",
+      "edit": "Edit Role",
+      "permissions_count": "{{count}} permissions",
+      "users_count": "{{count}} users",
+      "name": "Name",
+      "description": "Description",
+      "permissions": "Permissions",
+      "name_placeholder": "Enter role name",
+      "description_placeholder": "Enter role description",
+      "delete_confirm_title": "Delete Role?",
+      "delete_confirm_message": "Are you sure you want to delete role \"{{name}}\"? This action cannot be undone.",
+      "load_error": "Failed to load roles",
+      "save_error": "Failed to save",
+      "delete_error": "Failed to delete",
+      "built_in": "Built-in",
+      "select_all": "Select all"
     }
   },
 
