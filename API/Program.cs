@@ -162,6 +162,8 @@ try
     // JWT Authentication
     builder.Services.AddScoped<ITokenService, TokenService>();
     builder.Services.AddScoped<IUserService, UserService>();
+    builder.Services.AddScoped<IRoleService, RoleService>();
+    builder.Services.AddScoped<IAdminUserService, AdminUserService>();
     builder.Services.AddScoped<IUserClaimsPrincipalFactory<ApplicationUser>, ClaimsPrincipalFactory>();
     // Permission-based dynamic policies (policies like "Permission:users.read")
     builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
