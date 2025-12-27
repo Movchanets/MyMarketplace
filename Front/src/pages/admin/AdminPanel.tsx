@@ -14,6 +14,8 @@ export default function AdminPanel() {
     { path: '/admin/categories', label: t('admin.nav.categories') },
     { path: '/admin/tags', label: t('admin.nav.tags') },
     { path: '/admin/stores', label: t('admin.nav.stores') },
+    { path: '/admin/users', label: t('admin.nav.users') },
+    { path: '/admin/roles', label: t('admin.nav.roles') },
   ]
 
   return (
@@ -68,6 +70,14 @@ export default function AdminPanel() {
               <h3 className="text-lg font-semibold text-text mb-2">{t('admin.cards.orders')}</h3>
               <p className="text-text-muted text-sm">{t('admin.cards.orders_desc')}</p>
             </div>
+            <Link to="/admin/users" className="card p-6 hover:shadow-md transition-shadow">
+              <h3 className="text-lg font-semibold text-text mb-2">{t('admin.cards.users')}</h3>
+              <p className="text-text-muted text-sm">{t('admin.cards.users_desc')}</p>
+            </Link>
+            <Link to="/admin/roles" className="card p-6 hover:shadow-md transition-shadow">
+              <h3 className="text-lg font-semibold text-text mb-2">{t('admin.cards.roles')}</h3>
+              <p className="text-text-muted text-sm">{t('admin.cards.roles_desc')}</p>
+            </Link>
           </div>
 
           {/* Roles & Permissions */}

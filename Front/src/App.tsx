@@ -13,6 +13,8 @@ import AdminPanel from './pages/admin/AdminPanel'
 import CategoriesManagement from './pages/admin/CategoriesManagement'
 import TagsManagement from './pages/admin/TagsManagement'
 import StoresManagement from './pages/admin/StoresManagement'
+import UsersManagement from './pages/admin/users/UsersManagement'
+import RolesManagement from './pages/admin/roles/RolesManagement'
 import MyStore from './pages/store/MyStore'
 import CreateStore from './pages/store/CreateStore'
 import NotFound from './pages/NotFound'
@@ -62,6 +64,8 @@ export default function App() {
           <Route path="categories" element={<CategoriesManagement />} />
           <Route path="tags" element={<TagsManagement />} />
           <Route path="stores" element={<StoresManagement />} />
+          <Route path="users" element={<UsersManagement />} />
+          <Route path="roles" element={<RolesManagement />} />
         </Route>
 
         {/* 404 routes */}
