@@ -9,4 +9,4 @@ public sealed record AddSkuToProductCommand(
 	decimal Price,
 	int StockQuantity,
 	Dictionary<string, object?>? Attributes = null
-) : IRequest<ServiceResponse<Guid>>;
+) : IRequest<ServiceResponse<string>>;
