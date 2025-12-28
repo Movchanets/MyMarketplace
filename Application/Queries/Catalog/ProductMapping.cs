@@ -32,6 +32,7 @@ internal static class ProductMapping
 			product.BaseImageUrl,
 			minPrice,
 			inStock,
+			product.IsActive,
 			categories,
 			tags);
 	}

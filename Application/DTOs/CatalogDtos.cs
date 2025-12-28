@@ -68,6 +68,7 @@ public sealed record ProductSummaryDto(
 	string? BaseImageUrl,
 	decimal? MinPrice,
 	bool InStock,
+	bool IsActive,
 	IReadOnlyList<CategoryDto> Categories,
 	IReadOnlyList<TagDto> Tags
 );
