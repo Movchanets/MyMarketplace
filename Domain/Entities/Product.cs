@@ -8,6 +8,7 @@ public class Product : BaseEntity<Guid>
     public string Name { get; private set; } = string.Empty;
     public string? Description { get; private set; }
     public string? BaseImageUrl { get; private set; }
+    public bool IsActive { get; private set; } = true;
 
     private readonly List<ProductTag> _productTags = new();
     public virtual IReadOnlyCollection<ProductTag> ProductTags => _productTags.AsReadOnly();
@@ -30,6 +31,19 @@ public class Product : BaseEntity<Guid>
         Id = Guid.NewGuid();
         Name = name.Trim();
         Description = description?.Trim();
+        IsActive = true;
+    }
+
+    public void Activate()
+    {
+        IsActive = true;
+        MarkAsUpdated();
+    }
+
+    public void Deactivate()
+    {
+        IsActive = false;
+        MarkAsUpdated();
     }
 
     public void Rename(string name)
