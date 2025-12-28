@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { 
   getRoles, 
@@ -31,11 +31,7 @@ export default function RolesManagement() {
   // Built-in roles that cannot be deleted
   const builtInRoles = ['Admin', 'User', 'Seller']
 
-  useEffect(() => {
-    loadData()
-  }, [])
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true)
       const [rolesRes, permissionsRes] = await Promise.all([
@@ -55,7 +51,11 @@ export default function RolesManagement() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [t])
+
+  useEffect(() => {
+    loadData()
+  }, [loadData])
 
   const handleOpenCreateModal = () => {
     setEditingRole(null)
@@ -73,7 +73,7 @@ export default function RolesManagement() {
     })
     // Expand categories that have selected permissions
     const categoriesToExpand = Object.entries(permissions)
-      .filter(([_, perms]) => perms.some(p => role.permissions.includes(p.name)))
+      .filter(([, perms]) => perms.some(p => role.permissions.includes(p.name)))
       .map(([category]) => category)
     setExpandedCategories(categoriesToExpand)
     setShowModal(true)

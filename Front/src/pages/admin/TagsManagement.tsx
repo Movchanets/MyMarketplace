@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { tagsApi, type TagDto, type CreateTagRequest, type UpdateTagRequest } from '../../api/catalogApi'
 
@@ -32,7 +32,7 @@ export default function TagsManagement() {
     return tags.slice(start, start + ITEMS_PER_PAGE)
   }, [tags, currentPage])
 
-  const fetchTags = async () => {
+  const fetchTags = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
@@ -48,11 +48,11 @@ export default function TagsManagement() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [t])
 
   useEffect(() => {
     fetchTags()
-  }, [])
+  }, [fetchTags])
 
   const resetForm = () => {
     setFormData({ name: '', description: '' })

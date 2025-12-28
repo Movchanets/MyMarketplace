@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { 
   getAdminUsers, 
@@ -23,11 +23,7 @@ export default function UsersManagement() {
   const [showRoleModal, setShowRoleModal] = useState(false)
   const [saving, setSaving] = useState(false)
 
-  useEffect(() => {
-    loadData()
-  }, [])
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true)
       const [usersRes, rolesRes] = await Promise.all([
@@ -47,7 +43,11 @@ export default function UsersManagement() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [t])
+
+  useEffect(() => {
+    loadData()
+  }, [loadData])
 
   const handleOpenRoleModal = (user: AdminUserDto) => {
     setSelectedUser(user)
