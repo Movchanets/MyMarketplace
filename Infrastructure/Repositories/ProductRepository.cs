@@ -46,6 +46,13 @@ public class ProductRepository : IProductRepository
 			.ToListAsync();
 	}
 
+	public async Task<IEnumerable<Product>> GetByStoreIdAsync(Guid storeId)
+	{
+		return await WithDetails()
+			.Where(p => p.StoreId == storeId)
+			.ToListAsync();
+	}
+
 	public async Task<Product?> GetBySkuCodeAsync(string skuCode)
 	{
 		if (string.IsNullOrWhiteSpace(skuCode))
