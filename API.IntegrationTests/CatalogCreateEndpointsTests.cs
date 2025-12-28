@@ -410,4 +410,504 @@ public class CatalogCreateEndpointsTests : IClassFixture<TestWebApplicationFacto
 		json.GetProperty("payload").ValueKind.Should().Be(JsonValueKind.Array);
 		json.GetProperty("payload").GetArrayLength().Should().BeGreaterThan(0);
 	}
+
+	#region Product with Multiple SKUs Tests
+
+	[Fact]
+	public async Task PostProducts_WithMultipleSkus_CreatesProductWithAllSkus()
+	{
+		var adminToken = await LoginAdminAndGetAccessToken();
+		var (email, password) = await RegisterUser();
+
+		await EnsureUserInRole(email, Roles.Seller);
+		var sellerToken = await LoginAndGetAccessToken(email, password);
+		var sellerUserId = await GetDomainUserIdByEmail(email);
+		await EnsureStoreForUser(sellerUserId);
+
+		var categoryId = await CreateCategoryAsAdmin(adminToken);
+
+		_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", sellerToken);
+		var req = new
+		{
+			name = "Multi-SKU Product",
+			description = "Product with multiple variants",
+			categoryIds = new[] { categoryId },
+			skus = new[]
+			{
+				new { price = 100.0m, stockQuantity = 10, attributes = new { size = "S", color = "red" } },
+				new { price = 110.0m, stockQuantity = 5, attributes = new { size = "M", color = "red" } },
+				new { price = 120.0m, stockQuantity = 3, attributes = new { size = "L", color = "blue" } }
+			}
+		};
+
+		var resp = await _client.PostAsJsonAsync("/api/products", req);
+		resp.StatusCode.Should().Be(HttpStatusCode.OK);
+
+		var json = await resp.Content.ReadFromJsonAsync<JsonElement>();
+		json.GetProperty("isSuccess").GetBoolean().Should().BeTrue();
+		var productId = json.GetProperty("payload").GetGuid();
+		productId.Should().NotBeEmpty();
+
+		// Verify product has all 3 SKUs
+		var getResp = await _client.GetAsync($"/api/products/{productId}");
+		getResp.StatusCode.Should().Be(HttpStatusCode.OK);
+		var productJson = await getResp.Content.ReadFromJsonAsync<JsonElement>();
+		var skus = productJson.GetProperty("payload").GetProperty("skus");
+		skus.GetArrayLength().Should().Be(3);
+	}
+
+	[Fact]
+	public async Task PostProducts_WithNoSkus_CreatesInactiveProduct()
+	{
+		var adminToken = await LoginAdminAndGetAccessToken();
+		var (email, password) = await RegisterUser();
+
+		await EnsureUserInRole(email, Roles.Seller);
+		var sellerToken = await LoginAndGetAccessToken(email, password);
+		var sellerUserId = await GetDomainUserIdByEmail(email);
+		await EnsureStoreForUser(sellerUserId);
+
+		var categoryId = await CreateCategoryAsAdmin(adminToken);
+
+		_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", sellerToken);
+		var req = new
+		{
+			name = "Inactive Product",
+			description = "Product without SKUs",
+			categoryIds = new[] { categoryId }
+		};
+
+		var resp = await _client.PostAsJsonAsync("/api/products", req);
+		resp.StatusCode.Should().Be(HttpStatusCode.OK);
+
+		var json = await resp.Content.ReadFromJsonAsync<JsonElement>();
+		json.GetProperty("isSuccess").GetBoolean().Should().BeTrue();
+		var productId = json.GetProperty("payload").GetGuid();
+
+		// Product should have a default SKU with price 0
+		var getResp = await _client.GetAsync($"/api/products/{productId}");
+		var productJson = await getResp.Content.ReadFromJsonAsync<JsonElement>();
+		var skus = productJson.GetProperty("payload").GetProperty("skus");
+		skus.GetArrayLength().Should().Be(1);
+		skus.EnumerateArray().First().GetProperty("price").GetDecimal().Should().Be(0);
+	}
+
+	[Fact]
+	public async Task PostProducts_WithSkuAttributes_StoresAttributesCorrectly()
+	{
+		var adminToken = await LoginAdminAndGetAccessToken();
+		var (email, password) = await RegisterUser();
+
+		await EnsureUserInRole(email, Roles.Seller);
+		var sellerToken = await LoginAndGetAccessToken(email, password);
+		var sellerUserId = await GetDomainUserIdByEmail(email);
+		await EnsureStoreForUser(sellerUserId);
+
+		var categoryId = await CreateCategoryAsAdmin(adminToken);
+
+		_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", sellerToken);
+		var req = new
+		{
+			name = "Attribute Test Product",
+			categoryIds = new[] { categoryId },
+			skus = new[]
+			{
+				new
+				{
+					price = 50.0m,
+					stockQuantity = 100,
+					attributes = new
+					{
+						color = "navy blue",
+						size = "XL",
+						material = "cotton",
+						weight = 0.5
+					}
+				}
+			}
+		};
+
+		var resp = await _client.PostAsJsonAsync("/api/products", req);
+		resp.StatusCode.Should().Be(HttpStatusCode.OK);
+
+		var json = await resp.Content.ReadFromJsonAsync<JsonElement>();
+		var productId = json.GetProperty("payload").GetGuid();
+
+		// Verify attributes are stored
+		var getResp = await _client.GetAsync($"/api/products/{productId}");
+		var productJson = await getResp.Content.ReadFromJsonAsync<JsonElement>();
+		var firstSku = productJson.GetProperty("payload").GetProperty("skus").EnumerateArray().First();
+		var attributes = firstSku.GetProperty("attributes");
+		attributes.GetProperty("color").GetString().Should().Be("navy blue");
+		attributes.GetProperty("size").GetString().Should().Be("XL");
+	}
+
+	#endregion
+
+	#region SKU Management Tests
+
+	[Fact]
+	public async Task AddSku_ToExistingProduct_AddsNewSku()
+	{
+		var adminToken = await LoginAdminAndGetAccessToken();
+		var (email, password) = await RegisterUser();
+
+		await EnsureUserInRole(email, Roles.Seller);
+		var sellerToken = await LoginAndGetAccessToken(email, password);
+		var sellerUserId = await GetDomainUserIdByEmail(email);
+		await EnsureStoreForUser(sellerUserId);
+
+		var categoryId = await CreateCategoryAsAdmin(adminToken);
+
+		// Create product with one SKU
+		_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", sellerToken);
+		var createReq = new
+		{
+			name = "Product For SKU Add",
+			categoryIds = new[] { categoryId },
+			skus = new[] { new { price = 50.0m, stockQuantity = 10 } }
+		};
+		var createResp = await _client.PostAsJsonAsync("/api/products", createReq);
+		createResp.StatusCode.Should().Be(HttpStatusCode.OK);
+		var productId = (await createResp.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("payload").GetGuid();
+
+		// Add another SKU
+		var addSkuReq = new
+		{
+			price = 75.0m,
+			stockQuantity = 5,
+			attributes = new { variant = "premium" }
+		};
+		var addSkuResp = await _client.PostAsJsonAsync($"/api/products/{productId}/skus", addSkuReq);
+		addSkuResp.StatusCode.Should().Be(HttpStatusCode.OK);
+
+		var addSkuJson = await addSkuResp.Content.ReadFromJsonAsync<JsonElement>();
+		addSkuJson.GetProperty("isSuccess").GetBoolean().Should().BeTrue();
+		var newSkuCode = addSkuJson.GetProperty("payload").GetString();
+		newSkuCode.Should().NotBeNullOrWhiteSpace();
+
+		// Verify product now has 2 SKUs
+		var getResp = await _client.GetAsync($"/api/products/{productId}");
+		var productJson = await getResp.Content.ReadFromJsonAsync<JsonElement>();
+		productJson.GetProperty("payload").GetProperty("skus").GetArrayLength().Should().Be(2);
+	}
+
+	[Fact]
+	public async Task DeleteSku_FromProduct_RemovesSku()
+	{
+		var adminToken = await LoginAdminAndGetAccessToken();
+		var (email, password) = await RegisterUser();
+
+		await EnsureUserInRole(email, Roles.Seller);
+		var sellerToken = await LoginAndGetAccessToken(email, password);
+		var sellerUserId = await GetDomainUserIdByEmail(email);
+		await EnsureStoreForUser(sellerUserId);
+
+		var categoryId = await CreateCategoryAsAdmin(adminToken);
+
+		// Create product with multiple SKUs (use unique attributes to avoid duplicate SkuCodes)
+		_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", sellerToken);
+		var createReq = new
+		{
+			name = "Product For SKU Delete",
+			categoryIds = new[] { categoryId },
+			skus = new[]
+			{
+				new { price = 50.0m, stockQuantity = 10, attributes = new { variant = "standard" } },
+				new { price = 75.0m, stockQuantity = 5, attributes = new { variant = "premium" } }
+			}
+		};
+		var createResp = await _client.PostAsJsonAsync("/api/products", createReq);
+		var productId = (await createResp.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("payload").GetGuid();
+
+		// Get SKU IDs
+		var getResp = await _client.GetAsync($"/api/products/{productId}");
+		var productJson = await getResp.Content.ReadFromJsonAsync<JsonElement>();
+		var skus = productJson.GetProperty("payload").GetProperty("skus").EnumerateArray().ToList();
+		skus.Should().HaveCount(2);
+		var skuIdToDelete = skus.First().GetProperty("id").GetGuid();
+
+		// Delete one SKU
+		var deleteResp = await _client.DeleteAsync($"/api/products/{productId}/skus/{skuIdToDelete}");
+		deleteResp.StatusCode.Should().Be(HttpStatusCode.OK);
+
+		// Verify product now has 1 SKU
+		var getAfterResp = await _client.GetAsync($"/api/products/{productId}");
+		var productAfterJson = await getAfterResp.Content.ReadFromJsonAsync<JsonElement>();
+		productAfterJson.GetProperty("payload").GetProperty("skus").GetArrayLength().Should().Be(1);
+	}
+
+	[Fact]
+	public async Task AddSku_AsNonOwner_ReturnsForbidden()
+	{
+		var adminToken = await LoginAdminAndGetAccessToken();
+		var (sellerEmail, sellerPassword) = await RegisterUser();
+		var (otherEmail, otherPassword) = await RegisterUser();
+
+		await EnsureUserInRole(sellerEmail, Roles.Seller);
+		await EnsureUserInRole(otherEmail, Roles.Seller);
+
+		var sellerToken = await LoginAndGetAccessToken(sellerEmail, sellerPassword);
+		var otherSellerToken = await LoginAndGetAccessToken(otherEmail, otherPassword);
+
+		var sellerUserId = await GetDomainUserIdByEmail(sellerEmail);
+		var otherUserId = await GetDomainUserIdByEmail(otherEmail);
+		await EnsureStoreForUser(sellerUserId);
+		await EnsureStoreForUser(otherUserId);
+
+		var categoryId = await CreateCategoryAsAdmin(adminToken);
+
+		// Create product as first seller
+		_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", sellerToken);
+		var createReq = new
+		{
+			name = "Seller's Product",
+			categoryIds = new[] { categoryId },
+			skus = new[] { new { price = 50.0m, stockQuantity = 10 } }
+		};
+		var createResp = await _client.PostAsJsonAsync("/api/products", createReq);
+		var productId = (await createResp.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("payload").GetGuid();
+
+		// Try to add SKU as different seller
+		_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", otherSellerToken);
+		var addSkuReq = new { price = 100.0m, stockQuantity = 5 };
+		var addSkuResp = await _client.PostAsJsonAsync($"/api/products/{productId}/skus", addSkuReq);
+		
+		// Should fail because other seller doesn't own this product
+		addSkuResp.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+	}
+
+	#endregion
+
+	#region Gallery Tests
+
+	[Fact]
+	public async Task UploadGalleryImage_ToProduct_UploadsSuccessfully()
+	{
+		var adminToken = await LoginAdminAndGetAccessToken();
+		var (email, password) = await RegisterUser();
+
+		await EnsureUserInRole(email, Roles.Seller);
+		var sellerToken = await LoginAndGetAccessToken(email, password);
+		var sellerUserId = await GetDomainUserIdByEmail(email);
+		await EnsureStoreForUser(sellerUserId);
+
+		var categoryId = await CreateCategoryAsAdmin(adminToken);
+
+		// Create product
+		_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", sellerToken);
+		var createReq = new
+		{
+			name = "Product For Gallery",
+			categoryIds = new[] { categoryId },
+			skus = new[] { new { price = 50.0m, stockQuantity = 10 } }
+		};
+		var createResp = await _client.PostAsJsonAsync("/api/products", createReq);
+		var productId = (await createResp.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("payload").GetGuid();
+
+		// Upload image
+		using var imageContent = new ByteArrayContent(CreateTestImageBytes());
+		imageContent.Headers.ContentType = new MediaTypeHeaderValue("image/png");
+		using var formData = new MultipartFormDataContent();
+		formData.Add(imageContent, "file", "test-image.png");
+		formData.Add(new StringContent("0"), "displayOrder");
+
+		var uploadResp = await _client.PostAsync($"/api/products/{productId}/gallery", formData);
+		uploadResp.StatusCode.Should().Be(HttpStatusCode.OK);
+
+		var uploadJson = await uploadResp.Content.ReadFromJsonAsync<JsonElement>();
+		uploadJson.GetProperty("isSuccess").GetBoolean().Should().BeTrue();
+		uploadJson.GetProperty("payload").GetProperty("galleryId").GetGuid().Should().NotBeEmpty();
+		uploadJson.GetProperty("payload").GetProperty("url").GetString().Should().NotBeNullOrWhiteSpace();
+
+		// Verify product gallery contains the image
+		var getResp = await _client.GetAsync($"/api/products/{productId}");
+		var productJson = await getResp.Content.ReadFromJsonAsync<JsonElement>();
+		productJson.GetProperty("payload").GetProperty("gallery").GetArrayLength().Should().Be(1);
+	}
+
+	[Fact]
+	public async Task UploadMultipleGalleryImages_ToProduct_UploadsAllSuccessfully()
+	{
+		var adminToken = await LoginAdminAndGetAccessToken();
+		var (email, password) = await RegisterUser();
+
+		await EnsureUserInRole(email, Roles.Seller);
+		var sellerToken = await LoginAndGetAccessToken(email, password);
+		var sellerUserId = await GetDomainUserIdByEmail(email);
+		await EnsureStoreForUser(sellerUserId);
+
+		var categoryId = await CreateCategoryAsAdmin(adminToken);
+
+		// Create product
+		_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", sellerToken);
+		var createReq = new
+		{
+			name = "Product With Multiple Images",
+			categoryIds = new[] { categoryId },
+			skus = new[] { new { price = 50.0m, stockQuantity = 10 } }
+		};
+		var createResp = await _client.PostAsJsonAsync("/api/products", createReq);
+		var productId = (await createResp.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("payload").GetGuid();
+
+		// Upload 3 images
+		for (int i = 0; i < 3; i++)
+		{
+			using var imageContent = new ByteArrayContent(CreateTestImageBytes());
+			imageContent.Headers.ContentType = new MediaTypeHeaderValue("image/png");
+			using var formData = new MultipartFormDataContent();
+			formData.Add(imageContent, "file", $"test-image-{i}.png");
+			formData.Add(new StringContent(i.ToString()), "displayOrder");
+
+			var uploadResp = await _client.PostAsync($"/api/products/{productId}/gallery", formData);
+			uploadResp.StatusCode.Should().Be(HttpStatusCode.OK);
+		}
+
+		// Verify product gallery contains all 3 images
+		var getResp = await _client.GetAsync($"/api/products/{productId}");
+		var productJson = await getResp.Content.ReadFromJsonAsync<JsonElement>();
+		productJson.GetProperty("payload").GetProperty("gallery").GetArrayLength().Should().Be(3);
+	}
+
+	[Fact]
+	public async Task DeleteGalleryImage_FromProduct_RemovesImage()
+	{
+		var adminToken = await LoginAdminAndGetAccessToken();
+		var (email, password) = await RegisterUser();
+
+		await EnsureUserInRole(email, Roles.Seller);
+		var sellerToken = await LoginAndGetAccessToken(email, password);
+		var sellerUserId = await GetDomainUserIdByEmail(email);
+		await EnsureStoreForUser(sellerUserId);
+
+		var categoryId = await CreateCategoryAsAdmin(adminToken);
+
+		// Create product
+		_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", sellerToken);
+		var createReq = new
+		{
+			name = "Product For Gallery Delete",
+			categoryIds = new[] { categoryId },
+			skus = new[] { new { price = 50.0m, stockQuantity = 10 } }
+		};
+		var createResp = await _client.PostAsJsonAsync("/api/products", createReq);
+		var productId = (await createResp.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("payload").GetGuid();
+
+		// Upload image
+		using var imageContent = new ByteArrayContent(CreateTestImageBytes());
+		imageContent.Headers.ContentType = new MediaTypeHeaderValue("image/png");
+		using var formData = new MultipartFormDataContent();
+		formData.Add(imageContent, "file", "test-image.png");
+
+		var uploadResp = await _client.PostAsync($"/api/products/{productId}/gallery", formData);
+		var uploadJson = await uploadResp.Content.ReadFromJsonAsync<JsonElement>();
+		var galleryId = uploadJson.GetProperty("payload").GetProperty("galleryId").GetGuid();
+
+		// Delete the image
+		var deleteResp = await _client.DeleteAsync($"/api/products/{productId}/gallery/{galleryId}");
+		deleteResp.StatusCode.Should().Be(HttpStatusCode.OK);
+
+		// Verify gallery is empty
+		var getResp = await _client.GetAsync($"/api/products/{productId}");
+		var productJson = await getResp.Content.ReadFromJsonAsync<JsonElement>();
+		productJson.GetProperty("payload").GetProperty("gallery").GetArrayLength().Should().Be(0);
+	}
+
+	[Fact]
+	public async Task UploadGalleryImage_WithoutFile_ReturnsBadRequest()
+	{
+		var adminToken = await LoginAdminAndGetAccessToken();
+		var (email, password) = await RegisterUser();
+
+		await EnsureUserInRole(email, Roles.Seller);
+		var sellerToken = await LoginAndGetAccessToken(email, password);
+		var sellerUserId = await GetDomainUserIdByEmail(email);
+		await EnsureStoreForUser(sellerUserId);
+
+		var categoryId = await CreateCategoryAsAdmin(adminToken);
+
+		// Create product
+		_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", sellerToken);
+		var createReq = new
+		{
+			name = "Product For Empty Upload",
+			categoryIds = new[] { categoryId },
+			skus = new[] { new { price = 50.0m, stockQuantity = 10 } }
+		};
+		var createResp = await _client.PostAsJsonAsync("/api/products", createReq);
+		var productId = (await createResp.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("payload").GetGuid();
+
+		// Try to upload without file
+		using var formData = new MultipartFormDataContent();
+		formData.Add(new StringContent("0"), "displayOrder");
+
+		var uploadResp = await _client.PostAsync($"/api/products/{productId}/gallery", formData);
+		uploadResp.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+	}
+
+	[Fact]
+	public async Task UploadGalleryImage_AsNonOwner_ReturnsForbidden()
+	{
+		var adminToken = await LoginAdminAndGetAccessToken();
+		var (sellerEmail, sellerPassword) = await RegisterUser();
+		var (otherEmail, otherPassword) = await RegisterUser();
+
+		await EnsureUserInRole(sellerEmail, Roles.Seller);
+		await EnsureUserInRole(otherEmail, Roles.Seller);
+
+		var sellerToken = await LoginAndGetAccessToken(sellerEmail, sellerPassword);
+		var otherSellerToken = await LoginAndGetAccessToken(otherEmail, otherPassword);
+
+		var sellerUserId = await GetDomainUserIdByEmail(sellerEmail);
+		var otherUserId = await GetDomainUserIdByEmail(otherEmail);
+		await EnsureStoreForUser(sellerUserId);
+		await EnsureStoreForUser(otherUserId);
+
+		var categoryId = await CreateCategoryAsAdmin(adminToken);
+
+		// Create product as first seller
+		_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", sellerToken);
+		var createReq = new
+		{
+			name = "Seller's Product For Gallery",
+			categoryIds = new[] { categoryId },
+			skus = new[] { new { price = 50.0m, stockQuantity = 10 } }
+		};
+		var createResp = await _client.PostAsJsonAsync("/api/products", createReq);
+		var productId = (await createResp.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("payload").GetGuid();
+
+		// Try to upload image as different seller
+		_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", otherSellerToken);
+		using var imageContent = new ByteArrayContent(CreateTestImageBytes());
+		imageContent.Headers.ContentType = new MediaTypeHeaderValue("image/png");
+		using var formData = new MultipartFormDataContent();
+		formData.Add(imageContent, "file", "test-image.png");
+
+		var uploadResp = await _client.PostAsync($"/api/products/{productId}/gallery", formData);
+		
+		// Should fail because other seller doesn't own this product
+		uploadResp.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+	}
+
+	/// <summary>
+	/// Creates minimal valid PNG bytes for testing
+	/// </summary>
+	private static byte[] CreateTestImageBytes()
+	{
+		// Minimal 1x1 PNG (red pixel)
+		return new byte[]
+		{
+			0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, // PNG signature
+			0x00, 0x00, 0x00, 0x0D, 0x49, 0x48, 0x44, 0x52, // IHDR chunk
+			0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
+			0x08, 0x02, 0x00, 0x00, 0x00, 0x90, 0x77, 0x53,
+			0xDE, 0x00, 0x00, 0x00, 0x0C, 0x49, 0x44, 0x41, // IDAT chunk
+			0x54, 0x08, 0xD7, 0x63, 0xF8, 0xCF, 0xC0, 0x00,
+			0x00, 0x00, 0x03, 0x00, 0x01, 0x00, 0x05, 0xFE,
+			0xD4, 0xEF, 0x00, 0x00, 0x00, 0x00, 0x49, 0x45, // IEND chunk
+			0x4E, 0x44, 0xAE, 0x42, 0x60, 0x82
+		};
+	}
+
+	#endregion
 }
