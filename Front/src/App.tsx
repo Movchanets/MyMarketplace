@@ -17,6 +17,9 @@ import UsersManagement from './pages/admin/users/UsersManagement'
 import RolesManagement from './pages/admin/roles/RolesManagement'
 import MyStore from './pages/store/MyStore'
 import CreateStore from './pages/store/CreateStore'
+import ProductCreate from './pages/store/ProductCreate'
+import ProductEdit from './pages/store/ProductEdit'
+import MyProducts from './pages/store/MyProducts'
 import NotFound from './pages/NotFound'
 // no top-level Fragment needed here
 
@@ -44,6 +47,9 @@ export default function App() {
           <Route path="user/settings" element={<SettingsPage />} />
           <Route path="my-store" element={<MyStore />} />
           <Route path="create-store" element={<CreateStore />} />
+          <Route path="products" element={<MyProducts />} />
+          <Route path="products/create" element={<ProductCreate />} />
+          <Route path="products/:productId/edit" element={<ProductEdit />} />
           <Route path="orders" element={<div className="p-6">{t('menu.orders')} ({t('common.empty')})</div>} />
           <Route path="tracking" element={<div className="p-6">{t('menu.tracking')} ({t('common.empty')})</div>} />
           <Route path="favorites" element={<div className="p-6">{t('menu.favorites')} ({t('common.empty')})</div>} />

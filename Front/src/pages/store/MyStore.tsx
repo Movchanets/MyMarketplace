@@ -140,7 +140,11 @@ export default function MyStore() {
       <div className="card p-6">
         <h2 className="text-lg font-semibold text-text mb-4">{t('store.quick_actions')}</h2>
         <div className="flex flex-wrap gap-3">
-          <button className="btn btn-brand" disabled={store.isSuspended}>
+          <button
+            className="btn btn-brand"
+            disabled={store.isSuspended}
+            onClick={() => navigate('/cabinet/products/create')}
+          >
             {t('store.add_product')}
           </button>
           <button className="btn btn-secondary">
