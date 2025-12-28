@@ -1,5 +1,6 @@
 using Application.DTOs;
 using Application.Interfaces;
+using Domain.Entities;
 using Domain.Interfaces.Repositories;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -10,17 +11,23 @@ public sealed class AddProductGalleryImageCommandHandler : IRequestHandler<AddPr
 {
 	private readonly IProductRepository _productRepository;
 	private readonly IMediaImageRepository _mediaImageRepository;
+	private readonly IProductGalleryRepository _galleryRepository;
+	private readonly IUserRepository _userRepository;
 	private readonly IUnitOfWork _unitOfWork;
 	private readonly ILogger<AddProductGalleryImageCommandHandler> _logger;
 
 	public AddProductGalleryImageCommandHandler(
 		IProductRepository productRepository,
 		IMediaImageRepository mediaImageRepository,
+		IProductGalleryRepository galleryRepository,
+		IUserRepository userRepository,
 		IUnitOfWork unitOfWork,
 		ILogger<AddProductGalleryImageCommandHandler> logger)
 	{
 		_productRepository = productRepository;
 		_mediaImageRepository = mediaImageRepository;
+		_galleryRepository = galleryRepository;
+		_userRepository = userRepository;
 		_unitOfWork = unitOfWork;
 		_logger = logger;
 	}
@@ -31,10 +38,18 @@ public sealed class AddProductGalleryImageCommandHandler : IRequestHandler<AddPr
 
 		try
 		{
-			var product = await _productRepository.GetByIdAsync(request.ProductId);
-			if (product?.Store is null || product.Store.UserId != request.UserId)
+			// Convert identity user ID to domain user ID
+			var domainUser = await _userRepository.GetByIdentityUserIdAsync(request.UserId);
+			if (domainUser is null)
 			{
-				_logger.LogWarning("Product {ProductId} not found for user {UserId}", request.ProductId, request.UserId);
+				_logger.LogWarning("Domain user for identity {UserId} not found", request.UserId);
+				return new ServiceResponse<Guid>(false, "User not found");
+			}
+
+			var product = await _productRepository.GetByIdAsync(request.ProductId);
+			if (product?.Store is null || product.Store.UserId != domainUser.Id)
+			{
+				_logger.LogWarning("Product {ProductId} not found for user {UserId}", request.ProductId, domainUser.Id);
 				return new ServiceResponse<Guid>(false, "Product not found");
 			}
 
@@ -51,17 +66,12 @@ public sealed class AddProductGalleryImageCommandHandler : IRequestHandler<AddPr
 				return new ServiceResponse<Guid>(false, "Image not found");
 			}
 
-			product.AddGalleryItem(media, request.DisplayOrder);
+			var galleryItem = ProductGallery.Create(product, media, request.DisplayOrder);
+			_galleryRepository.Add(galleryItem);
 
 			await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-			var galleryId = product.Gallery
-				.Where(g => g.MediaImageId == request.MediaImageId && g.DisplayOrder == request.DisplayOrder)
-				.OrderByDescending(g => g.CreatedAt)
-				.Select(g => g.Id)
-				.FirstOrDefault();
-
-			return new ServiceResponse<Guid>(true, "Gallery image added successfully", galleryId);
+			return new ServiceResponse<Guid>(true, "Gallery image added successfully", galleryItem.Id);
 		}
 		catch (Exception ex)
 		{
