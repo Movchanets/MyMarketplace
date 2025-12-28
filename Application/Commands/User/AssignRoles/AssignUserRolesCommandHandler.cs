@@ -16,10 +16,10 @@ public class AssignUserRolesCommandHandler : IRequestHandler<AssignUserRolesComm
     public async Task<ServiceResponse<AdminUserDto>> Handle(AssignUserRolesCommand request, CancellationToken cancellationToken)
     {
         var (success, message, user) = await _adminUserService.AssignUserRolesAsync(
-            request.UserId, 
-            request.Roles, 
+            request.UserId,
+            request.Roles,
             cancellationToken);
-        
+
         return success
             ? new ServiceResponse<AdminUserDto>(true, message, user)
             : new ServiceResponse<AdminUserDto>(false, message);

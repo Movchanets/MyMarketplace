@@ -67,7 +67,7 @@ public class AssignUserRolesCommandValidatorTests
     {
         // Arrange
         var command = new AssignUserRolesCommand(
-            Guid.NewGuid(), 
+            Guid.NewGuid(),
             new List<string> { "Admin", "Seller", "ContentManager" }
         );
 

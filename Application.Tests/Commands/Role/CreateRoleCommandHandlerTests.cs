@@ -18,7 +18,7 @@ public class CreateRoleCommandHandlerTests
         // Arrange
         var roleId = Guid.NewGuid();
         var expectedRole = new RoleDto(roleId, "TestRole", "Test Description", new List<string> { "users.read" }, 0);
-        
+
         _roleService
             .Setup(x => x.CreateRoleAsync("TestRole", "Test Description", It.IsAny<List<string>>()))
             .ReturnsAsync((true, "Role created successfully", expectedRole));

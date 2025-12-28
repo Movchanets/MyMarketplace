@@ -11,15 +11,15 @@ public class GetAllPermissionsQueryHandler : IRequestHandler<GetAllPermissionsQu
         CancellationToken cancellationToken)
     {
         var grouped = Permissions.GetAllGrouped();
-        
+
         var result = grouped.ToDictionary(
             g => g.Key,
             g => g.Value.Select(p => new PermissionDto(p.Name, p.Description, g.Key)).ToList()
         );
 
         return Task.FromResult(new ServiceResponse<Dictionary<string, List<PermissionDto>>>(
-            true, 
-            "Permissions retrieved successfully", 
+            true,
+            "Permissions retrieved successfully",
             result
         ));
     }

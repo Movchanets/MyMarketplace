@@ -57,7 +57,7 @@ public class LockUserCommandHandlerTests
         // Arrange
         var userId = Guid.NewGuid();
         var lockUntil = DateTime.UtcNow.AddDays(7);
-        
+
         _adminUserService
             .Setup(x => x.SetUserLockoutAsync(userId, true, lockUntil))
             .ReturnsAsync((true, "User locked until " + lockUntil));

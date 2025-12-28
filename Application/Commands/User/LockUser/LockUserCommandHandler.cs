@@ -16,10 +16,10 @@ public class LockUserCommandHandler : IRequestHandler<LockUserCommand, ServiceRe
     public async Task<ServiceResponse> Handle(LockUserCommand request, CancellationToken cancellationToken)
     {
         var (success, message) = await _adminUserService.SetUserLockoutAsync(
-            request.UserId, 
-            request.Lock, 
+            request.UserId,
+            request.Lock,
             request.LockUntil);
-        
+
         return new ServiceResponse(success, message);
     }
 }

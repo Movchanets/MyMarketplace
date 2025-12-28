@@ -92,7 +92,7 @@ try
     }
     else
     {
-      
+
         builder.Services.AddDbContext<AppDbContext>(opt =>
           opt.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
     }
@@ -243,7 +243,7 @@ try
     {
         await app.SeedDataAsync();
     }
-   
+
     Log.Information("Application started successfully");
     app.Run();
 }

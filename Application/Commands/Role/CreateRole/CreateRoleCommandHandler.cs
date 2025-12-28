@@ -16,7 +16,7 @@ public class CreateRoleCommandHandler : IRequestHandler<CreateRoleCommand, Servi
     public async Task<ServiceResponse<RoleDto>> Handle(CreateRoleCommand request, CancellationToken cancellationToken)
     {
         var (success, message, role) = await _roleService.CreateRoleAsync(request.Name, request.Description, request.Permissions);
-        
+
         return success
             ? new ServiceResponse<RoleDto>(true, message, role)
             : new ServiceResponse<RoleDto>(false, message);

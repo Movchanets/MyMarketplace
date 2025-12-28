@@ -16,12 +16,12 @@ public class UpdateRoleCommandHandler : IRequestHandler<UpdateRoleCommand, Servi
     public async Task<ServiceResponse<RoleDto>> Handle(UpdateRoleCommand request, CancellationToken cancellationToken)
     {
         var (success, message, role) = await _roleService.UpdateRoleAsync(
-            request.RoleId, 
-            request.Name, 
-            request.Description, 
-            request.Permissions, 
+            request.RoleId,
+            request.Name,
+            request.Description,
+            request.Permissions,
             cancellationToken);
-        
+
         return success
             ? new ServiceResponse<RoleDto>(true, message, role)
             : new ServiceResponse<RoleDto>(false, message);

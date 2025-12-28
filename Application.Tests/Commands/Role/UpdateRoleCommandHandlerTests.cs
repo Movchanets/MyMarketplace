@@ -18,7 +18,7 @@ public class UpdateRoleCommandHandlerTests
         // Arrange
         var roleId = Guid.NewGuid();
         var updatedRole = new RoleDto(roleId, "UpdatedRole", "Updated Description", new List<string> { "users.read", "users.write" }, 5);
-        
+
         _roleService
             .Setup(x => x.UpdateRoleAsync(roleId, "UpdatedRole", "Updated Description", It.IsAny<List<string>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((true, "Role updated successfully", updatedRole));
@@ -62,7 +62,7 @@ public class UpdateRoleCommandHandlerTests
         // Arrange
         var roleId = Guid.NewGuid();
         var existingRole = new RoleDto(roleId, "ExistingRole", "Existing Description", new List<string>(), 0);
-        
+
         _roleService
             .Setup(x => x.UpdateRoleAsync(roleId, null, "New Description", null, It.IsAny<CancellationToken>()))
             .ReturnsAsync((true, "Updated", existingRole));
