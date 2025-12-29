@@ -3,8 +3,10 @@ using Application.Commands.Product.CreateProduct;
 using Application.Commands.Product.DeleteProduct;
 using Application.Commands.Product.Gallery.AddProductGalleryImage;
 using Application.Commands.Product.Gallery.RemoveProductGalleryImage;
+using Application.Commands.Product.SetProductBaseImage;
 using Application.Commands.Product.Sku.AddSkuToProduct;
 using Application.Commands.Product.Sku.DeleteSku;
+using Application.Commands.Product.Sku.UpdateSku;
 using Application.Commands.Product.ToggleProductActive;
 using Application.Commands.Product.UpdateProduct;
 using Application.Interfaces;
@@ -20,6 +22,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers;
+
+public sealed record SetBaseImageRequest(string? BaseImageUrl);
 
 [Authorize]
 [ApiController]
@@ -246,6 +250,37 @@ public sealed class ProductsController : ControllerBase
 		return Ok(result);
 	}
 
+	public sealed record UpdateSkuRequest(
+		decimal Price,
+		int StockQuantity,
+		Dictionary<string, object?>? Attributes = null
+	);
+
+	/// <summary>
+	/// Оновити SKU продукту
+	/// </summary>
+	[HttpPut("{productId:guid}/skus/{skuId:guid}")]
+	[Authorize(Policy = "Permission:products.update.self")]
+	public async Task<IActionResult> UpdateSku([FromRoute] Guid productId, [FromRoute] Guid skuId, [FromBody] UpdateSkuRequest request)
+	{
+		var idClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+		if (string.IsNullOrWhiteSpace(idClaim)) return Unauthorized();
+		if (!Guid.TryParse(idClaim, out var userId)) return Unauthorized();
+
+		var command = new UpdateSkuCommand(
+			userId,
+			productId,
+			skuId,
+			request.Price,
+			request.StockQuantity,
+			request.Attributes
+		);
+
+		var result = await _mediator.Send(command);
+		if (!result.IsSuccess) return BadRequest(result);
+		return Ok(result);
+	}
+
 	/// <summary>
 	/// Видалити SKU з продукту
 	/// </summary>
@@ -335,6 +370,23 @@ public sealed class ProductsController : ControllerBase
 		if (!Guid.TryParse(idClaim, out var userId)) return Unauthorized();
 
 		var command = new RemoveProductGalleryImageCommand(userId, productId, galleryId);
+		var result = await _mediator.Send(command);
+		if (!result.IsSuccess) return BadRequest(result);
+		return Ok(result);
+	}
+
+	/// <summary>
+	/// Встановити базове зображення продукту
+	/// </summary>
+	[HttpPatch("{productId:guid}/base-image")]
+	[Authorize(Policy = "Permission:products.update.self")]
+	public async Task<IActionResult> SetBaseImage([FromRoute] Guid productId, [FromBody] SetBaseImageRequest request)
+	{
+		var idClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+		if (string.IsNullOrWhiteSpace(idClaim)) return Unauthorized();
+		if (!Guid.TryParse(idClaim, out var userId)) return Unauthorized();
+
+		var command = new SetProductBaseImageCommand(userId, productId, request.BaseImageUrl);
 		var result = await _mediator.Send(command);
 		if (!result.IsSuccess) return BadRequest(result);
 		return Ok(result);

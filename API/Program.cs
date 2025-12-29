@@ -113,6 +113,7 @@ try
     builder.Services.AddScoped<ISkuRepository, SkuRepository>();
     builder.Services.AddScoped<ITagRepository, TagRepository>();
     builder.Services.AddScoped<IProductGalleryRepository, ProductGalleryRepository>();
+    builder.Services.AddScoped<IAttributeDefinitionRepository, AttributeDefinitionRepository>();
     builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
     builder.Services.AddIdentity<ApplicationUser, RoleEntity>(options =>
