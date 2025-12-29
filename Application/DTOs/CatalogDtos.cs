@@ -48,7 +48,8 @@ public sealed record SkuDto(
 	string SkuCode,
 	decimal Price,
 	int StockQuantity,
-	Dictionary<string, object?>? Attributes
+	Dictionary<string, object?>? Attributes,
+	Dictionary<string, object?>? MergedAttributes
 );
 
 public sealed record MediaImageDto(
@@ -79,6 +80,7 @@ public sealed record ProductDetailsDto(
 	string Name,
 	string? Description,
 	string? BaseImageUrl,
+	Dictionary<string, object?>? Attributes,
 	IReadOnlyList<SkuDto> Skus,
 	IReadOnlyList<MediaImageDto> Gallery,
 	IReadOnlyList<CategoryDto> Categories,
@@ -104,6 +106,44 @@ public sealed record ProductSearchRequest(
 	ProductSort Sort = ProductSort.Relevance,
 	int Page = 1,
 	int PageSize = 24
+);
+
+// Attribute Definition DTOs
+public sealed record AttributeDefinitionDto(
+	Guid Id,
+	string Code,
+	string Name,
+	string DataType,
+	bool IsRequired,
+	bool IsVariant,
+	string? Description,
+	string? Unit,
+	int DisplayOrder,
+	IReadOnlyList<string>? AllowedValues,
+	bool IsActive
+);
+
+public sealed record CreateAttributeDefinitionRequest(
+	string Code,
+	string Name,
+	string DataType = "string",
+	bool IsRequired = false,
+	bool IsVariant = false,
+	string? Description = null,
+	string? Unit = null,
+	int DisplayOrder = 0,
+	List<string>? AllowedValues = null
+);
+
+public sealed record UpdateAttributeDefinitionRequest(
+	string Name,
+	string DataType,
+	bool IsRequired,
+	bool IsVariant,
+	string? Description,
+	string? Unit,
+	int DisplayOrder,
+	List<string>? AllowedValues
 );
 
 public static class CatalogDtoJson
