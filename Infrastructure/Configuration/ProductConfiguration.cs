@@ -26,6 +26,9 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
         builder.Property(p => p.BaseImageUrl)
             .HasMaxLength(500);
 
+        builder.Property(p => p.Attributes)
+            .HasColumnType("jsonb");
+
         builder.Metadata.FindNavigation(nameof(Product.ProductTags))?
             .SetPropertyAccessMode(PropertyAccessMode.Field);
 
