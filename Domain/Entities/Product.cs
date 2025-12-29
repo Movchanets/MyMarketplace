@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 namespace Domain.Entities;
 
 public class Product : BaseEntity<Guid>
@@ -9,6 +11,12 @@ public class Product : BaseEntity<Guid>
     public string? Description { get; private set; }
     public string? BaseImageUrl { get; private set; }
     public bool IsActive { get; private set; } = true;
+
+    /// <summary>
+    /// Base attributes for the product. These are inherited by all SKUs
+    /// unless overridden at SKU level. Stored as JSONB.
+    /// </summary>
+    public JsonDocument? Attributes { get; private set; }
 
     private readonly List<ProductTag> _productTags = new();
     public virtual IReadOnlyCollection<ProductTag> ProductTags => _productTags.AsReadOnly();
@@ -181,5 +189,61 @@ public class Product : BaseEntity<Guid>
 
         existing.Tag?.RemoveProductTag(existing);
         _productTags.Remove(existing);
+    }
+
+    /// <summary>
+    /// Updates base product attributes. These will be inherited by SKUs.
+    /// </summary>
+    public void UpdateAttributes(IDictionary<string, object?>? attributes)
+    {
+        Attributes?.Dispose();
+
+        if (attributes is null || attributes.Count == 0)
+        {
+            Attributes = null;
+        }
+        else
+        {
+            var options = new JsonSerializerOptions { PropertyNamingPolicy = null };
+            var json = JsonSerializer.Serialize(attributes, options);
+            Attributes = JsonDocument.Parse(json);
+        }
+        MarkAsUpdated();
+    }
+
+    /// <summary>
+    /// Gets attributes as a dictionary.
+    /// </summary>
+    public Dictionary<string, object?>? GetAttributesDictionary()
+    {
+        if (Attributes is null) return null;
+
+        try
+        {
+            var result = new Dictionary<string, object?>();
+            foreach (var prop in Attributes.RootElement.EnumerateObject())
+            {
+                result[prop.Name] = GetJsonElementValue(prop.Value);
+            }
+            return result;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static object? GetJsonElementValue(JsonElement element)
+    {
+        return element.ValueKind switch
+        {
+            JsonValueKind.String => element.GetString(),
+            JsonValueKind.Number => element.TryGetInt64(out var l) ? l : element.GetDouble(),
+            JsonValueKind.True => true,
+            JsonValueKind.False => false,
+            JsonValueKind.Null => null,
+            JsonValueKind.Array => element.EnumerateArray().Select(GetJsonElementValue).ToArray(),
+            _ => element.GetRawText()
+        };
     }
 }
