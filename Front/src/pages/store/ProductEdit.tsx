@@ -8,12 +8,21 @@ import {
   type CategoryDto,
   type TagDto,
   type UpdateProductRequest,
-  type ProductDetailsDto
+  type ProductDetailsDto,
+  type MediaImageDto
 } from '../../api/catalogApi'
 
 interface FormErrors {
   name?: string
 }
+
+interface NewGalleryImage {
+  id: string
+  file: File
+  preview: string
+}
+
+const generateId = () => Math.random().toString(36).substring(2, 11)
 
 export default function ProductEdit() {
   const { t } = useTranslation()
@@ -35,11 +44,24 @@ export default function ProductEdit() {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [selectedTags, setSelectedTags] = useState<string[]>([])
 
+  // Gallery state
+  const [existingImages, setExistingImages] = useState<MediaImageDto[]>([])
+  const [newImages, setNewImages] = useState<NewGalleryImage[]>([])
+  const [uploadingImages, setUploadingImages] = useState(false)
+  const [deletingImages, setDeletingImages] = useState<Set<string>>(new Set())
+
   // Dropdowns state
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false)
   const [showTagDropdown, setShowTagDropdown] = useState(false)
   const [categorySearch, setCategorySearch] = useState('')
   const [tagSearch, setTagSearch] = useState('')
+
+  // Cleanup preview URLs on unmount
+  useEffect(() => {
+    return () => {
+      newImages.forEach(img => URL.revokeObjectURL(img.preview))
+    }
+  }, [newImages])
 
   const fetchData = useCallback(async () => {
     if (!productId) return
@@ -66,6 +88,7 @@ export default function ProductEdit() {
         setDescription(p.description || '')
         setSelectedCategories(p.categories.map(c => c.id))
         setSelectedTags(p.tags.map(t => t.id))
+        setExistingImages(p.gallery || [])
       } else {
         setError(t('product.notFound'))
       }
@@ -131,6 +154,94 @@ export default function ProductEdit() {
     setSelectedTags(prev =>
       prev.includes(id) ? prev.filter(t => t !== id) : [...prev, id]
     )
+  }
+
+  // Gallery management
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (!files || !productId) return
+
+    const images: NewGalleryImage[] = Array.from(files).map(file => ({
+      id: generateId(),
+      file,
+      preview: URL.createObjectURL(file)
+    }))
+
+    setNewImages([...newImages, ...images])
+    e.target.value = '' // Reset input
+  }
+
+  const handleRemoveNewImage = (imageId: string) => {
+    const img = newImages.find(i => i.id === imageId)
+    if (img) {
+      URL.revokeObjectURL(img.preview)
+    }
+    setNewImages(newImages.filter(i => i.id !== imageId))
+  }
+
+  const handleDeleteExistingImage = async (galleryId: string) => {
+    if (!productId || !confirm(t('product.confirm_delete_image'))) return
+
+    setDeletingImages(prev => new Set(prev).add(galleryId))
+    try {
+      const result = await productsApi.deleteGalleryImage(productId, galleryId)
+      if (result.isSuccess) {
+        setExistingImages(prev => prev.filter(img => img.id !== galleryId))
+      } else {
+        setError(result.message || t('errors.delete_failed'))
+      }
+    } catch (err) {
+      setError(t('errors.delete_failed'))
+    } finally {
+      setDeletingImages(prev => {
+        const next = new Set(prev)
+        next.delete(galleryId)
+        return next
+      })
+    }
+  }
+
+  const handleSetBaseImage = async (imageUrl: string) => {
+    if (!productId) return
+
+    try {
+      const result = await productsApi.setBaseImage(productId, imageUrl)
+      if (result.isSuccess) {
+        // Update product data locally
+        if (product) {
+          setProduct({ ...product, baseImageUrl: imageUrl })
+        }
+      } else {
+        setError(result.message || t('errors.update_failed'))
+      }
+    } catch (err) {
+      setError(t('errors.update_failed'))
+    }
+  }
+
+  const handleUploadNewImages = async () => {
+    if (!productId || newImages.length === 0) return
+
+    setUploadingImages(true)
+    try {
+      for (let i = 0; i < newImages.length; i++) {
+        const result = await productsApi.uploadGalleryImage(
+          productId,
+          newImages[i].file,
+          existingImages.length + i
+        )
+        if (!result.isSuccess) {
+          console.error('Failed to upload:', newImages[i].file.name)
+        }
+      }
+      // Refresh product data to get new gallery
+      await fetchData()
+      setNewImages([])
+    } catch (err) {
+      setError(t('errors.upload_failed'))
+    } finally {
+      setUploadingImages(false)
+    }
   }
 
   const filteredCategories = categories.filter(c =>
@@ -254,8 +365,8 @@ export default function ProductEdit() {
 
           {/* Dropdown */}
           {showCategoryDropdown && (
-            <div className="absolute z-50 w-full mt-1 bg-background border border-border rounded-lg shadow-lg max-h-60 overflow-auto">
-              <div className="p-2 border-b border-border">
+            <div className="absolute z-50 w-full mt-1 bg-surface border border-border rounded-lg shadow-lg max-h-60 overflow-auto">
+              <div className="p-2 border-b border-border bg-surface">
                 <input
                   type="text"
                   value={categorySearch}
@@ -286,6 +397,122 @@ export default function ProductEdit() {
               </div>
             </div>
           )}
+        </div>
+
+        {/* Gallery */}
+        <div>
+          <label className="block text-sm font-medium text-text mb-2">
+            {t('product.gallery')}
+          </label>
+          <p className="text-xs text-text-muted mb-3">{t('product.gallery_hint')}</p>
+
+          {/* Existing Images */}
+          {existingImages.length > 0 && (
+            <div className="mb-4">
+              <p className="text-xs font-medium text-text mb-2">{t('product.current_images')}</p>
+              <div className="flex flex-wrap gap-3">
+                {existingImages.map((img) => {
+                  const isBaseImage = product?.baseImageUrl === img.url
+                  return (
+                    <div key={img.id} className="relative group">
+                      <div
+                        className={`w-24 h-24 rounded-lg overflow-hidden border-2 cursor-pointer transition-all ${
+                          isBaseImage ? 'border-brand ring-2 ring-brand/50' : 'border-border hover:border-brand'
+                        }`}
+                        onClick={() => handleSetBaseImage(img.url)}
+                        title={isBaseImage ? t('product.base_image_current') : t('product.set_as_base')}
+                      >
+                        <img
+                          src={img.url}
+                          alt={img.altText || ''}
+                          className="w-full h-full object-cover"
+                        />
+                        {isBaseImage && (
+                          <div className="absolute top-1 left-1 bg-brand text-white text-xs px-1.5 py-0.5 rounded">
+                            {t('product.base')}
+                          </div>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleDeleteExistingImage(img.id)
+                        }}
+                        disabled={deletingImages.has(img.id)}
+                        className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full 
+                          opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
+                      >
+                        {deletingImages.has(img.id) ? (
+                          <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                          </svg>
+                        ) : (
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        )}
+                      </button>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* New Images to Upload */}
+          {newImages.length > 0 && (
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs font-medium text-text">{t('product.new_images')}</p>
+                <button
+                  type="button"
+                  onClick={handleUploadNewImages}
+                  disabled={uploadingImages}
+                  className="text-xs btn btn-brand py-1 px-3"
+                >
+                  {uploadingImages ? t('common.uploading') : t('product.upload_now')}
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                {newImages.map((img) => (
+                  <div key={img.id} className="relative group">
+                    <img
+                      src={img.preview}
+                      alt=""
+                      className="w-24 h-24 object-cover rounded-lg border border-border"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveNewImage(img.id)}
+                      className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full 
+                        opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Add New Images */}
+          <label className="inline-flex flex-col items-center justify-center px-4 py-3 border-2 border-dashed 
+            border-border rounded-lg cursor-pointer hover:border-brand transition-colors">
+            <svg className="w-8 h-8 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            <span className="text-sm text-text-muted mt-1">{t('product.add_images')}</span>
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={handleImageSelect}
+              className="hidden"
+            />
+          </label>
         </div>
 
         {/* Tags */}
@@ -329,8 +556,8 @@ export default function ProductEdit() {
 
           {/* Dropdown */}
           {showTagDropdown && (
-            <div className="absolute z-50 w-full mt-1 bg-background border border-border rounded-lg shadow-lg max-h-60 overflow-auto">
-              <div className="p-2 border-b border-border">
+            <div className="absolute z-50 w-full mt-1 bg-surface border border-border rounded-lg shadow-lg max-h-60 overflow-auto">
+              <div className="p-2 border-b border-border bg-surface">
                 <input
                   type="text"
                   value={tagSearch}
