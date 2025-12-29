@@ -39,13 +39,10 @@ internal static class ProductMapping
 
 	public static ProductDetailsDto MapDetails(Product product, IFileStorage fileStorage)
 	{
+		var productAttributes = product.GetAttributesDictionary();
+
 		var skus = product.Skus
-			.Select(s => new SkuDto(
-				s.Id,
-				s.SkuCode,
-				s.Price,
-				s.StockQuantity,
-				CatalogDtoJson.AttributesToDictionary(s.Attributes)))
+			.Select(s => MapSku(s, productAttributes))
 			.ToList()
 			.AsReadOnly();
 
@@ -77,10 +74,68 @@ internal static class ProductMapping
 			product.Name,
 			product.Description,
 			product.BaseImageUrl,
+			productAttributes,
 			skus,
 			gallery,
 			categories,
 			tags);
+	}
+
+	/// <summary>
+	/// Maps SKU entity to DTO, merging product-level attributes with SKU-level attributes.
+	/// SKU attributes override product attributes with the same key.
+	/// </summary>
+	private static SkuDto MapSku(SkuEntity sku, Dictionary<string, object?>? productAttributes)
+	{
+		var skuAttributes = CatalogDtoJson.AttributesToDictionary(sku.Attributes);
+		var mergedAttributes = MergeAttributes(productAttributes, skuAttributes);
+
+		return new SkuDto(
+			sku.Id,
+			sku.SkuCode,
+			sku.Price,
+			sku.StockQuantity,
+			skuAttributes,
+			mergedAttributes
+		);
+	}
+
+	/// <summary>
+	/// Merges product-level and SKU-level attributes.
+	/// SKU attributes take precedence over product attributes.
+	/// </summary>
+	private static Dictionary<string, object?>? MergeAttributes(
+		Dictionary<string, object?>? productAttributes,
+		Dictionary<string, object?>? skuAttributes)
+	{
+		// If both are null or empty, return null
+		if ((productAttributes is null || productAttributes.Count == 0) &&
+			(skuAttributes is null || skuAttributes.Count == 0))
+		{
+			return null;
+		}
+
+		// Start with product attributes (base)
+		var merged = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+
+		if (productAttributes is not null)
+		{
+			foreach (var kvp in productAttributes)
+			{
+				merged[kvp.Key] = kvp.Value;
+			}
+		}
+
+		// Override with SKU attributes (variant-specific)
+		if (skuAttributes is not null)
+		{
+			foreach (var kvp in skuAttributes)
+			{
+				merged[kvp.Key] = kvp.Value;
+			}
+		}
+
+		return merged.Count > 0 ? merged : null;
 	}
 
 	private static MediaImageDto? MapGalleryImage(ProductGallery galleryItem, IFileStorage fileStorage)

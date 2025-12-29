@@ -33,7 +33,7 @@ public sealed class GetMyProductsQueryHandler : IRequestHandler<GetMyProductsQue
 			if (domainUser is null)
 			{
 				return new ServiceResponse<IReadOnlyList<ProductSummaryDto>>(
-					false, 
+					false,
 					"User not found",
 					Array.Empty<ProductSummaryDto>().AsReadOnly());
 			}
@@ -43,7 +43,7 @@ public sealed class GetMyProductsQueryHandler : IRequestHandler<GetMyProductsQue
 			if (store is null)
 			{
 				return new ServiceResponse<IReadOnlyList<ProductSummaryDto>>(
-					false, 
+					false,
 					"Store not found for user",
 					Array.Empty<ProductSummaryDto>().AsReadOnly());
 			}

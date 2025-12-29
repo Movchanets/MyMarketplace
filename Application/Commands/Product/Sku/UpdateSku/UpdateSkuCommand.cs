@@ -8,5 +8,6 @@ public sealed record UpdateSkuCommand(
 	Guid ProductId,
 	Guid SkuId,
 	decimal Price,
-	int StockQuantity
+	int StockQuantity,
+	IDictionary<string, object?>? Attributes = null
 ) : IRequest<ServiceResponse>;

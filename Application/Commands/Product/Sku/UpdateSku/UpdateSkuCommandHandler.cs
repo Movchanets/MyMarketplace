@@ -3,6 +3,7 @@ using Application.Interfaces;
 using Domain.Interfaces.Repositories;
 using MediatR;
 using Microsoft.Extensions.Logging;
+using System.Text.Json;
 
 namespace Application.Commands.Product.Sku.UpdateSku;
 
@@ -43,6 +44,16 @@ public sealed class UpdateSkuCommandHandler : IRequestHandler<UpdateSkuCommand, 
 
 			sku.UpdatePrice(request.Price);
 			sku.UpdateStock(request.StockQuantity);
+
+			// Update attributes if provided
+			if (request.Attributes is not null)
+			{
+				foreach (var attr in request.Attributes)
+				{
+					sku.SetAttribute(attr.Key, attr.Value);
+				}
+			}
+
 			_skuRepository.Update(sku);
 
 			await _unitOfWork.SaveChangesAsync(cancellationToken);
