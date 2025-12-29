@@ -672,7 +672,7 @@ public class CatalogCreateEndpointsTests : IClassFixture<TestWebApplicationFacto
 		_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", otherSellerToken);
 		var addSkuReq = new { price = 100.0m, stockQuantity = 5 };
 		var addSkuResp = await _client.PostAsJsonAsync($"/api/products/{productId}/skus", addSkuReq);
-		
+
 		// Should fail because other seller doesn't own this product
 		addSkuResp.StatusCode.Should().Be(HttpStatusCode.BadRequest);
 	}
@@ -884,7 +884,7 @@ public class CatalogCreateEndpointsTests : IClassFixture<TestWebApplicationFacto
 		formData.Add(imageContent, "file", "test-image.png");
 
 		var uploadResp = await _client.PostAsync($"/api/products/{productId}/gallery", formData);
-		
+
 		// Should fail because other seller doesn't own this product
 		uploadResp.StatusCode.Should().Be(HttpStatusCode.BadRequest);
 	}

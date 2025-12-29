@@ -56,7 +56,7 @@ public class MediaImageRepository : IMediaImageRepository
 	/// </summary>
 	public void Update(MediaImage mediaImage)
 	{
-		_db.MediaImages.Update(mediaImage);;
+		_db.MediaImages.Update(mediaImage); ;
 	}
 
 	/// <summary>
