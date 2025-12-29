@@ -258,6 +258,17 @@ export default function MyProducts() {
                       {t('common.edit')}
                     </button>
 
+                    {/* SKU Management Button */}
+                    <button
+                      onClick={() => navigate(`/cabinet/products/${product.id}/skus`)}
+                      className="w-full flex items-center justify-center gap-2 px-3 py-2.5 text-sm font-medium rounded-lg bg-purple-500/10 hover:bg-purple-500/20 transition-colors text-purple-600 dark:text-purple-400"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                      </svg>
+                      {t('myProducts.manageVariants')}
+                    </button>
+
                     {/* Delete Button */}
                     <button
                       onClick={() => setDeleteId(product.id)}
@@ -375,7 +386,7 @@ export default function MyProducts() {
               </button>
               <button
                 onClick={() => handleDelete(deleteId)}
-                className="btn bg-red-600 hover:bg-red-700 text-white"
+                className="px-4 py-2.5 rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={deleting}
               >
                 {deleting ? (
