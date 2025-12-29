@@ -116,6 +116,7 @@ export interface SkuDto {
   price: number
   stockQuantity: number
   attributes: Record<string, unknown> | null
+  mergedAttributes: Record<string, unknown> | null
 }
 
 export interface MediaImageDto {
@@ -146,6 +147,7 @@ export interface ProductDetailsDto {
   name: string
   description: string | null
   baseImageUrl: string | null
+  attributes: Record<string, unknown> | null
   skus: SkuDto[]
   gallery: MediaImageDto[]
   categories: CategoryDto[]
@@ -167,6 +169,12 @@ export interface CreateProductRequest {
 }
 
 export interface AddSkuRequest {
+  price: number
+  stockQuantity: number
+  attributes?: Record<string, unknown>
+}
+
+export interface UpdateSkuRequest {
   price: number
   stockQuantity: number
   attributes?: Record<string, unknown>
@@ -228,6 +236,11 @@ export const productsApi = {
     return response.data
   },
 
+  updateSku: async (productId: string, skuId: string, data: UpdateSkuRequest): Promise<ServiceResponse<void>> => {
+    const response = await axiosClient.put<ServiceResponse<void>>(`/products/${productId}/skus/${skuId}`, data)
+    return response.data
+  },
+
   deleteSku: async (productId: string, skuId: string): Promise<ServiceResponse<void>> => {
     const response = await axiosClient.delete<ServiceResponse<void>>(`/products/${productId}/skus/${skuId}`)
     return response.data
@@ -247,6 +260,11 @@ export const productsApi = {
 
   deleteGalleryImage: async (productId: string, galleryId: string): Promise<ServiceResponse<void>> => {
     const response = await axiosClient.delete<ServiceResponse<void>>(`/products/${productId}/gallery/${galleryId}`)
+    return response.data
+  },
+
+  setBaseImage: async (productId: string, baseImageUrl: string | null): Promise<ServiceResponse<void>> => {
+    const response = await axiosClient.patch<ServiceResponse<void>>(`/products/${productId}/base-image`, { baseImageUrl })
     return response.data
   },
 

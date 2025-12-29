@@ -13,6 +13,7 @@ export default function AdminPanel() {
     { path: '/admin', label: t('admin.nav.dashboard'), exact: true },
     { path: '/admin/categories', label: t('admin.nav.categories') },
     { path: '/admin/tags', label: t('admin.nav.tags') },
+    { path: '/admin/attributes', label: t('admin.nav.attributes') },
     { path: '/admin/stores', label: t('admin.nav.stores') },
     { path: '/admin/users', label: t('admin.nav.users') },
     { path: '/admin/roles', label: t('admin.nav.roles') },
