@@ -10,6 +10,11 @@ import {
   type CreateProductRequest,
   type SkuRequest
 } from '../../api/catalogApi'
+import {
+  attributeDefinitionsApi,
+  type AttributeDefinitionDto,
+} from '../../api/attributeDefinitionsApi'
+import AttributeSelector from '../../components/catalog/AttributeSelector'
 
 interface AttributeField {
   key: string
@@ -44,6 +49,7 @@ export default function ProductCreate() {
   // Data loading state
   const [categories, setCategories] = useState<CategoryDto[]>([])
   const [tags, setTags] = useState<TagDto[]>([])
+  const [attributeDefinitions, setAttributeDefinitions] = useState<AttributeDefinitionDto[]>([])
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -69,9 +75,10 @@ export default function ProductCreate() {
     setLoading(true)
     setError(null)
     try {
-      const [categoriesRes, tagsRes] = await Promise.all([
+      const [categoriesRes, tagsRes, attributesRes] = await Promise.all([
         categoriesApi.getAll(),
-        tagsApi.getAll()
+        tagsApi.getAll(),
+        attributeDefinitionsApi.getAll()
       ])
 
       if (categoriesRes.isSuccess) {
@@ -79,6 +86,9 @@ export default function ProductCreate() {
       }
       if (tagsRes.isSuccess) {
         setTags(tagsRes.payload || [])
+      }
+      if (attributesRes.isSuccess) {
+        setAttributeDefinitions(attributesRes.payload || [])
       }
     } catch {
       setError(t('errors.fetch_failed'))
@@ -170,28 +180,9 @@ export default function ProductCreate() {
     setSkus(skus.map(s => s.id === skuId ? { ...s, [field]: value } : s))
   }
 
-  // SKU Attributes
-  const handleAddAttribute = (skuId: string) => {
-    setSkus(skus.map(s => s.id === skuId
-      ? { ...s, attributes: [...s.attributes, { key: '', value: '' }] }
-      : s
-    ))
-  }
-
-  const handleRemoveAttribute = (skuId: string, attrIndex: number) => {
-    setSkus(skus.map(s => s.id === skuId
-      ? { ...s, attributes: s.attributes.filter((_, i) => i !== attrIndex) }
-      : s
-    ))
-  }
-
-  const handleAttributeChange = (skuId: string, attrIndex: number, field: 'key' | 'value', value: string) => {
-    setSkus(skus.map(s => {
-      if (s.id !== skuId) return s
-      const newAttributes = [...s.attributes]
-      newAttributes[attrIndex] = { ...newAttributes[attrIndex], [field]: value }
-      return { ...s, attributes: newAttributes }
-    }))
+  // SKU Attributes - using AttributeSelector
+  const handleSkuAttributesChange = (skuId: string, attributes: AttributeField[]) => {
+    setSkus(skus.map(s => s.id === skuId ? { ...s, attributes } : s))
   }
 
   // Category/Tag selection
@@ -462,8 +453,8 @@ export default function ProductCreate() {
             </div>
 
             {showCategoryDropdown && (
-              <div className="absolute z-50 w-full mt-1 bg-background border border-border rounded-lg shadow-lg max-h-60 overflow-auto">
-                <div className="p-2 sticky top-0 bg-background">
+              <div className="absolute z-50 w-full mt-1 bg-surface border border-border rounded-lg shadow-lg max-h-60 overflow-auto">
+                <div className="p-2 sticky top-0 bg-surface border-b border-border">
                   <input
                     type="text"
                     value={categorySearch}
@@ -550,8 +541,8 @@ export default function ProductCreate() {
             </div>
 
             {showTagDropdown && (
-              <div className="absolute z-50 w-full mt-1 bg-background border border-border rounded-lg shadow-lg max-h-60 overflow-auto">
-                <div className="p-2 sticky top-0 bg-background">
+              <div className="absolute z-50 w-full mt-1 bg-surface border border-border rounded-lg shadow-lg max-h-60 overflow-auto">
+                <div className="p-2 sticky top-0 bg-surface border-b border-border">
                   <input
                     type="text"
                     value={tagSearch}
@@ -684,52 +675,11 @@ export default function ProductCreate() {
                 </div>
 
                 {/* Attributes for this SKU */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <label className="text-sm font-medium text-text">{t('product.attributes')}</label>
-                    <button
-                      type="button"
-                      onClick={() => handleAddAttribute(sku.id)}
-                      className="text-brand hover:text-brand-hover text-sm"
-                    >
-                      + {t('product.add_attribute')}
-                    </button>
-                  </div>
-
-                  {sku.attributes.length === 0 ? (
-                    <p className="text-text-muted text-sm">{t('product.no_attributes')}</p>
-                  ) : (
-                    <div className="space-y-2">
-                      {sku.attributes.map((attr, attrIndex) => (
-                        <div key={attrIndex} className="flex gap-2 items-center">
-                          <input
-                            type="text"
-                            value={attr.key}
-                            onChange={e => handleAttributeChange(sku.id, attrIndex, 'key', e.target.value)}
-                            placeholder={t('product.attribute_key')}
-                            className="flex-1 px-3 py-2 border border-border rounded-lg bg-background text-text text-sm"
-                          />
-                          <input
-                            type="text"
-                            value={attr.value}
-                            onChange={e => handleAttributeChange(sku.id, attrIndex, 'value', e.target.value)}
-                            placeholder={t('product.attribute_value')}
-                            className="flex-1 px-3 py-2 border border-border rounded-lg bg-background text-text text-sm"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveAttribute(sku.id, attrIndex)}
-                            className="p-2 text-red-500 hover:text-red-700"
-                          >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                <AttributeSelector
+                  attributes={sku.attributes}
+                  availableAttributes={attributeDefinitions}
+                  onChange={(attrs) => handleSkuAttributesChange(sku.id, attrs)}
+                />
               </div>
             ))}
           </div>
