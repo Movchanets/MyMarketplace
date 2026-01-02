@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Domain.Helpers;
 
 namespace Domain.Entities;
 
@@ -8,6 +9,7 @@ public class Product : BaseEntity<Guid>
     public virtual Store? Store { get; private set; }
 
     public string Name { get; private set; } = string.Empty;
+    public string Slug { get; private set; } = string.Empty;
     public string? Description { get; private set; }
     public string? BaseImageUrl { get; private set; }
     public bool IsActive { get; private set; } = true;
@@ -38,8 +40,29 @@ public class Product : BaseEntity<Guid>
 
         Id = Guid.NewGuid();
         Name = name.Trim();
+        Slug = GenerateSlug(name);
         Description = description?.Trim();
         IsActive = true;
+    }
+
+    /// <summary>
+    /// Generates a unique slug for the product based on name.
+    /// Appends a short hash suffix to ensure uniqueness.
+    /// </summary>
+    private string GenerateSlug(string name)
+    {
+        var baseSlug = SlugHelper.GenerateSlug(name);
+        var shortId = Id.ToString("N")[..6]; // First 6 chars of GUID
+        return $"{baseSlug}-{shortId}";
+    }
+
+    /// <summary>
+    /// Regenerates the slug. Use when name changes or to ensure uniqueness.
+    /// </summary>
+    public void RegenerateSlug()
+    {
+        Slug = GenerateSlug(Name);
+        MarkAsUpdated();
     }
 
     public void Activate()
@@ -62,6 +85,7 @@ public class Product : BaseEntity<Guid>
         }
 
         Name = name.Trim();
+        Slug = GenerateSlug(name);
         MarkAsUpdated();
     }
 
@@ -139,7 +163,7 @@ public class Product : BaseEntity<Guid>
         return existing;
     }
 
-    public void AddCategory(Category category)
+    public void AddCategory(Category category, bool isPrimary = false)
     {
         if (category is null) throw new ArgumentNullException(nameof(category));
 
@@ -148,9 +172,78 @@ public class Product : BaseEntity<Guid>
             return;
         }
 
-        var link = ProductCategory.Create(this, category);
+        // If this is the first category or explicitly marked as primary, set it
+        var shouldBePrimary = isPrimary || !_productCategories.Any();
+
+        // If setting as primary, remove primary from existing categories
+        if (shouldBePrimary)
+        {
+            foreach (var pc in _productCategories.Where(pc => pc.IsPrimary))
+            {
+                pc.RemovePrimary();
+            }
+        }
+
+        var link = ProductCategory.Create(this, category, shouldBePrimary);
         _productCategories.Add(link);
-        category.AddProductCategory(link);
+        // Note: EF Core handles the relationship automatically via navigation properties
+        // No need to call category.AddProductCategory(link) - it causes tracking conflicts
+    }
+
+    /// <summary>
+    /// Adds categories by their IDs without loading Category entities.
+    /// Use this to avoid EF tracking conflicts when updating product categories.
+    /// </summary>
+    public void AddCategoriesById(IEnumerable<Guid> categoryIds)
+    {
+        foreach (var categoryId in categoryIds)
+        {
+            if (categoryId == Guid.Empty) continue;
+            if (_productCategories.Any(pc => pc.CategoryId == categoryId)) continue;
+
+            var shouldBePrimary = !_productCategories.Any();
+            if (shouldBePrimary)
+            {
+                foreach (var pc in _productCategories.Where(pc => pc.IsPrimary))
+                {
+                    pc.RemovePrimary();
+                }
+            }
+
+            var link = ProductCategory.CreateById(Id, categoryId, shouldBePrimary);
+            // Don't set link.Product - EF will resolve the relationship via ProductId
+            _productCategories.Add(link);
+        }
+    }
+
+    /// <summary>
+    /// Sets a category as the primary category for this product.
+    /// </summary>
+    public void SetPrimaryCategory(Guid categoryId)
+    {
+        var targetCategory = _productCategories.FirstOrDefault(pc => pc.CategoryId == categoryId);
+        if (targetCategory is null) return;
+
+        foreach (var pc in _productCategories)
+        {
+            if (pc.CategoryId == categoryId)
+            {
+                pc.SetAsPrimary();
+            }
+            else if (pc.IsPrimary)
+            {
+                pc.RemovePrimary();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets the primary category for breadcrumb navigation.
+    /// </summary>
+    public ProductCategory? GetPrimaryCategory()
+    {
+        return _productCategories.FirstOrDefault(pc => pc.IsPrimary)
+            ?? _productCategories.FirstOrDefault();
     }
 
     public void RemoveCategory(Guid categoryId)
@@ -161,7 +254,8 @@ public class Product : BaseEntity<Guid>
             return;
         }
 
-        existing.Category?.RemoveProductCategory(existing);
+        // Note: EF Core handles the relationship automatically
+        // No need to call existing.Category?.RemoveProductCategory(existing)
         _productCategories.Remove(existing);
     }
 
@@ -176,7 +270,24 @@ public class Product : BaseEntity<Guid>
 
         var productTag = ProductTag.Create(this, tag);
         _productTags.Add(productTag);
-        tag.AddProductTag(productTag);
+        // Note: EF Core handles the relationship automatically via navigation properties
+    }
+
+    /// <summary>
+    /// Adds tags by their IDs without loading Tag entities.
+    /// Use this to avoid EF tracking conflicts when updating product tags.
+    /// </summary>
+    public void AddTagsById(IEnumerable<Guid> tagIds)
+    {
+        foreach (var tagId in tagIds)
+        {
+            if (tagId == Guid.Empty) continue;
+            if (_productTags.Any(pt => pt.TagId == tagId)) continue;
+
+            var link = ProductTag.CreateById(Id, tagId);
+            // Don't set link.Product - EF will resolve the relationship via ProductId
+            _productTags.Add(link);
+        }
     }
 
     public void RemoveTag(Guid tagId)
@@ -187,7 +298,7 @@ public class Product : BaseEntity<Guid>
             return;
         }
 
-        existing.Tag?.RemoveProductTag(existing);
+        // Note: EF Core handles the relationship automatically
         _productTags.Remove(existing);
     }
 
