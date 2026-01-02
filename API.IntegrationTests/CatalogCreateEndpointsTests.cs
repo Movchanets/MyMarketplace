@@ -411,6 +411,137 @@ public class CatalogCreateEndpointsTests : IClassFixture<TestWebApplicationFacto
 		json.GetProperty("payload").GetArrayLength().Should().BeGreaterThan(0);
 	}
 
+	#region GetProductBySlug Tests
+
+	private async Task<(string ProductSlug, string SkuCode, Guid CategoryId)> GetSeededDemoProductSlugAndSkuCode()
+	{
+		using var scope = _factory.Services.CreateScope();
+		var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+		var category = await db.Categories.FirstAsync(c => c.Slug == "electronics");
+		var product = await db.Products
+			.Include(p => p.Skus)
+			.FirstAsync(p => p.Name == "Phone Case (Demo)");
+
+		product.Skus.Should().NotBeEmpty("Seeder should create at least one SKU");
+		var skuCode = product.Skus.First().SkuCode;
+
+		return (product.Slug, skuCode, category.Id);
+	}
+
+	[Fact]
+	public async Task GetProductBySlug_Anonymous_ReturnsProductDetails()
+	{
+		var (productSlug, _, _) = await GetSeededDemoProductSlugAndSkuCode();
+
+		_client.DefaultRequestHeaders.Authorization = null;
+		var resp = await _client.GetAsync($"/api/products/s/{productSlug}");
+		resp.StatusCode.Should().Be(HttpStatusCode.OK);
+
+		var json = await resp.Content.ReadFromJsonAsync<JsonElement>();
+		json.GetProperty("isSuccess").GetBoolean().Should().BeTrue();
+		var payload = json.GetProperty("payload");
+		payload.GetProperty("slug").GetString().Should().Be(productSlug);
+		payload.GetProperty("name").GetString().Should().Be("Phone Case (Demo)");
+		payload.GetProperty("skus").GetArrayLength().Should().BeGreaterThan(0);
+	}
+
+	[Fact]
+	public async Task GetProductBySlug_WithSkuCode_ReordersSkusWithMatchingFirst()
+	{
+		// Create a product with multiple SKUs
+		var adminToken = await LoginAdminAndGetAccessToken();
+		var (email, password) = await RegisterUser();
+		await EnsureUserInRole(email, Roles.Seller);
+		var sellerToken = await LoginAndGetAccessToken(email, password);
+		var sellerUserId = await GetDomainUserIdByEmail(email);
+		await EnsureStoreForUser(sellerUserId);
+
+		var categoryId = await CreateCategoryAsAdmin(adminToken);
+		_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", sellerToken);
+
+		var req = new
+		{
+			name = "Multi-Variant Product",
+			categoryIds = new[] { categoryId },
+			skus = new[]
+			{
+				new { price = 100.0m, stockQuantity = 10, attributes = new { size = "S" } },
+				new { price = 110.0m, stockQuantity = 5, attributes = new { size = "M" } },
+				new { price = 120.0m, stockQuantity = 3, attributes = new { size = "L" } }
+			}
+		};
+
+		var createResp = await _client.PostAsJsonAsync("/api/products", req);
+		createResp.StatusCode.Should().Be(HttpStatusCode.OK);
+		var productId = (await createResp.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("payload").GetGuid();
+
+		// Get slug and last SKU code from DB
+		using var scope = _factory.Services.CreateScope();
+		var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+		var product = await db.Products.Include(p => p.Skus).FirstAsync(p => p.Id == productId);
+		var lastSku = product.Skus.Last();
+
+		// Fetch by slug with specific sku code
+		_client.DefaultRequestHeaders.Authorization = null;
+		var resp = await _client.GetAsync($"/api/products/s/{product.Slug}?sku={lastSku.SkuCode}");
+		resp.StatusCode.Should().Be(HttpStatusCode.OK);
+
+		var json = await resp.Content.ReadFromJsonAsync<JsonElement>();
+		json.GetProperty("isSuccess").GetBoolean().Should().BeTrue();
+		var skus = json.GetProperty("payload").GetProperty("skus");
+		skus.GetArrayLength().Should().Be(3);
+		skus[0].GetProperty("skuCode").GetString().Should().Be(lastSku.SkuCode);
+	}
+
+	[Fact]
+	public async Task GetProductBySlug_NonExistentSlug_ReturnsNotFound()
+	{
+		_client.DefaultRequestHeaders.Authorization = null;
+		var resp = await _client.GetAsync("/api/products/s/non-existent-product-slug-xyz123");
+		resp.StatusCode.Should().Be(HttpStatusCode.NotFound);
+
+		var json = await resp.Content.ReadFromJsonAsync<JsonElement>();
+		json.GetProperty("isSuccess").GetBoolean().Should().BeFalse();
+		json.GetProperty("message").GetString().Should().Contain("not found");
+	}
+
+	[Fact]
+	public async Task GetProductBySlug_WithInvalidSkuCode_StillReturnsProduct()
+	{
+		var (productSlug, _, _) = await GetSeededDemoProductSlugAndSkuCode();
+
+		_client.DefaultRequestHeaders.Authorization = null;
+		var resp = await _client.GetAsync($"/api/products/s/{productSlug}?sku=invalid-sku-code");
+		resp.StatusCode.Should().Be(HttpStatusCode.OK);
+
+		var json = await resp.Content.ReadFromJsonAsync<JsonElement>();
+		json.GetProperty("isSuccess").GetBoolean().Should().BeTrue();
+		json.GetProperty("payload").GetProperty("slug").GetString().Should().Be(productSlug);
+	}
+
+	[Fact]
+	public async Task GetProductBySlug_ReturnsGalleryAndCategories()
+	{
+		var (productSlug, _, _) = await GetSeededDemoProductSlugAndSkuCode();
+
+		_client.DefaultRequestHeaders.Authorization = null;
+		var resp = await _client.GetAsync($"/api/products/s/{productSlug}");
+		resp.StatusCode.Should().Be(HttpStatusCode.OK);
+
+		var json = await resp.Content.ReadFromJsonAsync<JsonElement>();
+		json.GetProperty("isSuccess").GetBoolean().Should().BeTrue();
+		var payload = json.GetProperty("payload");
+
+		// Verify gallery is included
+		payload.GetProperty("gallery").ValueKind.Should().Be(JsonValueKind.Array);
+
+		// Verify categories are included
+		payload.GetProperty("categories").ValueKind.Should().Be(JsonValueKind.Array);
+	}
+
+	#endregion
+
 	#region Product with Multiple SKUs Tests
 
 	[Fact]
@@ -907,6 +1038,379 @@ public class CatalogCreateEndpointsTests : IClassFixture<TestWebApplicationFacto
 			0xD4, 0xEF, 0x00, 0x00, 0x00, 0x00, 0x49, 0x45, // IEND chunk
 			0x4E, 0x44, 0xAE, 0x42, 0x60, 0x82
 		};
+	}
+
+	#endregion
+
+	#region Product Categories Management Tests
+
+	[Fact]
+	public async Task UpdateProduct_CanAddCategories_Success()
+	{
+		// Arrange
+		var (email, password) = await RegisterUser();
+		await EnsureUserInRole(email, Roles.Seller);
+		var domainUserId = await GetDomainUserIdByEmail(email);
+		await EnsureStoreForUser(domainUserId);
+		var sellerToken = await LoginAndGetAccessToken(email, password);
+
+		// Create categories
+		var adminToken = await LoginAdminAndGetAccessToken();
+		_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
+
+		var cat1Resp = await _client.PostAsJsonAsync("/api/categories", new { name = "Category 1" });
+		var cat1Id = (await cat1Resp.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("payload").GetGuid();
+
+		var cat2Resp = await _client.PostAsJsonAsync("/api/categories", new { name = "Category 2" });
+		var cat2Id = (await cat2Resp.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("payload").GetGuid();
+
+		var cat3Resp = await _client.PostAsJsonAsync("/api/categories", new { name = "Category 3" });
+		var cat3Id = (await cat3Resp.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("payload").GetGuid();
+
+		// Create product with one category
+		_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", sellerToken);
+		var createReq = new
+		{
+			name = "Test Product",
+			description = "Test description",
+			categoryIds = new[] { cat1Id },
+			skus = new[] { new { price = 100.0m, stockQuantity = 10 } }
+		};
+		var createResp = await _client.PostAsJsonAsync("/api/products", createReq);
+		createResp.EnsureSuccessStatusCode();
+		var productId = (await createResp.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("payload").GetGuid();
+
+		// Act - Add more categories
+		var updateReq = new
+		{
+			name = "Test Product",
+			description = "Test description",
+			categoryIds = new[] { cat1Id, cat2Id, cat3Id }
+		};
+		var updateResp = await _client.PutAsJsonAsync($"/api/products/{productId}", updateReq);
+
+		// Assert - read response body for debugging
+		var responseContent = await updateResp.Content.ReadAsStringAsync();
+		Assert.True(updateResp.IsSuccessStatusCode, $"Expected success but got {updateResp.StatusCode}: {responseContent}");
+
+		// Verify categories were added
+		var getResp = await _client.GetAsync($"/api/products/{productId}");
+		getResp.EnsureSuccessStatusCode();
+		var productJson = await getResp.Content.ReadFromJsonAsync<JsonElement>();
+		var categories = productJson.GetProperty("payload").GetProperty("categories");
+
+		categories.GetArrayLength().Should().Be(3);
+		var categoryIds = categories.EnumerateArray().Select(c => c.GetProperty("id").GetGuid()).ToList();
+		categoryIds.Should().Contain(cat1Id);
+		categoryIds.Should().Contain(cat2Id);
+		categoryIds.Should().Contain(cat3Id);
+	}
+
+	[Fact]
+	public async Task UpdateProduct_CanRemoveCategories_Success()
+	{
+		// Arrange
+		var (email, password) = await RegisterUser();
+		await EnsureUserInRole(email, Roles.Seller);
+		var domainUserId = await GetDomainUserIdByEmail(email);
+		await EnsureStoreForUser(domainUserId);
+		var sellerToken = await LoginAndGetAccessToken(email, password);
+
+		// Create categories
+		var adminToken = await LoginAdminAndGetAccessToken();
+		_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
+
+		var cat1Resp = await _client.PostAsJsonAsync("/api/categories", new { name = "Category A" });
+		var cat1Id = (await cat1Resp.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("payload").GetGuid();
+
+		var cat2Resp = await _client.PostAsJsonAsync("/api/categories", new { name = "Category B" });
+		var cat2Id = (await cat2Resp.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("payload").GetGuid();
+
+		var cat3Resp = await _client.PostAsJsonAsync("/api/categories", new { name = "Category C" });
+		var cat3Id = (await cat3Resp.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("payload").GetGuid();
+
+		// Create product with three categories
+		_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", sellerToken);
+		var createReq = new
+		{
+			name = "Multi-Category Product",
+			description = "Test description",
+			categoryIds = new[] { cat1Id, cat2Id, cat3Id },
+			skus = new[] { new { price = 50.0m, stockQuantity = 5 } }
+		};
+		var createResp = await _client.PostAsJsonAsync("/api/products", createReq);
+		createResp.EnsureSuccessStatusCode();
+		var productId = (await createResp.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("payload").GetGuid();
+
+		// Act - Remove one category (keep only cat1)
+		var updateReq = new
+		{
+			name = "Multi-Category Product",
+			description = "Test description",
+			categoryIds = new[] { cat1Id }
+		};
+		var updateResp = await _client.PutAsJsonAsync($"/api/products/{productId}", updateReq);
+
+		// Assert
+		updateResp.EnsureSuccessStatusCode();
+
+		// Verify only one category remains
+		var getResp = await _client.GetAsync($"/api/products/{productId}");
+		getResp.EnsureSuccessStatusCode();
+		var productJson = await getResp.Content.ReadFromJsonAsync<JsonElement>();
+		var categories = productJson.GetProperty("payload").GetProperty("categories");
+
+		categories.GetArrayLength().Should().Be(1);
+		var categoryId = categories[0].GetProperty("id").GetGuid();
+		categoryId.Should().Be(cat1Id);
+	}
+
+	[Fact]
+	public async Task UpdateProduct_CanSetPrimaryCategory_Success()
+	{
+		// Arrange
+		var (email, password) = await RegisterUser();
+		await EnsureUserInRole(email, Roles.Seller);
+		var domainUserId = await GetDomainUserIdByEmail(email);
+		await EnsureStoreForUser(domainUserId);
+		var sellerToken = await LoginAndGetAccessToken(email, password);
+
+		// Create categories with unique names to avoid collisions with seeded data
+		var uniqueSuffix = Guid.NewGuid().ToString("N")[..8];
+		var adminToken = await LoginAdminAndGetAccessToken();
+		_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
+
+		var cat1Resp = await _client.PostAsJsonAsync("/api/categories", new { name = $"PrimaryTestCat_{uniqueSuffix}" });
+		cat1Resp.EnsureSuccessStatusCode();
+		var cat1Id = (await cat1Resp.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("payload").GetGuid();
+
+		var cat2Resp = await _client.PostAsJsonAsync("/api/categories", new { name = $"SecondaryTestCat_{uniqueSuffix}" });
+		cat2Resp.EnsureSuccessStatusCode();
+		var cat2Id = (await cat2Resp.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("payload").GetGuid();
+
+		// Create product
+		_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", sellerToken);
+		var createReq = new
+		{
+			name = "Laptop",
+			description = "Test laptop description",
+			categoryIds = new[] { cat1Id, cat2Id },
+			skus = new[] { new { price = 1000.0m, stockQuantity = 5 } }
+		};
+		var createResp = await _client.PostAsJsonAsync("/api/products", createReq);
+		createResp.EnsureSuccessStatusCode();
+		var productId = (await createResp.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("payload").GetGuid();
+
+		// Act - Set cat2 as primary category
+		var updateReq = new
+		{
+			name = "Laptop",
+			description = "Test laptop description",
+			categoryIds = new[] { cat1Id, cat2Id },
+			primaryCategoryId = cat2Id
+		};
+		var updateResp = await _client.PutAsJsonAsync($"/api/products/{productId}", updateReq);
+
+		// Assert
+		updateResp.EnsureSuccessStatusCode();
+
+		// Verify primary category is set correctly
+		var getResp = await _client.GetAsync($"/api/products/{productId}");
+		getResp.EnsureSuccessStatusCode();
+		var productJson = await getResp.Content.ReadFromJsonAsync<JsonElement>();
+		var payload = productJson.GetProperty("payload");
+
+		// Check primaryCategory field
+		var primaryCategory = payload.GetProperty("primaryCategory");
+		primaryCategory.GetProperty("id").GetGuid().Should().Be(cat2Id);
+		// Name should match our unique test category
+		primaryCategory.GetProperty("name").GetString().Should().StartWith("SecondaryTestCat_");
+
+		// Check that categories contain isPrimary flag
+		var categories = payload.GetProperty("categories");
+		var cat2InList = categories.EnumerateArray()
+			.FirstOrDefault(c => c.GetProperty("id").GetGuid() == cat2Id);
+
+		cat2InList.GetProperty("isPrimary").GetBoolean().Should().BeTrue();
+	}
+
+	[Fact]
+	public async Task UpdateProduct_ChangePrimaryCategory_Success()
+	{
+		// Arrange
+		var (email, password) = await RegisterUser();
+		await EnsureUserInRole(email, Roles.Seller);
+		var domainUserId = await GetDomainUserIdByEmail(email);
+		await EnsureStoreForUser(domainUserId);
+		var sellerToken = await LoginAndGetAccessToken(email, password);
+
+		// Create categories
+		var adminToken = await LoginAdminAndGetAccessToken();
+		_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
+
+		var cat1Resp = await _client.PostAsJsonAsync("/api/categories", new { name = "Books" });
+		var cat1Id = (await cat1Resp.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("payload").GetGuid();
+
+		var cat2Resp = await _client.PostAsJsonAsync("/api/categories", new { name = "Fiction" });
+		var cat2Id = (await cat2Resp.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("payload").GetGuid();
+
+		// Create product with cat1 as primary (first category)
+		_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", sellerToken);
+		var createReq = new
+		{
+			name = "Novel",
+			description = "A great novel",
+			categoryIds = new[] { cat1Id, cat2Id },
+			skus = new[] { new { price = 20.0m, stockQuantity = 100 } }
+		};
+		var createResp = await _client.PostAsJsonAsync("/api/products", createReq);
+		createResp.EnsureSuccessStatusCode();
+		var productId = (await createResp.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("payload").GetGuid();
+
+		// Act - Change primary to cat2
+		var updateReq = new
+		{
+			name = "Novel",
+			description = "A great novel",
+			categoryIds = new[] { cat1Id, cat2Id },
+			primaryCategoryId = cat2Id
+		};
+		var updateResp = await _client.PutAsJsonAsync($"/api/products/{productId}", updateReq);
+
+		// Assert
+		updateResp.EnsureSuccessStatusCode();
+
+		// Verify primary category changed
+		var getResp = await _client.GetAsync($"/api/products/{productId}");
+		getResp.EnsureSuccessStatusCode();
+		var productJson = await getResp.Content.ReadFromJsonAsync<JsonElement>();
+		var payload = productJson.GetProperty("payload");
+
+		var primaryCategory = payload.GetProperty("primaryCategory");
+		primaryCategory.GetProperty("id").GetGuid().Should().Be(cat2Id);
+
+		// Verify only one category is marked as primary
+		var categories = payload.GetProperty("categories");
+		var primaryCount = categories.EnumerateArray()
+			.Count(c => c.TryGetProperty("isPrimary", out var isPrimary) && isPrimary.GetBoolean());
+
+		primaryCount.Should().Be(1, "Only one category should be marked as primary");
+	}
+
+	[Fact]
+	public async Task UpdateProduct_PrimaryCategoryNotInList_ReturnsBadRequest()
+	{
+		// Arrange
+		var (email, password) = await RegisterUser();
+		await EnsureUserInRole(email, Roles.Seller);
+		var domainUserId = await GetDomainUserIdByEmail(email);
+		await EnsureStoreForUser(domainUserId);
+		var sellerToken = await LoginAndGetAccessToken(email, password);
+
+		// Create categories
+		var adminToken = await LoginAdminAndGetAccessToken();
+		_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
+
+		var cat1Resp = await _client.PostAsJsonAsync("/api/categories", new { name = "Cat1" });
+		var cat1Id = (await cat1Resp.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("payload").GetGuid();
+
+		var cat2Resp = await _client.PostAsJsonAsync("/api/categories", new { name = "Cat2" });
+		var cat2Id = (await cat2Resp.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("payload").GetGuid();
+
+		// Create product
+		_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", sellerToken);
+		var createReq = new
+		{
+			name = "Test",
+			description = "Test product",
+			categoryIds = new[] { cat1Id },
+			skus = new[] { new { price = 10.0m, stockQuantity = 1 } }
+		};
+		var createResp = await _client.PostAsJsonAsync("/api/products", createReq);
+		createResp.EnsureSuccessStatusCode();
+		var productId = (await createResp.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("payload").GetGuid();
+
+		// Act - Try to set cat2 as primary, but it's not in categoryIds
+		var updateReq = new
+		{
+			name = "Test",
+			description = "Test product",
+			categoryIds = new[] { cat1Id },
+			primaryCategoryId = cat2Id // Not in categoryIds!
+		};
+		var updateResp = await _client.PutAsJsonAsync($"/api/products/{productId}", updateReq);
+
+		// Assert
+		updateResp.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+		var errorJson = await updateResp.Content.ReadFromJsonAsync<JsonElement>();
+		errorJson.GetProperty("message").GetString()
+			.Should().Contain("Primary category must be one of the selected categories");
+	}
+
+	[Fact]
+	public async Task UpdateProduct_AddAndRemoveCategoriesSimultaneously_Success()
+	{
+		// Arrange
+		var (email, password) = await RegisterUser();
+		await EnsureUserInRole(email, Roles.Seller);
+		var domainUserId = await GetDomainUserIdByEmail(email);
+		await EnsureStoreForUser(domainUserId);
+		var sellerToken = await LoginAndGetAccessToken(email, password);
+
+		// Create categories
+		var adminToken = await LoginAdminAndGetAccessToken();
+		_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
+
+		var cat1Resp = await _client.PostAsJsonAsync("/api/categories", new { name = "Old Cat 1" });
+		var cat1Id = (await cat1Resp.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("payload").GetGuid();
+
+		var cat2Resp = await _client.PostAsJsonAsync("/api/categories", new { name = "Old Cat 2" });
+		var cat2Id = (await cat2Resp.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("payload").GetGuid();
+
+		var cat3Resp = await _client.PostAsJsonAsync("/api/categories", new { name = "New Cat 3" });
+		var cat3Id = (await cat3Resp.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("payload").GetGuid();
+
+		var cat4Resp = await _client.PostAsJsonAsync("/api/categories", new { name = "New Cat 4" });
+		var cat4Id = (await cat4Resp.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("payload").GetGuid();
+
+		// Create product with cat1 and cat2
+		_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", sellerToken);
+		var createReq = new
+		{
+			name = "Dynamic Categories Product",
+			description = "Product with dynamic categories",
+			categoryIds = new[] { cat1Id, cat2Id },
+			skus = new[] { new { price = 75.0m, stockQuantity = 20 } }
+		};
+		var createResp = await _client.PostAsJsonAsync("/api/products", createReq);
+		createResp.EnsureSuccessStatusCode();
+		var productId = (await createResp.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("payload").GetGuid();
+
+		// Act - Replace with cat2, cat3, cat4 (remove cat1, keep cat2, add cat3 and cat4)
+		var updateReq = new
+		{
+			name = "Dynamic Categories Product",
+			description = "Product with dynamic categories",
+			categoryIds = new[] { cat2Id, cat3Id, cat4Id }
+		};
+		var updateResp = await _client.PutAsJsonAsync($"/api/products/{productId}", updateReq);
+
+		// Assert
+		updateResp.EnsureSuccessStatusCode();
+
+		// Verify correct categories
+		var getResp = await _client.GetAsync($"/api/products/{productId}");
+		getResp.EnsureSuccessStatusCode();
+		var productJson = await getResp.Content.ReadFromJsonAsync<JsonElement>();
+		var categories = productJson.GetProperty("payload").GetProperty("categories");
+
+		categories.GetArrayLength().Should().Be(3);
+		var categoryIds = categories.EnumerateArray().Select(c => c.GetProperty("id").GetGuid()).ToList();
+
+		categoryIds.Should().NotContain(cat1Id, "cat1 should be removed");
+		categoryIds.Should().Contain(cat2Id, "cat2 should be kept");
+		categoryIds.Should().Contain(cat3Id, "cat3 should be added");
+		categoryIds.Should().Contain(cat4Id, "cat4 should be added");
 	}
 
 	#endregion
