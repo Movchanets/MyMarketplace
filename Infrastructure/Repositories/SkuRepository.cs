@@ -26,7 +26,9 @@ public class SkuRepository : ISkuRepository
 
 		return await _db.Skus
 			.Include(s => s.Product)
-				.ThenInclude(p => p.Store)
+				.ThenInclude(p => p!.Store)
+			.Include(s => s.Gallery)
+				.ThenInclude(g => g.MediaImage)
 			.FirstOrDefaultAsync(s => s.Id == id);
 	}
 
@@ -40,7 +42,9 @@ public class SkuRepository : ISkuRepository
 		var normalized = skuCode.Trim();
 		return await _db.Skus
 			.Include(s => s.Product)
-				.ThenInclude(p => p.Store)
+				.ThenInclude(p => p!.Store)
+			.Include(s => s.Gallery)
+				.ThenInclude(g => g.MediaImage)
 			.FirstOrDefaultAsync(s => s.SkuCode == normalized);
 	}
 
@@ -49,7 +53,9 @@ public class SkuRepository : ISkuRepository
 		return await _db.Skus
 			.Where(s => s.ProductId == productId)
 			.Include(s => s.Product)
-				.ThenInclude(p => p.Store)
+				.ThenInclude(p => p!.Store)
+			.Include(s => s.Gallery)
+				.ThenInclude(g => g.MediaImage)
 			.ToListAsync();
 	}
 

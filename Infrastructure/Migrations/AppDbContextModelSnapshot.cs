@@ -192,6 +192,11 @@ namespace Infrastructure.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)");
+
                     b.Property<Guid?>("StoreId")
                         .HasColumnType("uuid");
 
@@ -199,6 +204,9 @@ namespace Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Slug")
+                        .IsUnique();
 
                     b.HasIndex("StoreId");
 
@@ -217,6 +225,11 @@ namespace Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<bool>("IsPrimary")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
                     b.Property<Guid>("ProductId")
                         .HasColumnType("uuid");
 
@@ -229,6 +242,9 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("ProductId", "CategoryId")
                         .IsUnique();
+
+                    b.HasIndex("ProductId", "IsPrimary")
+                        .HasFilter("\"IsPrimary\" = true");
 
                     b.ToTable("ProductCategories", (string)null);
                 });
@@ -323,10 +339,42 @@ namespace Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("SkuCode");
+
                     b.HasIndex("ProductId", "SkuCode")
                         .IsUnique();
 
                     b.ToTable("Skus", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Entities.SkuGallery", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("MediaImageId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("SkuId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MediaImageId");
+
+                    b.HasIndex("SkuId", "DisplayOrder");
+
+                    b.ToTable("SkuGalleries", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Entities.Store", b =>
@@ -760,6 +808,25 @@ namespace Infrastructure.Migrations
                     b.Navigation("Product");
                 });
 
+            modelBuilder.Entity("Domain.Entities.SkuGallery", b =>
+                {
+                    b.HasOne("Domain.Entities.MediaImage", "MediaImage")
+                        .WithMany()
+                        .HasForeignKey("MediaImageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.SkuEntity", "Sku")
+                        .WithMany("Gallery")
+                        .HasForeignKey("SkuId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("MediaImage");
+
+                    b.Navigation("Sku");
+                });
+
             modelBuilder.Entity("Domain.Entities.Store", b =>
                 {
                     b.HasOne("Domain.Entities.User", "User")
@@ -862,6 +929,11 @@ namespace Infrastructure.Migrations
                     b.Navigation("ProductTags");
 
                     b.Navigation("Skus");
+                });
+
+            modelBuilder.Entity("Domain.Entities.SkuEntity", b =>
+                {
+                    b.Navigation("Gallery");
                 });
 
             modelBuilder.Entity("Domain.Entities.Store", b =>
