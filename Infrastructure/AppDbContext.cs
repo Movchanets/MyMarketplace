@@ -28,6 +28,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
     public DbSet<ProductTag> ProductTags { get; set; }
     public DbSet<SkuEntity> Skus { get; set; }
     public DbSet<ProductGallery> ProductGalleries { get; set; }
+    public DbSet<SkuGallery> SkuGalleries { get; set; }
     public DbSet<Store> Stores { get; set; }
     public DbSet<ProductCategory> ProductCategories { get; set; }
     public DbSet<AttributeDefinition> AttributeDefinitions { get; set; }

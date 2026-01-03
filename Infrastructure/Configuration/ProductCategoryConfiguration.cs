@@ -13,6 +13,13 @@ public class ProductCategoryConfiguration : IEntityTypeConfiguration<ProductCate
 
 		builder.HasIndex(pc => new { pc.ProductId, pc.CategoryId }).IsUnique();
 
+		// Index for quickly finding primary category
+		builder.HasIndex(pc => new { pc.ProductId, pc.IsPrimary })
+			.HasFilter("\"IsPrimary\" = true");
+
+		builder.Property(pc => pc.IsPrimary)
+			.HasDefaultValue(false);
+
 		builder.HasOne(pc => pc.Product)
 			.WithMany(p => p.ProductCategories)
 			.HasForeignKey(pc => pc.ProductId)

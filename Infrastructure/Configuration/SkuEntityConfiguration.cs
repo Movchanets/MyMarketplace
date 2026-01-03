@@ -27,6 +27,9 @@ public class SkuEntityConfiguration : IEntityTypeConfiguration<SkuEntity>
 
 		builder.HasIndex(s => new { s.ProductId, s.SkuCode }).IsUnique();
 
+		// Index for direct SkuCode lookups (GET /products/s/{productSlug}?sku={skuCode})
+		builder.HasIndex(s => s.SkuCode);
+
 		builder.HasOne<Product>(s => s.Product)
 			.WithMany(p => p.Skus)
 			.HasForeignKey(s => s.ProductId)
