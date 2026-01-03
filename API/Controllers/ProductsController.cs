@@ -9,10 +9,13 @@ using Application.Commands.Product.Sku.DeleteSku;
 using Application.Commands.Product.Sku.UpdateSku;
 using Application.Commands.Product.ToggleProductActive;
 using Application.Commands.Product.UpdateProduct;
+using Application.Commands.Sku.Gallery.AddSkuGalleryImage;
+using Application.Commands.Sku.Gallery.RemoveSkuGalleryImage;
 using Application.Interfaces;
 using Application.Queries.Catalog.GetMyProducts;
 using Application.Queries.Catalog.GetProductById;
 using Application.Queries.Catalog.GetProductBySkuCode;
+using Application.Queries.Catalog.GetProductBySlug;
 using Application.Queries.Catalog.GetProducts;
 using Application.Queries.Catalog.GetProductsByCategoryId;
 using Domain.Entities;
@@ -64,6 +67,18 @@ public sealed class ProductsController : ControllerBase
 	public async Task<IActionResult> GetById([FromRoute] Guid id)
 	{
 		var result = await _mediator.Send(new GetProductByIdQuery(id));
+		if (!result.IsSuccess) return NotFound(result);
+		return Ok(result);
+	}
+
+	/// <summary>
+	/// Отримати продукт по slug (з опціональним sku code)
+	/// </summary>
+	[HttpGet("s/{productSlug}")]
+	[AllowAnonymous]
+	public async Task<IActionResult> GetBySlug([FromRoute] string productSlug, [FromQuery] string? sku = null)
+	{
+		var result = await _mediator.Send(new GetProductBySlugQuery(productSlug, sku));
 		if (!result.IsSuccess) return NotFound(result);
 		return Ok(result);
 	}
@@ -173,7 +188,8 @@ public sealed class ProductsController : ControllerBase
 		string Name,
 		string? Description,
 		List<Guid>? CategoryIds,
-		List<Guid>? TagIds = null
+		List<Guid>? TagIds = null,
+		Guid? PrimaryCategoryId = null
 	);
 
 	/// <summary>
@@ -193,7 +209,8 @@ public sealed class ProductsController : ControllerBase
 			request.Name,
 			request.Description,
 			request.CategoryIds ?? new List<Guid>(),
-			request.TagIds
+			request.TagIds,
+			request.PrimaryCategoryId
 		);
 
 		var result = await _mediator.Send(command);
@@ -391,6 +408,85 @@ public sealed class ProductsController : ControllerBase
 		if (!result.IsSuccess) return BadRequest(result);
 		return Ok(result);
 	}
+
+	#region SKU Gallery
+
+	/// <summary>
+	/// Завантажити зображення до галереї SKU варіанту
+	/// </summary>
+	[HttpPost("{productId:guid}/skus/{skuId:guid}/gallery")]
+	[Authorize(Policy = "Permission:products.update.self")]
+	public async Task<IActionResult> UploadSkuGalleryImage(
+		[FromRoute] Guid productId,
+		[FromRoute] Guid skuId,
+		IFormFile file,
+		[FromForm] int displayOrder = 0)
+	{
+		var idClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+		if (string.IsNullOrWhiteSpace(idClaim)) return Unauthorized();
+		if (!Guid.TryParse(idClaim, out var userId)) return Unauthorized();
+
+		if (file == null || file.Length == 0)
+		{
+			return BadRequest(new { IsSuccess = false, Message = "File is required" });
+		}
+
+		// Upload file to storage
+		using var stream = file.OpenReadStream();
+		var storageKey = await _fileStorage.UploadAsync(
+			stream,
+			$"products/{productId}/skus/{skuId}/{file.FileName}",
+			file.ContentType
+		);
+
+		var publicUrl = _fileStorage.GetPublicUrl(storageKey);
+
+		// Create MediaImage
+		var mediaImage = new MediaImage(
+			storageKey,
+			file.ContentType,
+			0, 0, // Will be updated if image processing is added
+			Path.GetFileNameWithoutExtension(file.FileName)
+		);
+		await _mediaImageRepository.AddAsync(mediaImage);
+
+		// Add to SKU gallery
+		var command = new AddSkuGalleryImageCommand(userId, productId, skuId, mediaImage.Id, displayOrder);
+		var result = await _mediator.Send(command);
+
+		if (!result.IsSuccess) return BadRequest(result);
+
+		return Ok(new
+		{
+			result.IsSuccess,
+			result.Message,
+			GalleryId = result.Payload,
+			MediaImageId = mediaImage.Id,
+			Url = publicUrl
+		});
+	}
+
+	/// <summary>
+	/// Видалити зображення з галереї SKU
+	/// </summary>
+	[HttpDelete("{productId:guid}/skus/{skuId:guid}/gallery/{galleryItemId:guid}")]
+	[Authorize(Policy = "Permission:products.update.self")]
+	public async Task<IActionResult> DeleteSkuGalleryImage(
+		[FromRoute] Guid productId,
+		[FromRoute] Guid skuId,
+		[FromRoute] Guid galleryItemId)
+	{
+		var idClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+		if (string.IsNullOrWhiteSpace(idClaim)) return Unauthorized();
+		if (!Guid.TryParse(idClaim, out var userId)) return Unauthorized();
+
+		var command = new RemoveSkuGalleryImageCommand(userId, productId, skuId, galleryItemId);
+		var result = await _mediator.Send(command);
+		if (!result.IsSuccess) return BadRequest(result);
+		return Ok(result);
+	}
+
+	#endregion
 
 	/// <summary>
 	/// Видалити продукт
