@@ -180,6 +180,7 @@ public class ProductCommandHandlerIntegrationTests : TestBase
 		var deleteHandler = new DeleteProductCommandHandler(
 			productRepo,
 			storeRepo,
+			userRepo,
 			uow,
 			NullLogger<DeleteProductCommandHandler>.Instance);
 
@@ -187,7 +188,7 @@ public class ProductCommandHandlerIntegrationTests : TestBase
 		DbContext.ChangeTracker.Clear();
 
 		// Act
-		var deleteRes = await deleteHandler.Handle(new DeleteProductCommand(user.Id, createRes.Payload), CancellationToken.None);
+		var deleteRes = await deleteHandler.Handle(new DeleteProductCommand(user.IdentityUserId, createRes.Payload), CancellationToken.None);
 
 		// Assert
 		deleteRes.IsSuccess.Should().BeTrue();

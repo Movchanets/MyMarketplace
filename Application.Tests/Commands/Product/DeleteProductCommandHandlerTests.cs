@@ -43,10 +43,12 @@ public class DeleteProductCommandHandlerTests
 		// Arrange
 		var identityUserId = Guid.NewGuid();
 		var domainUserId = Guid.NewGuid();
-		var domainUser = Domain.Entities.User.Create(identityUserId, "test@test.com", "Test", "User");
+		var domainUser = new Domain.Entities.User(identityUserId, "Test", "User", "test@test.com");
+		// Manually set Id since EF Core isn't managing it in unit tests
+		typeof(Domain.Entities.User).GetProperty("Id")?.SetValue(domainUser, domainUserId);
 
 		_userRepository.Setup(x => x.GetByIdentityUserIdAsync(identityUserId)).ReturnsAsync(domainUser);
-		_storeRepository.Setup(x => x.GetByUserIdAsync(domainUser.Id)).ReturnsAsync((Domain.Entities.Store?)null);
+		_storeRepository.Setup(x => x.GetByUserIdAsync(domainUserId)).ReturnsAsync((Domain.Entities.Store?)null);
 
 		var sut = CreateSut();
 		var cmd = new DeleteProductCommand(identityUserId, Guid.NewGuid());
@@ -65,13 +67,17 @@ public class DeleteProductCommandHandlerTests
 	{
 		// Arrange
 		var identityUserId = Guid.NewGuid();
-		var domainUser = Domain.Entities.User.Create(identityUserId, "test@test.com", "Test", "User");
-		var store = Domain.Entities.Store.Create(domainUser.Id, "My Store", null);
+		var domainUserId = Guid.NewGuid();
+		var domainUser = new Domain.Entities.User(identityUserId, "Test", "User", "test@test.com");
+		// Manually set Id since EF Core isn't managing it in unit tests
+		typeof(Domain.Entities.User).GetProperty("Id")?.SetValue(domainUser, domainUserId);
+
+		var store = Domain.Entities.Store.Create(domainUserId, "My Store", null);
 		var product = new Domain.Entities.Product("Old");
 		store.AddProduct(product);
 
 		_userRepository.Setup(x => x.GetByIdentityUserIdAsync(identityUserId)).ReturnsAsync(domainUser);
-		_storeRepository.Setup(x => x.GetByUserIdAsync(domainUser.Id)).ReturnsAsync(store);
+		_storeRepository.Setup(x => x.GetByUserIdAsync(domainUserId)).ReturnsAsync(store);
 		_productRepository.Setup(x => x.GetByIdAsync(product.Id)).ReturnsAsync(product);
 		_unitOfWork.Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
 
