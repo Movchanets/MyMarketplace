@@ -33,7 +33,8 @@ public sealed record CategoryDto(
 	string Name,
 	string Slug,
 	string? Description,
-	Guid? ParentCategoryId
+	Guid? ParentCategoryId,
+	bool IsPrimary = false
 );
 
 public sealed record TagDto(
@@ -49,7 +50,8 @@ public sealed record SkuDto(
 	decimal Price,
 	int StockQuantity,
 	Dictionary<string, object?>? Attributes,
-	Dictionary<string, object?>? MergedAttributes
+	Dictionary<string, object?>? MergedAttributes,
+	IReadOnlyList<MediaImageDto>? Gallery
 );
 
 public sealed record MediaImageDto(
@@ -66,10 +68,12 @@ public sealed record ProductSummaryDto(
 	Guid Id,
 	Guid? StoreId,
 	string Name,
+	string Slug,
 	string? BaseImageUrl,
 	decimal? MinPrice,
 	bool InStock,
 	bool IsActive,
+	CategoryDto? PrimaryCategory,
 	IReadOnlyList<CategoryDto> Categories,
 	IReadOnlyList<TagDto> Tags
 );
@@ -78,11 +82,13 @@ public sealed record ProductDetailsDto(
 	Guid Id,
 	Guid? StoreId,
 	string Name,
+	string Slug,
 	string? Description,
 	string? BaseImageUrl,
 	Dictionary<string, object?>? Attributes,
 	IReadOnlyList<SkuDto> Skus,
 	IReadOnlyList<MediaImageDto> Gallery,
+	CategoryDto? PrimaryCategory,
 	IReadOnlyList<CategoryDto> Categories,
 	IReadOnlyList<TagDto> Tags
 );

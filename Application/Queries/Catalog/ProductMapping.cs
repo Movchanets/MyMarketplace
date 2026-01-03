@@ -10,10 +10,27 @@ internal static class ProductMapping
 	{
 		var categories = product.ProductCategories
 			.Where(pc => pc.Category is not null)
-			.Select(pc => pc.Category!)
-			.Select(c => new CategoryDto(c.Id, c.Name, c.Slug, c.Description, c.ParentCategoryId))
+			.Select(pc => new CategoryDto(
+				pc.Category!.Id,
+				pc.Category.Name,
+				pc.Category.Slug,
+				pc.Category.Description,
+				pc.Category.ParentCategoryId,
+				pc.IsPrimary))
 			.ToList()
 			.AsReadOnly();
+
+		var primaryCategory = product.ProductCategories
+			.Where(pc => pc.IsPrimary && pc.Category is not null)
+			.Select(pc => new CategoryDto(
+				pc.Category!.Id,
+				pc.Category.Name,
+				pc.Category.Slug,
+				pc.Category.Description,
+				pc.Category.ParentCategoryId,
+				true))
+			.FirstOrDefault()
+			?? categories.FirstOrDefault();
 
 		var tags = product.ProductTags
 			.Where(pt => pt.Tag is not null)
@@ -29,10 +46,12 @@ internal static class ProductMapping
 			product.Id,
 			product.StoreId,
 			product.Name,
+			product.Slug,
 			product.BaseImageUrl,
 			minPrice,
 			inStock,
 			product.IsActive,
+			primaryCategory,
 			categories,
 			tags);
 	}
@@ -42,7 +61,7 @@ internal static class ProductMapping
 		var productAttributes = product.GetAttributesDictionary();
 
 		var skus = product.Skus
-			.Select(s => MapSku(s, productAttributes))
+			.Select(s => MapSku(s, productAttributes, fileStorage))
 			.ToList()
 			.AsReadOnly();
 
@@ -56,10 +75,27 @@ internal static class ProductMapping
 
 		var categories = product.ProductCategories
 			.Where(pc => pc.Category is not null)
-			.Select(pc => pc.Category!)
-			.Select(c => new CategoryDto(c.Id, c.Name, c.Slug, c.Description, c.ParentCategoryId))
+			.Select(pc => new CategoryDto(
+				pc.Category!.Id,
+				pc.Category.Name,
+				pc.Category.Slug,
+				pc.Category.Description,
+				pc.Category.ParentCategoryId,
+				pc.IsPrimary))
 			.ToList()
 			.AsReadOnly();
+
+		var primaryCategory = product.ProductCategories
+			.Where(pc => pc.IsPrimary && pc.Category is not null)
+			.Select(pc => new CategoryDto(
+				pc.Category!.Id,
+				pc.Category.Name,
+				pc.Category.Slug,
+				pc.Category.Description,
+				pc.Category.ParentCategoryId,
+				true))
+			.FirstOrDefault()
+			?? categories.FirstOrDefault();
 
 		var tags = product.ProductTags
 			.Where(pt => pt.Tag is not null)
@@ -72,11 +108,13 @@ internal static class ProductMapping
 			product.Id,
 			product.StoreId,
 			product.Name,
+			product.Slug,
 			product.Description,
 			product.BaseImageUrl,
 			productAttributes,
 			skus,
 			gallery,
+			primaryCategory,
 			categories,
 			tags);
 	}
@@ -85,10 +123,19 @@ internal static class ProductMapping
 	/// Maps SKU entity to DTO, merging product-level attributes with SKU-level attributes.
 	/// SKU attributes override product attributes with the same key.
 	/// </summary>
-	private static SkuDto MapSku(SkuEntity sku, Dictionary<string, object?>? productAttributes)
+	private static SkuDto MapSku(SkuEntity sku, Dictionary<string, object?>? productAttributes, IFileStorage fileStorage)
 	{
 		var skuAttributes = CatalogDtoJson.AttributesToDictionary(sku.Attributes);
 		var mergedAttributes = MergeAttributes(productAttributes, skuAttributes);
+
+		// Map SKU gallery for visual variants
+		var gallery = sku.Gallery
+			.OrderBy(g => g.DisplayOrder)
+			.Select(g => MapGalleryImage(g.MediaImage, fileStorage))
+			.Where(dto => dto is not null)
+			.Cast<MediaImageDto>()
+			.ToList()
+			.AsReadOnly();
 
 		return new SkuDto(
 			sku.Id,
@@ -96,7 +143,8 @@ internal static class ProductMapping
 			sku.Price,
 			sku.StockQuantity,
 			skuAttributes,
-			mergedAttributes
+			mergedAttributes,
+			gallery.Count > 0 ? gallery : null
 		);
 	}
 
@@ -141,6 +189,11 @@ internal static class ProductMapping
 	private static MediaImageDto? MapGalleryImage(ProductGallery galleryItem, IFileStorage fileStorage)
 	{
 		var media = galleryItem.MediaImage;
+		return MapGalleryImage(media, fileStorage);
+	}
+
+	private static MediaImageDto? MapGalleryImage(MediaImage? media, IFileStorage fileStorage)
+	{
 		if (media is null)
 		{
 			return null;
