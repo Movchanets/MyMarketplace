@@ -9,7 +9,8 @@ public sealed record UpdateProductCommand(
 	string Name,
 	string? Description,
 	List<Guid> CategoryIds,
-	List<Guid>? TagIds = null
+	List<Guid>? TagIds = null,
+	Guid? PrimaryCategoryId = null
 ) : IRequest<ServiceResponse>
 {
 	public UpdateProductCommand(
