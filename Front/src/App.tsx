@@ -23,6 +23,7 @@ import ProductEdit from './pages/store/ProductEdit'
 import SkuManagement from './pages/store/SkuManagement'
 import MyProducts from './pages/store/MyProducts'
 import StorePage from './pages/store/StorePage'
+import ProductPage from './pages/product/ProductPage'
 import NotFound from './pages/NotFound'
 // no top-level Fragment needed here
 
@@ -35,6 +36,8 @@ export default function App() {
         <Route path="about" element={<About />} />
         <Route path="contacts" element={<Contacts />} />
         <Route path="store/:slug" element={<StorePage />} />
+        <Route path="product/:productSlug" element={<ProductPage />} />
+        <Route path="product/:productSlug/:skuCode" element={<ProductPage />} />
         <Route path="auth" element={<Auth />} />
         <Route path="reset-password" element={<ResetPassword />} />
 

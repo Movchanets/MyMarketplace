@@ -5,14 +5,14 @@ interface ProductCardProps {
   product: ProductSummaryDto
   onAddToCart?: (productId: string) => void
   onAddToWishlist?: (productId: string) => void
-  onClick?: (productId: string) => void
+  onClick?: (productSlug: string) => void
 }
 
 export default function ProductCard({ product, onAddToCart, onAddToWishlist, onClick }: ProductCardProps) {
   const { t } = useTranslation()
 
   const handleCardClick = () => {
-    onClick?.(product.id)
+    onClick?.(product.slug)
   }
 
   const handleAddToCart = (e: React.MouseEvent) => {

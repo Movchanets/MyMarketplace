@@ -8,6 +8,7 @@ export interface CategoryDto {
   slug: string
   description: string | null
   parentCategoryId: string | null
+  isPrimary?: boolean
 }
 
 export interface TagDto {
@@ -117,6 +118,7 @@ export interface SkuDto {
   stockQuantity: number
   attributes: Record<string, unknown> | null
   mergedAttributes: Record<string, unknown> | null
+  gallery: MediaImageDto[] | null
 }
 
 export interface MediaImageDto {
@@ -133,10 +135,12 @@ export interface ProductSummaryDto {
   id: string
   storeId: string | null
   name: string
+  slug: string
   baseImageUrl: string | null
   minPrice: number | null
   inStock: boolean
   isActive: boolean
+  primaryCategory: CategoryDto | null
   categories: CategoryDto[]
   tags: TagDto[]
 }
@@ -145,11 +149,13 @@ export interface ProductDetailsDto {
   id: string
   storeId: string | null
   name: string
+  slug: string
   description: string | null
   baseImageUrl: string | null
   attributes: Record<string, unknown> | null
   skus: SkuDto[]
   gallery: MediaImageDto[]
+  primaryCategory: CategoryDto | null
   categories: CategoryDto[]
   tags: TagDto[]
 }
@@ -193,6 +199,7 @@ export interface UpdateProductRequest {
   description?: string | null
   categoryIds?: string[]
   tagIds?: string[]
+  primaryCategoryId?: string
 }
 
 export const productsApi = {
@@ -208,6 +215,12 @@ export const productsApi = {
 
   getById: async (id: string): Promise<ServiceResponse<ProductDetailsDto>> => {
     const response = await axiosClient.get<ServiceResponse<ProductDetailsDto>>(`/products/${id}`)
+    return response.data
+  },
+
+  getBySlug: async (productSlug: string, skuCode?: string): Promise<ServiceResponse<ProductDetailsDto>> => {
+    const params = skuCode ? `?sku=${encodeURIComponent(skuCode)}` : ''
+    const response = await axiosClient.get<ServiceResponse<ProductDetailsDto>>(`/products/s/${productSlug}${params}`)
     return response.data
   },
 
@@ -265,6 +278,24 @@ export const productsApi = {
 
   setBaseImage: async (productId: string, baseImageUrl: string | null): Promise<ServiceResponse<void>> => {
     const response = await axiosClient.patch<ServiceResponse<void>>(`/products/${productId}/base-image`, { baseImageUrl })
+    return response.data
+  },
+
+  // SKU Gallery
+  uploadSkuGalleryImage: async (productId: string, skuId: string, file: File, displayOrder: number = 0): Promise<ServiceResponse<GalleryUploadResponse>> => {
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('displayOrder', displayOrder.toString())
+    const response = await axiosClient.post<ServiceResponse<GalleryUploadResponse>>(
+      `/products/${productId}/skus/${skuId}/gallery`,
+      formData,
+      { headers: { 'Content-Type': 'multipart/form-data' } }
+    )
+    return response.data
+  },
+
+  deleteSkuGalleryImage: async (productId: string, skuId: string, galleryId: string): Promise<ServiceResponse<void>> => {
+    const response = await axiosClient.delete<ServiceResponse<void>>(`/products/${productId}/skus/${skuId}/gallery/${galleryId}`)
     return response.data
   },
 

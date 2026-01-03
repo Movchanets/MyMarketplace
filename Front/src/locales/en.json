@@ -236,6 +236,19 @@
     "addToWishlist": "Add to wishlist"
   },
 
+  "productPage": {
+    "notFound": "Product not found",
+    "notFoundHint": "The product may have been removed or the link is incorrect.",
+    "inStock": "In stock",
+    "outOfStock": "Out of stock",
+    "quantity": "Quantity",
+    "addToCart": "Add to cart",
+    "buyNow": "Buy now",
+    "description": "Description",
+    "specifications": "Specifications",
+    "categories": "Categories"
+  },
+
   "errors": {
     "access_denied": "Access denied",
     "insufficient_permissions": "You do not have sufficient permissions to view this page.",
@@ -484,6 +497,10 @@
     "categories": "Categories",
     "select_categories": "Select categories",
     "categories_selected": "Selected: {{count}}",
+    "primary_category": "Primary category for breadcrumbs",
+    "primary": "Primary",
+    "set_as_primary": "Set as primary",
+    "set_primary": "Set",
     "tags": "Tags",
     "select_tags": "Select tags",
     "tags_selected": "Selected: {{count}}",
@@ -543,7 +560,13 @@
     "updated_success": "Variant updated successfully",
     "deleted_success": "Variant deleted successfully",
     "all_saved_success": "All changes saved",
-    "no_changes": "No changes to save"
+    "no_changes": "No changes to save",
+    "gallery": "Variant Photos",
+    "gallery_hint": "Add photos for this variant (e.g., photos of specific color)",
+    "add_image": "Add Photo",
+    "confirm_delete_image": "Delete this photo?",
+    "image_uploaded": "Photo uploaded",
+    "image_deleted": "Photo deleted"
   },
 
   "common": {
@@ -561,6 +584,8 @@
     "no_results": "No results found",
     "back": "Back",
     "noResults": "No results found",
-    "error": "Error"
+    "error": "Error",
+    "home": "Home",
+    "backToHome": "Back to home"
   }
 }

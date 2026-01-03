@@ -42,6 +42,7 @@ export default function ProductEdit() {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
+  const [primaryCategoryId, setPrimaryCategoryId] = useState<string | null>(null)
   const [selectedTags, setSelectedTags] = useState<string[]>([])
 
   // Gallery state
@@ -87,6 +88,9 @@ export default function ProductEdit() {
         setName(p.name)
         setDescription(p.description || '')
         setSelectedCategories(p.categories.map(c => c.id))
+        // Set primary category from response if available
+        const primaryCat = p.primaryCategory || p.categories[0]
+        setPrimaryCategoryId(primaryCat?.id || null)
         setSelectedTags(p.tags.map(t => t.id))
         setExistingImages(p.gallery || [])
       } else {
@@ -110,6 +114,11 @@ export default function ProductEdit() {
       errors.name = t('product.name_required')
     }
     
+    if (selectedCategories.length === 0) {
+      setError(t('product.categories_required') || 'At least one category is required')
+      return false
+    }
+    
     setFormErrors(errors)
     return Object.keys(errors).length === 0
   }
@@ -127,18 +136,36 @@ export default function ProductEdit() {
         name: name.trim(),
         description: description.trim() || null,
         categoryIds: selectedCategories,
-        tagIds: selectedTags.length > 0 ? selectedTags : undefined
+        tagIds: selectedTags.length > 0 ? selectedTags : undefined,
+        primaryCategoryId: primaryCategoryId || undefined
       }
 
+      console.log('Update request:', {
+        request,
+        selectedCategoriesLength: selectedCategories.length,
+        selectedCategoriesValues: selectedCategories,
+        primaryCategoryId
+      })
+      
       const result = await productsApi.update(productId, request)
+      console.log('Update response:', result)
       
       if (result.isSuccess) {
         navigate('/cabinet/products')
       } else {
+        console.error('Update failed:', result)
         setError(result.message || t('common.error'))
       }
-    } catch (err) {
-      setError(t('common.error'))
+    } catch (err: any) {
+      console.error('Update error:', err)
+      console.error('Response data:', err.response?.data)
+      console.error('Response status:', err.response?.status)
+      // Try to get detailed error message from response
+      const errorMessage = err.response?.data?.message || 
+                          err.response?.data?.title ||
+                          err.message ||
+                          t('common.error')
+      setError(errorMessage)
     } finally {
       setSubmitting(false)
     }
@@ -330,26 +357,44 @@ export default function ProductEdit() {
             {t('product.categories')}
           </label>
           
-          {/* Selected categories chips */}
+          {/* Selected categories chips with primary indicator */}
           <div className="flex flex-wrap gap-2 mb-2">
             {selectedCategories.map(id => {
               const cat = categories.find(c => c.id === id)
+              const isPrimary = primaryCategoryId === id
               return cat ? (
-                <span
+                <div
                   key={id}
-                  className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-brand/10 text-brand text-sm"
+                  className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-brand/10 text-brand text-sm group relative"
                 >
-                  {cat.name}
+                  {isPrimary && (
+                    <span className="inline-flex items-center justify-center w-4 h-4 bg-brand text-white rounded-full text-xs font-bold" title={t('product.primary_category')}>
+                      ⭐
+                    </span>
+                  )}
+                  <span>{cat.name}</span>
                   <button
                     type="button"
                     onClick={() => toggleCategory(id)}
-                    className="hover:text-brand-hover"
+                    className="hover:text-brand-hover ml-1"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
                   </button>
-                </span>
+                  
+                  {/* Quick action: Set as primary */}
+                  {!isPrimary && (
+                    <button
+                      type="button"
+                      onClick={() => setPrimaryCategoryId(id)}
+                      className="ml-2 px-2 py-0.5 rounded text-xs bg-brand/20 hover:bg-brand/30 text-brand transition-colors opacity-0 group-hover:opacity-100"
+                      title={t('product.set_as_primary')}
+                    >
+                      {t('product.set_primary')}
+                    </button>
+                  )}
+                </div>
               ) : null
             })}
           </div>
@@ -379,20 +424,47 @@ export default function ProductEdit() {
                 {filteredCategories.length === 0 ? (
                   <p className="text-text-muted text-sm py-2 px-3">{t('common.noResults')}</p>
                 ) : (
-                  filteredCategories.map(cat => (
-                    <label
-                      key={cat.id}
-                      className="flex items-center gap-2 px-3 py-2 hover:bg-background-secondary rounded cursor-pointer"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedCategories.includes(cat.id)}
-                        onChange={() => toggleCategory(cat.id)}
-                        className="rounded border-border text-brand focus:ring-brand"
-                      />
-                      <span className="text-text">{cat.name}</span>
-                    </label>
-                  ))
+                  filteredCategories.map(cat => {
+                    const isPrimary = primaryCategoryId === cat.id
+                    const isSelected = selectedCategories.includes(cat.id)
+                    return (
+                      <div
+                        key={cat.id}
+                        className="flex items-center justify-between px-3 py-2 hover:bg-background-secondary rounded group"
+                      >
+                        <label className="flex items-center gap-2 flex-1 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => {
+                              toggleCategory(cat.id)
+                              // Auto-set first selected category as primary
+                              if (!isSelected && !primaryCategoryId) {
+                                setPrimaryCategoryId(cat.id)
+                              }
+                            }}
+                            className="rounded border-border text-brand focus:ring-brand"
+                          />
+                          <span className="text-text">{cat.name}</span>
+                          {isPrimary && (
+                            <span className="text-xs bg-brand/20 text-brand px-2 py-1 rounded">
+                              {t('product.primary')}
+                            </span>
+                          )}
+                        </label>
+                        {isSelected && !isPrimary && (
+                          <button
+                            type="button"
+                            onClick={() => setPrimaryCategoryId(cat.id)}
+                            className="px-2 py-1 text-xs rounded bg-brand/10 hover:bg-brand/20 text-brand transition-colors opacity-0 group-hover:opacity-100"
+                            title={t('product.set_as_primary')}
+                          >
+                            ⭐ {t('product.set_primary')}
+                          </button>
+                        )}
+                      </div>
+                    )
+                  })
                 )}
               </div>
             </div>

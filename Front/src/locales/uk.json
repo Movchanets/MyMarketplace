@@ -238,6 +238,19 @@
     "addToWishlist": "До списку бажань"
   },
 
+  "productPage": {
+    "notFound": "Товар не знайдено",
+    "notFoundHint": "Можливо, товар було видалено або посилання невірне.",
+    "inStock": "В наявності",
+    "outOfStock": "Немає в наявності",
+    "quantity": "Кількість",
+    "addToCart": "До кошика",
+    "buyNow": "Купити зараз",
+    "description": "Опис",
+    "specifications": "Характеристики",
+    "categories": "Категорії"
+  },
+
   "errors": {
     "access_denied": "Доступ заборонено",
     "insufficient_permissions": "У вас недостатньо прав для перегляду цієї сторінки.",
@@ -486,6 +499,10 @@
     "categories": "Категорії",
     "select_categories": "Виберіть категорії",
     "categories_selected": "Вибрано: {{count}}",
+    "primary_category": "Головна категорія для хлібних крихт",
+    "primary": "Головна",
+    "set_as_primary": "Зробити головною",
+    "set_primary": "Встановити",
     "tags": "Теги",
     "select_tags": "Виберіть теги",
     "tags_selected": "Вибрано: {{count}}",
@@ -545,7 +562,13 @@
     "updated_success": "Варіант успішно оновлено",
     "deleted_success": "Варіант успішно видалено",
     "all_saved_success": "Всі зміни збережено",
-    "no_changes": "Немає змін для збереження"
+    "no_changes": "Немає змін для збереження",
+    "gallery": "Фото варіанту",
+    "gallery_hint": "Додайте фото для цього варіанту (наприклад, фото конкретного кольору)",
+    "add_image": "Додати фото",
+    "confirm_delete_image": "Видалити це фото?",
+    "image_uploaded": "Фото завантажено",
+    "image_deleted": "Фото видалено"
   },
 
   "common": {
@@ -563,6 +586,8 @@
     "no_results": "Нічого не знайдено",
     "back": "Назад",
     "noResults": "Нічого не знайдено",
-    "error": "Помилка"
+    "error": "Помилка",
+    "home": "Головна",
+    "backToHome": "На головну"
   }
 }

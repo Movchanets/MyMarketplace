@@ -6,7 +6,8 @@ import {
   type ProductDetailsDto,
   type SkuDto,
   type AddSkuRequest,
-  type UpdateSkuRequest
+  type UpdateSkuRequest,
+  type MediaImageDto
 } from '../../api/catalogApi'
 import {
   attributeDefinitionsApi,
@@ -25,6 +26,7 @@ interface SkuFormData {
   price: string
   stockQuantity: string
   attributes: AttributeField[]
+  gallery: MediaImageDto[]
   isNew: boolean
   isModified: boolean
 }
@@ -77,6 +79,8 @@ export default function SkuManagement() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [formErrors, setFormErrors] = useState<FormErrors>({})
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
+  const [uploadingGallery, setUploadingGallery] = useState<Set<string>>(new Set())
+  const [deletingGalleryImages, setDeletingGalleryImages] = useState<Set<string>>(new Set())
 
   const mapSkuToForm = (sku: SkuDto): SkuFormData => ({
     id: sku.id,
@@ -84,6 +88,7 @@ export default function SkuManagement() {
     price: sku.price.toString(),
     stockQuantity: sku.stockQuantity.toString(),
     attributes: parseAttributes(sku.attributes),
+    gallery: sku.gallery || [],
     isNew: false,
     isModified: false
   })
@@ -158,6 +163,7 @@ export default function SkuManagement() {
         price: '',
         stockQuantity: '0',
         attributes: [],
+        gallery: [],
         isNew: true,
         isModified: true
       }
@@ -316,6 +322,72 @@ export default function SkuManagement() {
       setError(t('errors.save_failed'))
     } finally {
       setSaving(false)
+    }
+  }
+
+  // Gallery handlers
+  const handleGalleryImageUpload = async (skuId: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!productId || !e.target.files?.length) return
+    
+    const sku = skus.find(s => s.id === skuId)
+    if (!sku || sku.isNew) return // Can't upload images to unsaved SKUs
+
+    setUploadingGallery(prev => new Set(prev).add(skuId))
+    setError(null)
+
+    try {
+      for (const file of Array.from(e.target.files)) {
+        const displayOrder = sku.gallery.length
+        const result = await productsApi.uploadSkuGalleryImage(productId, skuId, file, displayOrder)
+        
+        if (!result.isSuccess) {
+          setError(result.message || t('errors.upload_failed'))
+          break
+        }
+      }
+      
+      setSuccessMessage(t('sku.image_uploaded'))
+      await fetchData()
+      setTimeout(() => setSuccessMessage(null), 3000)
+    } catch {
+      setError(t('errors.upload_failed'))
+    } finally {
+      setUploadingGallery(prev => {
+        const next = new Set(prev)
+        next.delete(skuId)
+        return next
+      })
+      e.target.value = ''
+    }
+  }
+
+  const handleGalleryImageDelete = async (skuId: string, galleryId: string) => {
+    if (!productId || !confirm(t('sku.confirm_delete_image'))) return
+
+    setDeletingGalleryImages(prev => new Set(prev).add(galleryId))
+    setError(null)
+
+    try {
+      const result = await productsApi.deleteSkuGalleryImage(productId, skuId, galleryId)
+      
+      if (result.isSuccess) {
+        setSkus(skus.map(s => s.id === skuId
+          ? { ...s, gallery: s.gallery.filter(img => img.id !== galleryId) }
+          : s
+        ))
+        setSuccessMessage(t('sku.image_deleted'))
+        setTimeout(() => setSuccessMessage(null), 3000)
+      } else {
+        setError(result.message || t('errors.delete_failed'))
+      }
+    } catch {
+      setError(t('errors.delete_failed'))
+    } finally {
+      setDeletingGalleryImages(prev => {
+        const next = new Set(prev)
+        next.delete(galleryId)
+        return next
+      })
     }
   }
 
@@ -535,6 +607,71 @@ export default function SkuManagement() {
                   onChange={(attrs) => handleSkuAttributesChange(sku.id, attrs)}
                 />
               </div>
+
+              {/* Gallery - only for saved SKUs */}
+              {!sku.isNew && (
+                <div className="space-y-3 pt-4 border-t border-border">
+                  <div>
+                    <label className="text-sm font-medium text-text">{t('sku.gallery')}</label>
+                    <p className="text-xs text-text-muted mt-0.5">{t('sku.gallery_hint')}</p>
+                  </div>
+
+                  <div className="flex flex-wrap gap-3 items-start">
+                    {/* Existing images */}
+                    {sku.gallery.map((img) => (
+                      <div key={img.id} className="relative group">
+                        <img
+                          src={img.url}
+                          alt={img.altText || ''}
+                          className="w-20 h-20 object-cover rounded-lg border border-border"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleGalleryImageDelete(sku.id, img.id)}
+                          disabled={deletingGalleryImages.has(img.id)}
+                          className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full 
+                            opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
+                        >
+                          {deletingGalleryImages.has(img.id) ? (
+                            <svg className="w-3 h-3 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                          ) : (
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          )}
+                        </button>
+                      </div>
+                    ))}
+
+                    {/* Add image button */}
+                    <label className="w-20 h-20 flex flex-col items-center justify-center border-2 border-dashed 
+                      border-border rounded-lg cursor-pointer hover:border-brand transition-colors">
+                      {uploadingGallery.has(sku.id) ? (
+                        <svg className="w-6 h-6 text-text-muted animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                      ) : (
+                        <>
+                          <svg className="w-6 h-6 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                          </svg>
+                          <span className="text-xs text-text-muted mt-1">{t('sku.add_image')}</span>
+                        </>
+                      )}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={(e) => handleGalleryImageUpload(sku.id, e)}
+                        disabled={uploadingGallery.has(sku.id)}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>

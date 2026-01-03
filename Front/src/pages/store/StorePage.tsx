@@ -57,8 +57,8 @@ export default function StorePage() {
     setCurrentPage(Math.max(1, Math.min(page, totalPages)))
   }
 
-  const handleProductClick = (productId: string) => {
-    navigate(`/product/${productId}`)
+  const handleProductClick = (productSlug: string) => {
+    navigate(`/product/${productSlug}`)
   }
 
   const handleAddToCart = (productId: string) => {
