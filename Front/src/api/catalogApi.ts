@@ -129,6 +129,7 @@ export interface MediaImageDto {
   width: number
   height: number
   altText: string | null
+  galleryId?: string | null
 }
 
 export interface ProductSummaryDto {
@@ -200,6 +201,7 @@ export interface UpdateProductRequest {
   categoryIds?: string[]
   tagIds?: string[]
   primaryCategoryId?: string
+  galleryIdsToDelete?: string[]
 }
 
 export const productsApi = {
@@ -239,8 +241,31 @@ export const productsApi = {
     return response.data
   },
 
-  update: async (productId: string, data: UpdateProductRequest): Promise<ServiceResponse<void>> => {
-    const response = await axiosClient.put<ServiceResponse<void>>(`/products/${productId}`, data)
+  update: async (productId: string, data: UpdateProductRequest, newImages?: File[]): Promise<ServiceResponse<void>> => {
+    const formData = new FormData()
+    formData.append('name', data.name)
+    if (data.description) formData.append('description', data.description)
+    if (data.categoryIds) {
+      data.categoryIds.forEach(id => formData.append('categoryIds', id))
+    }
+    if (data.tagIds) {
+      data.tagIds.forEach(id => formData.append('tagIds', id))
+    }
+    if (data.primaryCategoryId) {
+      formData.append('primaryCategoryId', data.primaryCategoryId)
+    }
+    if (data.galleryIdsToDelete) {
+      data.galleryIdsToDelete.forEach(id => formData.append('galleryIdsToDelete', id))
+    }
+    if (newImages) {
+      newImages.forEach(file => formData.append('newGalleryImages', file))
+    }
+    
+    const response = await axiosClient.put<ServiceResponse<void>>(
+      `/products/${productId}/with-gallery`,
+      formData,
+      { headers: { 'Content-Type': 'multipart/form-data' } }
+    )
     return response.data
   },
 
