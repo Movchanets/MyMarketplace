@@ -189,15 +189,18 @@ public sealed class ProductsController : ControllerBase
 		string? Description,
 		List<Guid>? CategoryIds,
 		List<Guid>? TagIds = null,
-		Guid? PrimaryCategoryId = null
+		Guid? PrimaryCategoryId = null,
+		List<Guid>? GalleryIdsToDelete = null
 	);
 
 	/// <summary>
-	/// Оновити продукт
+	/// Оновити продукт (JSON, без завантаження файлів)
 	/// </summary>
 	[HttpPut("{productId:guid}")]
 	[Authorize(Policy = "Permission:products.update.self")]
-	public async Task<IActionResult> Update([FromRoute] Guid productId, [FromBody] UpdateProductRequest request)
+	public async Task<IActionResult> Update(
+		[FromRoute] Guid productId, 
+		[FromBody] UpdateProductRequest request)
 	{
 		var idClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 		if (string.IsNullOrWhiteSpace(idClaim)) return Unauthorized();
@@ -210,7 +213,66 @@ public sealed class ProductsController : ControllerBase
 			request.Description,
 			request.CategoryIds ?? new List<Guid>(),
 			request.TagIds,
-			request.PrimaryCategoryId
+			request.PrimaryCategoryId,
+			null, // No gallery images in JSON endpoint
+			request.GalleryIdsToDelete
+		);
+
+		var result = await _mediator.Send(command);
+		if (!result.IsSuccess) return BadRequest(result);
+		return Ok(result);
+	}
+
+	public sealed record UpdateProductWithGalleryRequest(
+		string Name,
+		string? Description,
+		List<Guid>? CategoryIds,
+		List<Guid>? TagIds = null,
+		Guid? PrimaryCategoryId = null,
+		List<Guid>? GalleryIdsToDelete = null
+	);
+
+	/// <summary>
+	/// Оновити продукт з галереєю (multipart/form-data)
+	/// </summary>
+	[HttpPut("{productId:guid}/with-gallery")]
+	[Authorize(Policy = "Permission:products.update.self")]
+	public async Task<IActionResult> UpdateWithGallery(
+		[FromRoute] Guid productId, 
+		[FromForm] UpdateProductWithGalleryRequest request,
+		[FromForm] List<IFormFile>? newGalleryImages = null)
+	{
+		var idClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+		if (string.IsNullOrWhiteSpace(idClaim)) return Unauthorized();
+		if (!Guid.TryParse(idClaim, out var userId)) return Unauthorized();
+
+		// Prepare gallery images for command
+		List<GalleryImageUploadRequest>? galleryUploads = null;
+		if (newGalleryImages is { Count: > 0 })
+		{
+			galleryUploads = new List<GalleryImageUploadRequest>();
+			for (int i = 0; i < newGalleryImages.Count; i++)
+			{
+				var file = newGalleryImages[i];
+				galleryUploads.Add(new GalleryImageUploadRequest(
+					file.OpenReadStream(),
+					file.FileName,
+					file.ContentType,
+					i // DisplayOrder
+				));
+			}
+		}
+
+		var command = new UpdateProductCommand(
+			userId,
+			productId,
+			request.Name,
+			request.Description,
+			request.CategoryIds ?? new List<Guid>(),
+			request.TagIds,
+			request.PrimaryCategoryId,
+			galleryUploads,
+			request.GalleryIdsToDelete
 		);
 
 		var result = await _mediator.Send(command);
