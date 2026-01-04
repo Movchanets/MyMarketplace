@@ -131,7 +131,7 @@ internal static class ProductMapping
 		// Map SKU gallery for visual variants
 		var gallery = sku.Gallery
 			.OrderBy(g => g.DisplayOrder)
-			.Select(g => MapGalleryImage(g.MediaImage, fileStorage))
+			.Select(g => MapSkuGalleryImage(g, fileStorage))
 			.Where(dto => dto is not null)
 			.Cast<MediaImageDto>()
 			.ToList()
@@ -189,7 +189,41 @@ internal static class ProductMapping
 	private static MediaImageDto? MapGalleryImage(ProductGallery galleryItem, IFileStorage fileStorage)
 	{
 		var media = galleryItem.MediaImage;
-		return MapGalleryImage(media, fileStorage);
+		if (media is null)
+		{
+			return null;
+		}
+
+		var url = fileStorage.GetPublicUrl(media.StorageKey);
+		return new MediaImageDto(
+			media.Id,
+			media.StorageKey,
+			url,
+			media.MimeType,
+			media.Width,
+			media.Height,
+			media.AltText,
+			galleryItem.Id); // Include GalleryId
+	}
+
+	private static MediaImageDto? MapSkuGalleryImage(SkuGallery galleryItem, IFileStorage fileStorage)
+	{
+		var media = galleryItem.MediaImage;
+		if (media is null)
+		{
+			return null;
+		}
+
+		var url = fileStorage.GetPublicUrl(media.StorageKey);
+		return new MediaImageDto(
+			media.Id,
+			media.StorageKey,
+			url,
+			media.MimeType,
+			media.Width,
+			media.Height,
+			media.AltText,
+			galleryItem.Id); // Include GalleryId for SKU
 	}
 
 	private static MediaImageDto? MapGalleryImage(MediaImage? media, IFileStorage fileStorage)

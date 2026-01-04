@@ -61,7 +61,8 @@ public sealed record MediaImageDto(
 	string MimeType,
 	int Width,
 	int Height,
-	string? AltText
+	string? AltText,
+	Guid? GalleryId = null
 );
 
 public sealed record ProductSummaryDto(
