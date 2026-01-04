@@ -62,7 +62,7 @@ public sealed class RemoveProductGalleryImageCommandHandler : IRequestHandler<Re
 				return new ServiceResponse(false, "Gallery image not found");
 			}
 
-			_galleryRepository.Delete(galleryItem);
+			await _galleryRepository.DeleteWithFileAsync(galleryItem);
 			await _unitOfWork.SaveChangesAsync(cancellationToken);
 			return new ServiceResponse(true, "Gallery image removed successfully");
 		}

@@ -14,7 +14,6 @@ public sealed class AddProductGalleryImageCommandHandler : IRequestHandler<AddPr
 	private readonly IProductGalleryRepository _galleryRepository;
 	private readonly IUserRepository _userRepository;
 	private readonly IUnitOfWork _unitOfWork;
-	private readonly IFileStorage _fileStorage;
 	private readonly ILogger<AddProductGalleryImageCommandHandler> _logger;
 
 	public AddProductGalleryImageCommandHandler(
@@ -23,7 +22,6 @@ public sealed class AddProductGalleryImageCommandHandler : IRequestHandler<AddPr
 		IProductGalleryRepository galleryRepository,
 		IUserRepository userRepository,
 		IUnitOfWork unitOfWork,
-		IFileStorage fileStorage,
 		ILogger<AddProductGalleryImageCommandHandler> logger)
 	{
 		_productRepository = productRepository;
@@ -31,7 +29,6 @@ public sealed class AddProductGalleryImageCommandHandler : IRequestHandler<AddPr
 		_galleryRepository = galleryRepository;
 		_userRepository = userRepository;
 		_unitOfWork = unitOfWork;
-		_fileStorage = fileStorage;
 		_logger = logger;
 	}
 
@@ -75,7 +72,7 @@ public sealed class AddProductGalleryImageCommandHandler : IRequestHandler<AddPr
 			// Якщо ще немає головного зображення — ставимо перше фото з галереї
 			if (string.IsNullOrWhiteSpace(product.BaseImageUrl))
 			{
-				var publicUrl = _fileStorage.GetPublicUrl(media.StorageKey);
+				var publicUrl = _galleryRepository.GetPublicUrl(media.StorageKey);
 				product.UpdateBaseImage(publicUrl);
 			}
 
