@@ -48,8 +48,7 @@ export default function ProductEdit() {
   // Gallery state
   const [existingImages, setExistingImages] = useState<MediaImageDto[]>([])
   const [newImages, setNewImages] = useState<NewGalleryImage[]>([])
-  const [uploadingImages, setUploadingImages] = useState(false)
-  const [deletingImages, setDeletingImages] = useState<Set<string>>(new Set())
+  const [deletedGalleryIds, setDeletedGalleryIds] = useState<string[]>([])
 
   // Dropdowns state
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false)
@@ -137,20 +136,28 @@ export default function ProductEdit() {
         description: description.trim() || null,
         categoryIds: selectedCategories,
         tagIds: selectedTags.length > 0 ? selectedTags : undefined,
-        primaryCategoryId: primaryCategoryId || undefined
+        primaryCategoryId: primaryCategoryId || undefined,
+        galleryIdsToDelete: deletedGalleryIds.length > 0 ? deletedGalleryIds : undefined
       }
+
+      // Collect new images to upload
+      const filesToUpload = newImages.map(img => img.file)
 
       console.log('Update request:', {
         request,
         selectedCategoriesLength: selectedCategories.length,
         selectedCategoriesValues: selectedCategories,
-        primaryCategoryId
+        primaryCategoryId,
+        newImagesCount: filesToUpload.length,
+        deletedGalleryIds
       })
       
-      const result = await productsApi.update(productId, request)
+      const result = await productsApi.update(productId, request, filesToUpload.length > 0 ? filesToUpload : undefined)
       console.log('Update response:', result)
       
       if (result.isSuccess) {
+        // Cleanup preview URLs before navigating
+        newImages.forEach(img => URL.revokeObjectURL(img.preview))
         navigate('/cabinet/products')
       } else {
         console.error('Update failed:', result)
@@ -206,26 +213,13 @@ export default function ProductEdit() {
     setNewImages(newImages.filter(i => i.id !== imageId))
   }
 
-  const handleDeleteExistingImage = async (galleryId: string) => {
-    if (!productId || !confirm(t('product.confirm_delete_image'))) return
+  const handleDeleteExistingImage = (galleryId: string) => {
+    if (!confirm(t('product.confirm_delete_image'))) return
 
-    setDeletingImages(prev => new Set(prev).add(galleryId))
-    try {
-      const result = await productsApi.deleteGalleryImage(productId, galleryId)
-      if (result.isSuccess) {
-        setExistingImages(prev => prev.filter(img => img.id !== galleryId))
-      } else {
-        setError(result.message || t('errors.delete_failed'))
-      }
-    } catch (err) {
-      setError(t('errors.delete_failed'))
-    } finally {
-      setDeletingImages(prev => {
-        const next = new Set(prev)
-        next.delete(galleryId)
-        return next
-      })
-    }
+    // Mark for deletion (will be deleted on save)
+    setDeletedGalleryIds(prev => [...prev, galleryId])
+    // Remove from UI immediately
+    setExistingImages(prev => prev.filter(img => (img.galleryId || img.id) !== galleryId))
   }
 
   const handleSetBaseImage = async (imageUrl: string) => {
@@ -243,31 +237,6 @@ export default function ProductEdit() {
       }
     } catch (err) {
       setError(t('errors.update_failed'))
-    }
-  }
-
-  const handleUploadNewImages = async () => {
-    if (!productId || newImages.length === 0) return
-
-    setUploadingImages(true)
-    try {
-      for (let i = 0; i < newImages.length; i++) {
-        const result = await productsApi.uploadGalleryImage(
-          productId,
-          newImages[i].file,
-          existingImages.length + i
-        )
-        if (!result.isSuccess) {
-          console.error('Failed to upload:', newImages[i].file.name)
-        }
-      }
-      // Refresh product data to get new gallery
-      await fetchData()
-      setNewImages([])
-    } catch (err) {
-      setError(t('errors.upload_failed'))
-    } finally {
-      setUploadingImages(false)
     }
   }
 
@@ -509,21 +478,14 @@ export default function ProductEdit() {
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation()
-                          handleDeleteExistingImage(img.id)
+                          handleDeleteExistingImage(img.galleryId || img.id)
                         }}
-                        disabled={deletingImages.has(img.id)}
                         className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full 
-                          opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
+                          opacity-0 group-hover:opacity-100 transition-opacity"
                       >
-                        {deletingImages.has(img.id) ? (
-                          <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                          </svg>
-                        ) : (
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                        )}
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
                       </button>
                     </div>
                   )
@@ -532,27 +494,20 @@ export default function ProductEdit() {
             </div>
           )}
 
-          {/* New Images to Upload */}
+          {/* New Images to Upload (will be saved with form) */}
           {newImages.length > 0 && (
             <div className="mb-4">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-xs font-medium text-text">{t('product.new_images')}</p>
-                <button
-                  type="button"
-                  onClick={handleUploadNewImages}
-                  disabled={uploadingImages}
-                  className="text-xs btn btn-brand py-1 px-3"
-                >
-                  {uploadingImages ? t('common.uploading') : t('product.upload_now')}
-                </button>
-              </div>
+              <p className="text-xs font-medium text-text mb-2">
+                {t('product.new_images')} 
+                <span className="text-text-muted ml-1">({t('product.will_upload_on_save')})</span>
+              </p>
               <div className="flex flex-wrap gap-3">
                 {newImages.map((img) => (
                   <div key={img.id} className="relative group">
                     <img
                       src={img.preview}
                       alt=""
-                      className="w-24 h-24 object-cover rounded-lg border border-border"
+                      className="w-24 h-24 object-cover rounded-lg border-2 border-dashed border-brand/50"
                     />
                     <button
                       type="button"
