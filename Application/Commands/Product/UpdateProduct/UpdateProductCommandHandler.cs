@@ -14,6 +14,7 @@ public sealed class UpdateProductCommandHandler : IRequestHandler<UpdateProductC
    private readonly IStoreRepository _storeRepository;
    private readonly ICategoryRepository _categoryRepository;
    private readonly ITagRepository _tagRepository;
+   private readonly IProductGalleryRepository _galleryRepository;
    private readonly IUnitOfWork _unitOfWork;
    private readonly ILogger<UpdateProductCommandHandler> _logger;
    private readonly IUserRepository _userRepository;
@@ -23,6 +24,7 @@ public sealed class UpdateProductCommandHandler : IRequestHandler<UpdateProductC
       IStoreRepository storeRepository,
       ICategoryRepository categoryRepository,
       ITagRepository tagRepository,
+      IProductGalleryRepository galleryRepository,
       IUnitOfWork unitOfWork,
       ILogger<UpdateProductCommandHandler> logger,
       IUserRepository userRepository)
@@ -31,6 +33,7 @@ public sealed class UpdateProductCommandHandler : IRequestHandler<UpdateProductC
       _storeRepository = storeRepository;
       _categoryRepository = categoryRepository;
       _tagRepository = tagRepository;
+      _galleryRepository = galleryRepository;
       _unitOfWork = unitOfWork;
       _logger = logger;
       _userRepository = userRepository;
@@ -139,6 +142,54 @@ public sealed class UpdateProductCommandHandler : IRequestHandler<UpdateProductC
 
             var newPt = ProductTag.CreateById(product.Id, tagId);
             _productRepository.AddProductTag(newPt);
+         }
+
+         // === UPDATE GALLERY (DELETE) ===
+         if (request.GalleryIdsToDelete is { Count: > 0 })
+         {
+            foreach (var galleryId in request.GalleryIdsToDelete)
+            {
+               var galleryItem = product.Gallery.FirstOrDefault(g => g.Id == galleryId);
+               if (galleryItem != null)
+               {
+                  await _galleryRepository.DeleteWithFileAsync(galleryItem);
+                  product.RemoveGalleryItem(galleryId);
+                  
+                  _logger.LogInformation("Removed gallery item {GalleryId} from product {ProductId}", 
+                     galleryId, product.Id);
+               }
+            }
+         }
+
+         // === UPDATE GALLERY (ADD NEW IMAGES) ===
+         if (request.NewGalleryImages is { Count: > 0 })
+         {
+            var currentMaxOrder = product.Gallery.Any() 
+               ? product.Gallery.Max(g => g.DisplayOrder) 
+               : -1;
+
+            foreach (var imageUpload in request.NewGalleryImages)
+            {
+               currentMaxOrder++;
+               
+               var uploadRequest = new GalleryImageUploadRequest(
+                  imageUpload.FileStream,
+                  imageUpload.FileName,
+                  imageUpload.ContentType,
+                  currentMaxOrder
+               );
+               
+               var result = await _galleryRepository.UploadAndAddAsync(product, uploadRequest);
+
+               // Set as base image if product doesn't have one
+               if (string.IsNullOrEmpty(product.BaseImageUrl))
+               {
+                  product.UpdateBaseImage(result.PublicUrl);
+               }
+
+               _logger.LogInformation("Added gallery image {MediaImageId} to product {ProductId}", 
+                  result.MediaImageId, product.Id);
+            }
          }
 
          // === SAVE ALL CHANGES AT ONCE ===
