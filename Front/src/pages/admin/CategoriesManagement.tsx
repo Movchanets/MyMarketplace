@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { categoriesApi, type CategoryDto, type CreateCategoryRequest, type UpdateCategoryRequest } from '../../api/catalogApi'
 
@@ -40,7 +40,7 @@ export default function CategoriesManagement() {
     return categories.slice(start, start + ITEMS_PER_PAGE)
   }, [categories, currentPage])
 
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
@@ -56,11 +56,11 @@ export default function CategoriesManagement() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [t])
 
   useEffect(() => {
     fetchCategories()
-  }, [])
+  }, [fetchCategories])
 
   const resetForm = () => {
     setFormData({ name: '', description: '', parentCategoryId: null })

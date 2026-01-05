@@ -9,15 +9,18 @@ namespace Application.Commands.Product.Sku.DeleteSku;
 public sealed class DeleteSkuCommandHandler : IRequestHandler<DeleteSkuCommand, ServiceResponse>
 {
 	private readonly ISkuRepository _skuRepository;
+	private readonly IUserRepository _userRepository;
 	private readonly IUnitOfWork _unitOfWork;
 	private readonly ILogger<DeleteSkuCommandHandler> _logger;
 
 	public DeleteSkuCommandHandler(
 		ISkuRepository skuRepository,
+		IUserRepository userRepository,
 		IUnitOfWork unitOfWork,
 		ILogger<DeleteSkuCommandHandler> logger)
 	{
 		_skuRepository = skuRepository;
+		_userRepository = userRepository;
 		_unitOfWork = unitOfWork;
 		_logger = logger;
 	}
@@ -28,10 +31,18 @@ public sealed class DeleteSkuCommandHandler : IRequestHandler<DeleteSkuCommand, 
 
 		try
 		{
-			var sku = await _skuRepository.GetByIdAsync(request.SkuId);
-			if (sku?.Product is null || sku.ProductId != request.ProductId || sku.Product.Store is null || sku.Product.Store.UserId != request.UserId)
+			// Convert identity user ID to domain user ID
+			var domainUser = await _userRepository.GetByIdentityUserIdAsync(request.UserId);
+			if (domainUser is null)
 			{
-				_logger.LogWarning("SKU {SkuId} not found for product {ProductId} and user {UserId}", request.SkuId, request.ProductId, request.UserId);
+				_logger.LogWarning("Domain user for identity {UserId} not found", request.UserId);
+				return new ServiceResponse(false, "User not found");
+			}
+
+			var sku = await _skuRepository.GetByIdAsync(request.SkuId);
+			if (sku?.Product is null || sku.ProductId != request.ProductId || sku.Product.Store is null || sku.Product.Store.UserId != domainUser.Id)
+			{
+				_logger.LogWarning("SKU {SkuId} not found for product {ProductId} and user {UserId}", request.SkuId, request.ProductId, domainUser.Id);
 				return new ServiceResponse(false, "SKU not found");
 			}
 

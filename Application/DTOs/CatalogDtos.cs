@@ -33,7 +33,8 @@ public sealed record CategoryDto(
 	string Name,
 	string Slug,
 	string? Description,
-	Guid? ParentCategoryId
+	Guid? ParentCategoryId,
+	bool IsPrimary = false
 );
 
 public sealed record TagDto(
@@ -48,7 +49,9 @@ public sealed record SkuDto(
 	string SkuCode,
 	decimal Price,
 	int StockQuantity,
-	Dictionary<string, object?>? Attributes
+	Dictionary<string, object?>? Attributes,
+	Dictionary<string, object?>? MergedAttributes,
+	IReadOnlyList<MediaImageDto>? Gallery
 );
 
 public sealed record MediaImageDto(
@@ -58,16 +61,20 @@ public sealed record MediaImageDto(
 	string MimeType,
 	int Width,
 	int Height,
-	string? AltText
+	string? AltText,
+	Guid? GalleryId = null
 );
 
 public sealed record ProductSummaryDto(
 	Guid Id,
 	Guid? StoreId,
 	string Name,
+	string Slug,
 	string? BaseImageUrl,
 	decimal? MinPrice,
 	bool InStock,
+	bool IsActive,
+	CategoryDto? PrimaryCategory,
 	IReadOnlyList<CategoryDto> Categories,
 	IReadOnlyList<TagDto> Tags
 );
@@ -76,10 +83,13 @@ public sealed record ProductDetailsDto(
 	Guid Id,
 	Guid? StoreId,
 	string Name,
+	string Slug,
 	string? Description,
 	string? BaseImageUrl,
+	Dictionary<string, object?>? Attributes,
 	IReadOnlyList<SkuDto> Skus,
 	IReadOnlyList<MediaImageDto> Gallery,
+	CategoryDto? PrimaryCategory,
 	IReadOnlyList<CategoryDto> Categories,
 	IReadOnlyList<TagDto> Tags
 );
@@ -103,6 +113,44 @@ public sealed record ProductSearchRequest(
 	ProductSort Sort = ProductSort.Relevance,
 	int Page = 1,
 	int PageSize = 24
+);
+
+// Attribute Definition DTOs
+public sealed record AttributeDefinitionDto(
+	Guid Id,
+	string Code,
+	string Name,
+	string DataType,
+	bool IsRequired,
+	bool IsVariant,
+	string? Description,
+	string? Unit,
+	int DisplayOrder,
+	IReadOnlyList<string>? AllowedValues,
+	bool IsActive
+);
+
+public sealed record CreateAttributeDefinitionRequest(
+	string Code,
+	string Name,
+	string DataType = "string",
+	bool IsRequired = false,
+	bool IsVariant = false,
+	string? Description = null,
+	string? Unit = null,
+	int DisplayOrder = 0,
+	List<string>? AllowedValues = null
+);
+
+public sealed record UpdateAttributeDefinitionRequest(
+	string Name,
+	string DataType,
+	bool IsRequired,
+	bool IsVariant,
+	string? Description,
+	string? Unit,
+	int DisplayOrder,
+	List<string>? AllowedValues
 );
 
 public static class CatalogDtoJson

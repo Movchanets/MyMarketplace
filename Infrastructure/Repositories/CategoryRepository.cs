@@ -25,6 +25,21 @@ public class CategoryRepository : ICategoryRepository
 			.FirstOrDefaultAsync(c => c.Id == id);
 	}
 
+	/// <inheritdoc />
+	public async Task<Category?> GetByIdLightAsync(Guid id)
+	{
+		return await _db.Categories
+			.AsNoTracking()
+			.Include(c => c.ParentCategory)
+			.FirstOrDefaultAsync(c => c.Id == id);
+	}
+
+	/// <inheritdoc />
+	public async Task<bool> ExistsAsync(Guid id)
+	{
+		return await _db.Categories.AnyAsync(c => c.Id == id);
+	}
+
 	public async Task<Category?> GetBySlugAsync(string slug)
 	{
 		if (string.IsNullOrWhiteSpace(slug))

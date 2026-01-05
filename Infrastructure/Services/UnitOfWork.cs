@@ -19,7 +19,7 @@ public class UnitOfWork : IUnitOfWork
 
 	public Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default)
 	{
-	
+
 		return _db.Database.BeginTransactionAsync(cancellationToken);
 	}
 

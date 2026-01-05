@@ -173,4 +173,5 @@ public class AuthController : ControllerBase
 			return BadRequest(new { Message = "Failed to reset password.", Errors = new[] { ex.Message } });
 		}
 	}
+	
 }

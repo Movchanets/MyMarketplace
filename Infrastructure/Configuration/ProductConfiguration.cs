@@ -20,11 +20,21 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
             .IsRequired()
             .HasMaxLength(200);
 
+        builder.Property(p => p.Slug)
+            .IsRequired()
+            .HasMaxLength(250);
+
+        builder.HasIndex(p => p.Slug)
+            .IsUnique();
+
         builder.Property(p => p.Description)
             .HasMaxLength(2000);
 
         builder.Property(p => p.BaseImageUrl)
             .HasMaxLength(500);
+
+        builder.Property(p => p.Attributes)
+            .HasColumnType("jsonb");
 
         builder.Metadata.FindNavigation(nameof(Product.ProductTags))?
             .SetPropertyAccessMode(PropertyAccessMode.Field);

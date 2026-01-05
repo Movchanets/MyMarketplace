@@ -30,7 +30,7 @@ public sealed class UpdateCategoryCommandHandler : IRequestHandler<UpdateCategor
 		_cache = cache;
 		_logger = logger;
 	}
-
+	
 	public async Task<ServiceResponse> Handle(UpdateCategoryCommand request, CancellationToken cancellationToken)
 	{
 		_logger.LogInformation("Updating category {CategoryId}", request.Id);

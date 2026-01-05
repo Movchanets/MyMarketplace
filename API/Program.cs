@@ -92,7 +92,7 @@ try
     }
     else
     {
-      
+
         builder.Services.AddDbContext<AppDbContext>(opt =>
           opt.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
     }
@@ -112,6 +112,9 @@ try
     builder.Services.AddScoped<IProductRepository, ProductRepository>();
     builder.Services.AddScoped<ISkuRepository, SkuRepository>();
     builder.Services.AddScoped<ITagRepository, TagRepository>();
+    builder.Services.AddScoped<IProductGalleryRepository, ProductGalleryRepository>();
+    builder.Services.AddScoped<ISkuGalleryRepository, SkuGalleryRepository>();
+    builder.Services.AddScoped<IAttributeDefinitionRepository, AttributeDefinitionRepository>();
     builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
     builder.Services.AddIdentity<ApplicationUser, RoleEntity>(options =>
@@ -162,6 +165,8 @@ try
     // JWT Authentication
     builder.Services.AddScoped<ITokenService, TokenService>();
     builder.Services.AddScoped<IUserService, UserService>();
+    builder.Services.AddScoped<IRoleService, RoleService>();
+    builder.Services.AddScoped<IAdminUserService, AdminUserService>();
     builder.Services.AddScoped<IUserClaimsPrincipalFactory<ApplicationUser>, ClaimsPrincipalFactory>();
     // Permission-based dynamic policies (policies like "Permission:users.read")
     builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
@@ -241,7 +246,7 @@ try
     {
         await app.SeedDataAsync();
     }
-   
+
     Log.Information("Application started successfully");
     app.Run();
 }

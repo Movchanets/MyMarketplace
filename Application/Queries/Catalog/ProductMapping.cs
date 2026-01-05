@@ -10,10 +10,27 @@ internal static class ProductMapping
 	{
 		var categories = product.ProductCategories
 			.Where(pc => pc.Category is not null)
-			.Select(pc => pc.Category!)
-			.Select(c => new CategoryDto(c.Id, c.Name, c.Slug, c.Description, c.ParentCategoryId))
+			.Select(pc => new CategoryDto(
+				pc.Category!.Id,
+				pc.Category.Name,
+				pc.Category.Slug,
+				pc.Category.Description,
+				pc.Category.ParentCategoryId,
+				pc.IsPrimary))
 			.ToList()
 			.AsReadOnly();
+
+		var primaryCategory = product.ProductCategories
+			.Where(pc => pc.IsPrimary && pc.Category is not null)
+			.Select(pc => new CategoryDto(
+				pc.Category!.Id,
+				pc.Category.Name,
+				pc.Category.Slug,
+				pc.Category.Description,
+				pc.Category.ParentCategoryId,
+				true))
+			.FirstOrDefault()
+			?? categories.FirstOrDefault();
 
 		var tags = product.ProductTags
 			.Where(pt => pt.Tag is not null)
@@ -29,22 +46,22 @@ internal static class ProductMapping
 			product.Id,
 			product.StoreId,
 			product.Name,
+			product.Slug,
 			product.BaseImageUrl,
 			minPrice,
 			inStock,
+			product.IsActive,
+			primaryCategory,
 			categories,
 			tags);
 	}
 
 	public static ProductDetailsDto MapDetails(Product product, IFileStorage fileStorage)
 	{
+		var productAttributes = product.GetAttributesDictionary();
+
 		var skus = product.Skus
-			.Select(s => new SkuDto(
-				s.Id,
-				s.SkuCode,
-				s.Price,
-				s.StockQuantity,
-				CatalogDtoJson.AttributesToDictionary(s.Attributes)))
+			.Select(s => MapSku(s, productAttributes, fileStorage))
 			.ToList()
 			.AsReadOnly();
 
@@ -58,10 +75,27 @@ internal static class ProductMapping
 
 		var categories = product.ProductCategories
 			.Where(pc => pc.Category is not null)
-			.Select(pc => pc.Category!)
-			.Select(c => new CategoryDto(c.Id, c.Name, c.Slug, c.Description, c.ParentCategoryId))
+			.Select(pc => new CategoryDto(
+				pc.Category!.Id,
+				pc.Category.Name,
+				pc.Category.Slug,
+				pc.Category.Description,
+				pc.Category.ParentCategoryId,
+				pc.IsPrimary))
 			.ToList()
 			.AsReadOnly();
+
+		var primaryCategory = product.ProductCategories
+			.Where(pc => pc.IsPrimary && pc.Category is not null)
+			.Select(pc => new CategoryDto(
+				pc.Category!.Id,
+				pc.Category.Name,
+				pc.Category.Slug,
+				pc.Category.Description,
+				pc.Category.ParentCategoryId,
+				true))
+			.FirstOrDefault()
+			?? categories.FirstOrDefault();
 
 		var tags = product.ProductTags
 			.Where(pt => pt.Tag is not null)
@@ -74,17 +108,126 @@ internal static class ProductMapping
 			product.Id,
 			product.StoreId,
 			product.Name,
+			product.Slug,
 			product.Description,
 			product.BaseImageUrl,
+			productAttributes,
 			skus,
 			gallery,
+			primaryCategory,
 			categories,
 			tags);
+	}
+
+	/// <summary>
+	/// Maps SKU entity to DTO, merging product-level attributes with SKU-level attributes.
+	/// SKU attributes override product attributes with the same key.
+	/// </summary>
+	private static SkuDto MapSku(SkuEntity sku, Dictionary<string, object?>? productAttributes, IFileStorage fileStorage)
+	{
+		var skuAttributes = CatalogDtoJson.AttributesToDictionary(sku.Attributes);
+		var mergedAttributes = MergeAttributes(productAttributes, skuAttributes);
+
+		// Map SKU gallery for visual variants
+		var gallery = sku.Gallery
+			.OrderBy(g => g.DisplayOrder)
+			.Select(g => MapSkuGalleryImage(g, fileStorage))
+			.Where(dto => dto is not null)
+			.Cast<MediaImageDto>()
+			.ToList()
+			.AsReadOnly();
+
+		return new SkuDto(
+			sku.Id,
+			sku.SkuCode,
+			sku.Price,
+			sku.StockQuantity,
+			skuAttributes,
+			mergedAttributes,
+			gallery.Count > 0 ? gallery : null
+		);
+	}
+
+	/// <summary>
+	/// Merges product-level and SKU-level attributes.
+	/// SKU attributes take precedence over product attributes.
+	/// </summary>
+	private static Dictionary<string, object?>? MergeAttributes(
+		Dictionary<string, object?>? productAttributes,
+		Dictionary<string, object?>? skuAttributes)
+	{
+		// If both are null or empty, return null
+		if ((productAttributes is null || productAttributes.Count == 0) &&
+			(skuAttributes is null || skuAttributes.Count == 0))
+		{
+			return null;
+		}
+
+		// Start with product attributes (base)
+		var merged = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+
+		if (productAttributes is not null)
+		{
+			foreach (var kvp in productAttributes)
+			{
+				merged[kvp.Key] = kvp.Value;
+			}
+		}
+
+		// Override with SKU attributes (variant-specific)
+		if (skuAttributes is not null)
+		{
+			foreach (var kvp in skuAttributes)
+			{
+				merged[kvp.Key] = kvp.Value;
+			}
+		}
+
+		return merged.Count > 0 ? merged : null;
 	}
 
 	private static MediaImageDto? MapGalleryImage(ProductGallery galleryItem, IFileStorage fileStorage)
 	{
 		var media = galleryItem.MediaImage;
+		if (media is null)
+		{
+			return null;
+		}
+
+		var url = fileStorage.GetPublicUrl(media.StorageKey);
+		return new MediaImageDto(
+			media.Id,
+			media.StorageKey,
+			url,
+			media.MimeType,
+			media.Width,
+			media.Height,
+			media.AltText,
+			galleryItem.Id); // Include GalleryId
+	}
+
+	private static MediaImageDto? MapSkuGalleryImage(SkuGallery galleryItem, IFileStorage fileStorage)
+	{
+		var media = galleryItem.MediaImage;
+		if (media is null)
+		{
+			return null;
+		}
+
+		var url = fileStorage.GetPublicUrl(media.StorageKey);
+		return new MediaImageDto(
+			media.Id,
+			media.StorageKey,
+			url,
+			media.MimeType,
+			media.Width,
+			media.Height,
+			media.AltText,
+			galleryItem.Id); // Include GalleryId for SKU
+	}
+
+	private static MediaImageDto? MapGalleryImage(MediaImage? media, IFileStorage fileStorage)
+	{
 		if (media is null)
 		{
 			return null;

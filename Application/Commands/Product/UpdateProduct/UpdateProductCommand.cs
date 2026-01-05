@@ -1,4 +1,5 @@
 using Application.DTOs;
+using Domain.Interfaces.Repositories;
 using MediatR;
 
 namespace Application.Commands.Product.UpdateProduct;
@@ -9,7 +10,10 @@ public sealed record UpdateProductCommand(
 	string Name,
 	string? Description,
 	List<Guid> CategoryIds,
-	List<Guid>? TagIds = null
+	List<Guid>? TagIds = null,
+	Guid? PrimaryCategoryId = null,
+	List<GalleryImageUploadRequest>? NewGalleryImages = null,
+	List<Guid>? GalleryIdsToDelete = null
 ) : IRequest<ServiceResponse>
 {
 	public UpdateProductCommand(

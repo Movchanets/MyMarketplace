@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { storesAdminApi, type StoreAdminDto } from '../../api/storeApi'
 
@@ -19,7 +19,7 @@ export default function StoresManagement() {
     return stores.slice(start, start + ITEMS_PER_PAGE)
   }, [stores, currentPage])
 
-  const fetchStores = async () => {
+  const fetchStores = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
@@ -35,11 +35,11 @@ export default function StoresManagement() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [t])
 
   useEffect(() => {
     fetchStores()
-  }, [])
+  }, [fetchStores])
 
   const handleVerify = async (id: string) => {
     setActionLoading(id)
