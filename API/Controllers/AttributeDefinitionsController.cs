@@ -4,6 +4,7 @@ using Application.Queries.AttributeDefinitions;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OutputCaching;
 
 namespace API.Controllers;
 
@@ -23,6 +24,7 @@ public class AttributeDefinitionsController : ControllerBase
 	/// </summary>
 	[HttpGet]
 	[AllowAnonymous]
+	[OutputCache(PolicyName = "AttributeDefinitions")]
 	public async Task<IActionResult> GetAll([FromQuery] bool includeInactive = false)
 	{
 		var result = await _mediator.Send(new GetAllAttributeDefinitionsQuery(includeInactive));

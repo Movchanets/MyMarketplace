@@ -8,6 +8,7 @@ using Application.Queries.Store.GetStoreBySlug;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OutputCaching;
 using System.Security.Claims;
 
 namespace API.Controllers;
@@ -62,6 +63,7 @@ public class StoresController : ControllerBase
 	/// </summary>
 	[HttpGet("slug/{slug}")]
 	[AllowAnonymous]
+	[OutputCache(PolicyName = "Stores")]
 	public async Task<IActionResult> GetBySlug([FromRoute] string slug)
 	{
 		var result = await _mediator.Send(new GetStoreBySlugQuery(slug));

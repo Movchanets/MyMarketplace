@@ -1,3 +1,4 @@
+using Application.Behaviors;
 using Application.DTOs;
 using Domain.Interfaces.Repositories;
 using MediatR;
@@ -14,8 +15,10 @@ public sealed record UpdateProductCommand(
 	Guid? PrimaryCategoryId = null,
 	List<GalleryImageUploadRequest>? NewGalleryImages = null,
 	List<Guid>? GalleryIdsToDelete = null
-) : IRequest<ServiceResponse>
+) : IRequest<ServiceResponse>, ICacheInvalidatingCommand
 {
+	public IEnumerable<string> CacheTags => ["products"];
+
 	public UpdateProductCommand(
 		Guid UserId,
 		Guid ProductId,

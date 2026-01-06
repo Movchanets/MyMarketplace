@@ -23,6 +23,7 @@ using Domain.Interfaces.Repositories;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OutputCaching;
 
 namespace API.Controllers;
 
@@ -52,6 +53,7 @@ public sealed class ProductsController : ControllerBase
 	/// </summary>
 	[HttpGet]
 	[AllowAnonymous]
+	[OutputCache(PolicyName = "Products")]
 	public async Task<IActionResult> GetAll()
 	{
 		var result = await _mediator.Send(new GetProductsQuery());
@@ -64,6 +66,7 @@ public sealed class ProductsController : ControllerBase
 	/// </summary>
 	[HttpGet("{id:guid}")]
 	[AllowAnonymous]
+	[OutputCache(PolicyName = "ProductDetails")]
 	public async Task<IActionResult> GetById([FromRoute] Guid id)
 	{
 		var result = await _mediator.Send(new GetProductByIdQuery(id));
@@ -76,6 +79,7 @@ public sealed class ProductsController : ControllerBase
 	/// </summary>
 	[HttpGet("s/{productSlug}")]
 	[AllowAnonymous]
+	[OutputCache(PolicyName = "ProductDetails")]
 	public async Task<IActionResult> GetBySlug([FromRoute] string productSlug, [FromQuery] string? sku = null)
 	{
 		var result = await _mediator.Send(new GetProductBySlugQuery(productSlug, sku));
@@ -88,6 +92,7 @@ public sealed class ProductsController : ControllerBase
 	/// </summary>
 	[HttpGet("by-sku/{skuCode}")]
 	[AllowAnonymous]
+	[OutputCache(PolicyName = "ProductDetails")]
 	public async Task<IActionResult> GetBySkuCode([FromRoute] string skuCode)
 	{
 		var result = await _mediator.Send(new GetProductBySkuCodeQuery(skuCode));
@@ -100,6 +105,7 @@ public sealed class ProductsController : ControllerBase
 	/// </summary>
 	[HttpGet("by-category/{categoryId:guid}")]
 	[AllowAnonymous]
+	[OutputCache(PolicyName = "ProductsByCategory")]
 	public async Task<IActionResult> GetByCategory([FromRoute] Guid categoryId)
 	{
 		var result = await _mediator.Send(new GetProductsByCategoryIdQuery(categoryId));
@@ -199,7 +205,7 @@ public sealed class ProductsController : ControllerBase
 	[HttpPut("{productId:guid}")]
 	[Authorize(Policy = "Permission:products.update.self")]
 	public async Task<IActionResult> Update(
-		[FromRoute] Guid productId, 
+		[FromRoute] Guid productId,
 		[FromBody] UpdateProductRequest request)
 	{
 		var idClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -238,7 +244,7 @@ public sealed class ProductsController : ControllerBase
 	[HttpPut("{productId:guid}/with-gallery")]
 	[Authorize(Policy = "Permission:products.update.self")]
 	public async Task<IActionResult> UpdateWithGallery(
-		[FromRoute] Guid productId, 
+		[FromRoute] Guid productId,
 		[FromForm] UpdateProductWithGalleryRequest request,
 		[FromForm] List<IFormFile>? newGalleryImages = null)
 	{

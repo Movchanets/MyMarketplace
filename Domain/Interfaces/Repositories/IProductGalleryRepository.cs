@@ -31,17 +31,17 @@ public interface IProductGalleryRepository
 	Task<IEnumerable<ProductGallery>> GetByProductIdAsync(Guid productId);
 	void Add(ProductGallery galleryItem);
 	void Delete(ProductGallery galleryItem);
-	
+
 	/// <summary>
 	/// Завантажує зображення у сховище, створює MediaImage і додає до галереї продукту
 	/// </summary>
 	Task<GalleryImageResult> UploadAndAddAsync(Product product, GalleryImageUploadRequest request);
-	
+
 	/// <summary>
 	/// Видаляє зображення зі сховища і з бази
 	/// </summary>
 	Task DeleteWithFileAsync(ProductGallery galleryItem);
-	
+
 	/// <summary>
 	/// Отримує публічний URL для storage key
 	/// </summary>

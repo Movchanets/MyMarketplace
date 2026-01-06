@@ -33,6 +33,9 @@ try
 
     var builder = WebApplication.CreateBuilder(args);
 
+    // Add Aspire service defaults (OpenTelemetry, Health Checks, Service Discovery)
+    builder.AddServiceDefaults();
+
     // Налаштування Serilog з конфігурації
     builder.Host.UseSerilog((context, services, configuration) => configuration
         .ReadFrom.Configuration(context.Configuration)
@@ -162,6 +165,8 @@ try
     });
     // Memory cache for rate-limiting
     builder.Services.AddMemoryCache();
+    // Redis distributed cache and Output Cache (uses Aspire if available)
+    builder.AddRedisCache();
     // JWT Authentication
     builder.Services.AddScoped<ITokenService, TokenService>();
     builder.Services.AddScoped<IUserService, UserService>();
@@ -216,6 +221,34 @@ try
 
     if (app.Environment.IsDevelopment())
     {
+        // Виводимо конфігурацію при старті в dev режимі
+        var config = app.Configuration;
+        var redisEnabled = config.GetValue<bool>("Redis:Enabled");
+        var storageProvider = config["Storage:Provider"] ?? "local";
+        var dbConnection = config.GetConnectionString("DefaultConnection");
+        var dbHost = "unknown";
+        if (!string.IsNullOrEmpty(dbConnection))
+        {
+            var hostMatch = System.Text.RegularExpressions.Regex.Match(dbConnection, @"Host=([^;]+)");
+            dbHost = hostMatch.Success ? hostMatch.Groups[1].Value : "configured";
+        }
+
+        Log.Information("========== Development Configuration ==========");
+        Log.Information("Redis Caching: {RedisEnabled}", redisEnabled ? "ENABLED" : "DISABLED");
+        if (redisEnabled)
+        {
+            // Check Aspire connection string first, then fallback to config
+            var aspireRedis = config.GetConnectionString("redis");
+            var configRedis = config["Redis:ConnectionString"] ?? "localhost:6379";
+            var actualRedis = aspireRedis ?? configRedis;
+            Log.Information("Redis Connection: {RedisConnection} (Aspire: {AspireProvided})",
+                actualRedis,
+                aspireRedis != null ? "YES" : "NO");
+        }
+        Log.Information("Storage Provider: {StorageProvider}", storageProvider.ToUpper());
+        Log.Information("Database Host: {DbHost}", dbHost);
+        Log.Information("CORS Origins: {CorsOrigins}", config["AllowedCorsOrigins"] ?? "not configured");
+        Log.Information("===============================================");
 
         app.UseStaticFiles();
         app.MapOpenApi();
@@ -235,11 +268,15 @@ try
     }
     app.UseAuthentication();
     app.UseAuthorization();
-
+    // Output caching middleware (must be after authorization)
+    app.UseOutputCache();
 
 
     app.UseCors("AllowFrontend");
     app.MapControllers();
+
+    // Map Aspire default endpoints (health, alive)
+    app.MapDefaultEndpoints();
 
     // Skip seeding in Testing environment (handled by TestWebApplicationFactory)
     if (!app.Environment.IsEnvironment("Testing"))

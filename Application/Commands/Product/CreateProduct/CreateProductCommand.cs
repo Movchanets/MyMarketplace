@@ -1,3 +1,4 @@
+using Application.Behaviors;
 using Application.DTOs;
 using MediatR;
 
@@ -12,8 +13,10 @@ public sealed record CreateProductCommand(
 	int StockQuantity,
 	Dictionary<string, object?>? Attributes = null,
 	List<Guid>? TagIds = null
-) : IRequest<ServiceResponse<Guid>>
+) : IRequest<ServiceResponse<Guid>>, ICacheInvalidatingCommand
 {
+	public IEnumerable<string> CacheTags => ["products"];
+
 	public CreateProductCommand(
 		Guid UserId,
 		string Name,

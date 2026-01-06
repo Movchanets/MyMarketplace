@@ -11,12 +11,12 @@ public interface ISkuGalleryRepository
 	Task<IEnumerable<SkuGallery>> GetBySkuIdAsync(Guid skuId);
 	void Add(SkuGallery galleryItem);
 	void Delete(SkuGallery galleryItem);
-	
+
 	/// <summary>
 	/// Видаляє зображення зі сховища і з бази
 	/// </summary>
 	Task DeleteWithFileAsync(SkuGallery galleryItem);
-	
+
 	/// <summary>
 	/// Отримує публічний URL для storage key
 	/// </summary>

@@ -154,8 +154,8 @@ public sealed class UpdateProductCommandHandler : IRequestHandler<UpdateProductC
                {
                   await _galleryRepository.DeleteWithFileAsync(galleryItem);
                   product.RemoveGalleryItem(galleryId);
-                  
-                  _logger.LogInformation("Removed gallery item {GalleryId} from product {ProductId}", 
+
+                  _logger.LogInformation("Removed gallery item {GalleryId} from product {ProductId}",
                      galleryId, product.Id);
                }
             }
@@ -164,21 +164,21 @@ public sealed class UpdateProductCommandHandler : IRequestHandler<UpdateProductC
          // === UPDATE GALLERY (ADD NEW IMAGES) ===
          if (request.NewGalleryImages is { Count: > 0 })
          {
-            var currentMaxOrder = product.Gallery.Any() 
-               ? product.Gallery.Max(g => g.DisplayOrder) 
+            var currentMaxOrder = product.Gallery.Any()
+               ? product.Gallery.Max(g => g.DisplayOrder)
                : -1;
 
             foreach (var imageUpload in request.NewGalleryImages)
             {
                currentMaxOrder++;
-               
+
                var uploadRequest = new GalleryImageUploadRequest(
                   imageUpload.FileStream,
                   imageUpload.FileName,
                   imageUpload.ContentType,
                   currentMaxOrder
                );
-               
+
                var result = await _galleryRepository.UploadAndAddAsync(product, uploadRequest);
 
                // Set as base image if product doesn't have one
@@ -187,7 +187,7 @@ public sealed class UpdateProductCommandHandler : IRequestHandler<UpdateProductC
                   product.UpdateBaseImage(result.PublicUrl);
                }
 
-               _logger.LogInformation("Added gallery image {MediaImageId} to product {ProductId}", 
+               _logger.LogInformation("Added gallery image {MediaImageId} to product {ProductId}",
                   result.MediaImageId, product.Id);
             }
          }
