@@ -165,6 +165,7 @@ try
     });
     // Memory cache for rate-limiting
     builder.Services.AddMemoryCache();
+    builder.Services.AddRateLimiterFromConfiguration(builder.Configuration);
     // Redis distributed cache and Output Cache (uses Aspire if available)
     builder.AddRedisCache();
     // JWT Authentication
@@ -268,6 +269,7 @@ try
     }
     app.UseAuthentication();
     app.UseAuthorization();
+    app.UseRateLimiter();
     // Output caching middleware (must be after authorization)
     app.UseOutputCache();
 

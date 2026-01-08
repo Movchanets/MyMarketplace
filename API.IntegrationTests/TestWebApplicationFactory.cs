@@ -59,7 +59,9 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>, IAsyncL
 				["JwtSettings:Issuer"] = "TestIssuer",
 				["JwtSettings:Audience"] = "TestAudience",
 				["JwtSettings:AccessTokenExpirationMinutes"] = "60",
-				["ConnectionStrings:NeonConnection"] = _postgresContainer.GetConnectionString()
+				["ConnectionStrings:NeonConnection"] = _postgresContainer.GetConnectionString(),
+				// Disable rate limiting for most tests to avoid interference
+				["RateLimiting:Enabled"] = "false"
 			};
 			cfg.AddInMemoryCollection(dict);
 		});
