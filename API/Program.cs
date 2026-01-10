@@ -242,8 +242,21 @@ try
         });
     }
 
-    // CORS must be before Authentication/Authorization to handle preflight OPTIONS requests
+    // CORS must be FIRST to ensure headers are added even on errors/exceptions
     app.UseCors("AllowFrontend");
+
+    // Global exception handler (after CORS so error responses include CORS headers)
+    app.UseExceptionHandler(errorApp =>
+    {
+        errorApp.Run(async context =>
+        {
+            context.Response.StatusCode = 500;
+            context.Response.ContentType = "application/json";
+            var error = context.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>();
+            Log.Error(error?.Error, "Unhandled exception");
+            await context.Response.WriteAsync("{\"error\":\"An unexpected error occurred\"}");
+        });
+    });
 
     app.UseAuthentication();
     app.UseAuthorization();
