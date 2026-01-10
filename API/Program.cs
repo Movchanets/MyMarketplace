@@ -113,6 +113,7 @@ try
             .Where(o => o.Length > 0)
             .Distinct()
             .ToArray();
+        Console.WriteLine("Allowed CORS Origins: " + string.Join(", ", allowedOrigins));
     }
     else
     {
