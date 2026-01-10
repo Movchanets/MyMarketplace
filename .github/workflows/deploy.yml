@@ -81,7 +81,7 @@ jobs:
               --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
               --environment ${{ secrets.AZURE_CONTAINERAPPS_ENVIRONMENT_NAME }} \
               --image "$IMAGE_NAME" \
-              --target-port 8080 \
+              --target-port 80 \
               --ingress external \
               --registry-server ghcr.io \
               --registry-username "$ACTOR_LC" \
