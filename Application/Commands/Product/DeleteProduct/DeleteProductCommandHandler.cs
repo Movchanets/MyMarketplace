@@ -10,17 +10,20 @@ public sealed class DeleteProductCommandHandler : IRequestHandler<DeleteProductC
 {
 	private readonly IProductRepository _productRepository;
 	private readonly IStoreRepository _storeRepository;
+	private readonly IUserRepository _userRepository;
 	private readonly IUnitOfWork _unitOfWork;
 	private readonly ILogger<DeleteProductCommandHandler> _logger;
 
 	public DeleteProductCommandHandler(
 		IProductRepository productRepository,
 		IStoreRepository storeRepository,
+		IUserRepository userRepository,
 		IUnitOfWork unitOfWork,
 		ILogger<DeleteProductCommandHandler> logger)
 	{
 		_productRepository = productRepository;
 		_storeRepository = storeRepository;
+		_userRepository = userRepository;
 		_unitOfWork = unitOfWork;
 		_logger = logger;
 	}
@@ -31,10 +34,18 @@ public sealed class DeleteProductCommandHandler : IRequestHandler<DeleteProductC
 
 		try
 		{
-			var store = await _storeRepository.GetByUserIdAsync(request.UserId);
+			// Конвертувати IdentityUserId в DomainUserId
+			var domainUser = await _userRepository.GetByIdentityUserIdAsync(request.UserId);
+			if (domainUser is null)
+			{
+				_logger.LogWarning("Domain user not found for IdentityUserId {UserId}", request.UserId);
+				return new ServiceResponse(false, "User not found");
+			}
+
+			var store = await _storeRepository.GetByUserIdAsync(domainUser.Id);
 			if (store == null)
 			{
-				_logger.LogWarning("Store for user {UserId} not found", request.UserId);
+				_logger.LogWarning("Store for user {UserId} not found", domainUser.Id);
 				return new ServiceResponse(false, "Store not found");
 			}
 

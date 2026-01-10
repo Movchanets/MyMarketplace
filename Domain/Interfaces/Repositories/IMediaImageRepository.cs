@@ -30,6 +30,12 @@ public interface IMediaImageRepository
 	void Add(MediaImage mediaImage);
 
 	/// <summary>
+	/// Додає нове зображення до бази даних асинхронно.
+	/// </summary>
+	/// <param name="mediaImage">Зображення для додавання</param>
+	Task AddAsync(MediaImage mediaImage);
+
+	/// <summary>
 	/// Оновлює існуюче зображення в базі даних.
 	/// </summary>
 	/// <param name="mediaImage">Зображення для оновлення</param>

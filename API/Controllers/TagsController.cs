@@ -7,6 +7,7 @@ using Application.Queries.Catalog.GetTags;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OutputCaching;
 
 namespace API.Controllers;
 
@@ -27,6 +28,7 @@ public sealed class TagsController : ControllerBase
 	/// </summary>
 	[HttpGet]
 	[AllowAnonymous]
+	[OutputCache(PolicyName = "Tags")]
 	public async Task<IActionResult> GetAll()
 	{
 		var result = await _mediator.Send(new GetTagsQuery());
@@ -39,6 +41,7 @@ public sealed class TagsController : ControllerBase
 	/// </summary>
 	[HttpGet("{id:guid}")]
 	[AllowAnonymous]
+	[OutputCache(PolicyName = "Tags")]
 	public async Task<IActionResult> GetById([FromRoute] Guid id)
 	{
 		var result = await _mediator.Send(new GetTagByIdQuery(id));
@@ -51,6 +54,7 @@ public sealed class TagsController : ControllerBase
 	/// </summary>
 	[HttpGet("slug/{slug}")]
 	[AllowAnonymous]
+	[OutputCache(PolicyName = "Tags")]
 	public async Task<IActionResult> GetBySlug([FromRoute] string slug)
 	{
 		var result = await _mediator.Send(new GetTagBySlugQuery(slug));

@@ -50,6 +50,10 @@ export default function Cabinet() {
                   <span>🏪</span>
                   {t('menu.myStore')}
                 </NavLink>
+                <NavLink to="/cabinet/products" className={linkClass}>
+                  <span>📦</span>
+                  {t('myProducts.title')}
+                </NavLink>
                 <NavLink to="/cabinet/user/settings?tab=profile" className={linkClass}>
                   <span>⚙️</span>
                   {t('menu.settings')}

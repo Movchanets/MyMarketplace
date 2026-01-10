@@ -23,6 +23,74 @@ namespace Infrastructure.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Domain.Entities.AttributeDefinition", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<JsonDocument>("AllowedValues")
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DataType")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("string");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int>("DisplayOrder")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<bool>("IsRequired")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<bool>("IsVariant")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Unit")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.ToTable("AttributeDefinitions", (string)null);
+                });
+
             modelBuilder.Entity("Domain.Entities.Category", b =>
                 {
                     b.Property<Guid>("Id")
@@ -102,6 +170,9 @@ namespace Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<JsonDocument>("Attributes")
+                        .HasColumnType("jsonb");
+
                     b.Property<string>("BaseImageUrl")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
@@ -113,10 +184,18 @@ namespace Infrastructure.Migrations
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)");
 
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)");
 
                     b.Property<Guid?>("StoreId")
                         .HasColumnType("uuid");
@@ -125,6 +204,9 @@ namespace Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Slug")
+                        .IsUnique();
 
                     b.HasIndex("StoreId");
 
@@ -143,6 +225,11 @@ namespace Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<bool>("IsPrimary")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
                     b.Property<Guid>("ProductId")
                         .HasColumnType("uuid");
 
@@ -155,6 +242,9 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("ProductId", "CategoryId")
                         .IsUnique();
+
+                    b.HasIndex("ProductId", "IsPrimary")
+                        .HasFilter("\"IsPrimary\" = true");
 
                     b.ToTable("ProductCategories", (string)null);
                 });
@@ -249,10 +339,42 @@ namespace Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("SkuCode");
+
                     b.HasIndex("ProductId", "SkuCode")
                         .IsUnique();
 
                     b.ToTable("Skus", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Entities.SkuGallery", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("MediaImageId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("SkuId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MediaImageId");
+
+                    b.HasIndex("SkuId", "DisplayOrder");
+
+                    b.ToTable("SkuGalleries", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Entities.Store", b =>
@@ -686,6 +808,25 @@ namespace Infrastructure.Migrations
                     b.Navigation("Product");
                 });
 
+            modelBuilder.Entity("Domain.Entities.SkuGallery", b =>
+                {
+                    b.HasOne("Domain.Entities.MediaImage", "MediaImage")
+                        .WithMany()
+                        .HasForeignKey("MediaImageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.SkuEntity", "Sku")
+                        .WithMany("Gallery")
+                        .HasForeignKey("SkuId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("MediaImage");
+
+                    b.Navigation("Sku");
+                });
+
             modelBuilder.Entity("Domain.Entities.Store", b =>
                 {
                     b.HasOne("Domain.Entities.User", "User")
@@ -788,6 +929,11 @@ namespace Infrastructure.Migrations
                     b.Navigation("ProductTags");
 
                     b.Navigation("Skus");
+                });
+
+            modelBuilder.Entity("Domain.Entities.SkuEntity", b =>
+                {
+                    b.Navigation("Gallery");
                 });
 
             modelBuilder.Entity("Domain.Entities.Store", b =>

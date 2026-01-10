@@ -170,7 +170,7 @@ public class User : BaseEntity<Guid>
     /// </summary>
     public void RemoveAvatar()
     {
-
+        Avatar = null;
         MarkAsUpdated();
     }
 }

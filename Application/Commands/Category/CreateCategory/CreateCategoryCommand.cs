@@ -1,3 +1,4 @@
+using Application.Behaviors;
 using Application.DTOs;
 using MediatR;
 
@@ -7,4 +8,7 @@ public sealed record CreateCategoryCommand(
 	string Name,
 	string? Description = null,
 	Guid? ParentCategoryId = null
-) : IRequest<ServiceResponse<Guid>>;
+) : IRequest<ServiceResponse<Guid>>, ICacheInvalidatingCommand
+{
+	public IEnumerable<string> CacheTags => ["categories"];
+}

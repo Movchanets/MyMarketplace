@@ -4,9 +4,11 @@ using Application.Commands.Store.UpdateStore;
 using Application.Commands.Store.VerifyStore;
 using Application.Queries.Store.GetAllStores;
 using Application.Queries.Store.GetMyStore;
+using Application.Queries.Store.GetStoreBySlug;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OutputCaching;
 using System.Security.Claims;
 
 namespace API.Controllers;
@@ -53,6 +55,22 @@ public class StoresController : ControllerBase
 		}
 
 		var result = await _mediator.Send(new GetMyStoreQuery(userId.Value));
+		return Ok(result);
+	}
+
+	/// <summary>
+	/// Get store by slug (public)
+	/// </summary>
+	[HttpGet("slug/{slug}")]
+	[AllowAnonymous]
+	[OutputCache(PolicyName = "Stores")]
+	public async Task<IActionResult> GetBySlug([FromRoute] string slug)
+	{
+		var result = await _mediator.Send(new GetStoreBySlugQuery(slug));
+		if (!result.IsSuccess || result.Payload is null)
+		{
+			return NotFound(result);
+		}
 		return Ok(result);
 	}
 

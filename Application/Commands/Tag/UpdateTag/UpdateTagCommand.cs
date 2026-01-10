@@ -1,3 +1,4 @@
+using Application.Behaviors;
 using Application.DTOs;
 using MediatR;
 
@@ -7,4 +8,7 @@ public sealed record UpdateTagCommand(
 	Guid Id,
 	string Name,
 	string? Description = null
-) : IRequest<ServiceResponse>;
+) : IRequest<ServiceResponse>, ICacheInvalidatingCommand
+{
+	public IEnumerable<string> CacheTags => ["tags"];
+}

@@ -22,3 +22,4 @@ infra/terraform/terraform.tfstate.backup
 infra/terraform/*.tfvars
 Front/.env
 test-output.txt
+infra/terraform/terraform.tfstate.1767963716.backup

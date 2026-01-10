@@ -43,6 +43,13 @@ public class StoreRepository : IStoreRepository
 		return await _db.Stores
 			.Include(s => s.User)
 			.Include(s => s.Products)
+				.ThenInclude(p => p.Skus)
+			.Include(s => s.Products)
+				.ThenInclude(p => p.ProductCategories)
+					.ThenInclude(pc => pc.Category)
+			.Include(s => s.Products)
+				.ThenInclude(p => p.ProductTags)
+					.ThenInclude(pt => pt.Tag)
 			.FirstOrDefaultAsync(s => s.Slug == normalized);
 	}
 

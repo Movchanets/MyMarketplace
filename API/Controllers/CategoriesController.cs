@@ -7,6 +7,7 @@ using Application.Queries.Catalog.GetCategoryBySlug;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OutputCaching;
 
 namespace API.Controllers;
 
@@ -27,6 +28,7 @@ public sealed class CategoriesController : ControllerBase
 	/// </summary>
 	[HttpGet]
 	[AllowAnonymous]
+	[OutputCache(PolicyName = "Categories")]
 	public async Task<IActionResult> GetAll([FromQuery] Guid? parentCategoryId = null, [FromQuery] bool topLevelOnly = false)
 	{
 		var result = await _mediator.Send(new GetCategoriesQuery(parentCategoryId, topLevelOnly));
@@ -39,6 +41,7 @@ public sealed class CategoriesController : ControllerBase
 	/// </summary>
 	[HttpGet("{id:guid}")]
 	[AllowAnonymous]
+	[OutputCache(PolicyName = "Categories")]
 	public async Task<IActionResult> GetById([FromRoute] Guid id)
 	{
 		var result = await _mediator.Send(new GetCategoryByIdQuery(id));
@@ -51,6 +54,7 @@ public sealed class CategoriesController : ControllerBase
 	/// </summary>
 	[HttpGet("slug/{slug}")]
 	[AllowAnonymous]
+	[OutputCache(PolicyName = "Categories")]
 	public async Task<IActionResult> GetBySlug([FromRoute] string slug)
 	{
 		var result = await _mediator.Send(new GetCategoryBySlugQuery(slug));

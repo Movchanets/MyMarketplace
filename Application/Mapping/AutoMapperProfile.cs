@@ -74,7 +74,9 @@ public class AutoMapperProfile : Profile
             .ForCtorParam("SkuCode", opt => opt.MapFrom(src => src.SkuCode))
             .ForCtorParam("Price", opt => opt.MapFrom(src => src.Price))
             .ForCtorParam("StockQuantity", opt => opt.MapFrom(src => src.StockQuantity))
-            .ForCtorParam("Attributes", opt => opt.MapFrom(src => DeserializeAttributes(src.Attributes)));
+            .ForCtorParam("Attributes", opt => opt.MapFrom(src => DeserializeAttributes(src.Attributes)))
+            .ForCtorParam("MergedAttributes", opt => opt.MapFrom(src => (Dictionary<string, object?>?)null))
+            .ForCtorParam("Gallery", opt => opt.MapFrom(src => (IReadOnlyList<MediaImageDto>?)null));
 
         CreateMap<Product, ProductSummaryDto>()
             .ForCtorParam("Id", opt => opt.MapFrom(src => src.Id))

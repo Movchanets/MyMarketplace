@@ -3,7 +3,7 @@ namespace Domain.Entities;
 public class ProductTag : BaseEntity<Guid>
 {
 	public Guid ProductId { get; private set; }
-	public virtual Product? Product { get; private set; }
+	public virtual Product? Product { get; internal set; }
 	public Guid TagId { get; private set; }
 	public virtual Tag? Tag { get; private set; }
 
@@ -39,8 +39,19 @@ public class ProductTag : BaseEntity<Guid>
 		}
 
 		var productTag = new ProductTag(product.Id, tag.Id);
-		productTag.Attach(product, tag);
+		// Only attach Product reference - Tag reference would cause EF tracking conflicts
+		// when tag is loaded with AsNoTracking
+		productTag.Product = product;
 		return productTag;
+	}
+
+	/// <summary>
+	/// Creates a ProductTag link using only IDs, without loading the Tag entity.
+	/// Use this to avoid EF tracking conflicts when updating product tags.
+	/// </summary>
+	public static ProductTag CreateById(Guid productId, Guid tagId)
+	{
+		return new ProductTag(productId, tagId);
 	}
 
 	public void Attach(Product product, Tag tag)

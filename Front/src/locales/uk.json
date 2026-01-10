@@ -188,7 +188,27 @@
   "common": {
     "email": "E-mail",
     "empty": "порожньо",
-    "user": "Користувач"
+    "user": "Користувач",
+    "save": "Зберегти",
+    "saving": "Збереження...",
+    "uploading": "Завантаження...",
+    "cancel": "Скасувати",
+    "delete": "Видалити",
+    "dismiss": "Закрити",
+    "backToHome": "На головну",
+    "yes": "Так",
+    "no": "Ні",
+    "search": "Пошук",
+    "no_results": "Нічого не знайдено"
+  },
+
+  "attribute_selector": {
+    "select_attribute": "Оберіть атрибут",
+    "select_value": "Оберіть значення",
+    "variant_attributes": "Варіантні атрибути",
+    "variant_hint": "Варіантні атрибути визначають унікальність SKU (наприклад, розмір, колір).",
+    "variant_marker": "Варіантний",
+    "required_marker": "Обов'язковий"
   },
 
   "notfound": {
@@ -198,11 +218,47 @@
     "go_back": "Назад"
   },
 
+  "storePage": {
+    "notFound": "Магазин не знайдено",
+    "notFoundHint": "Магазин не існує або ще не верифікований.",
+    "verified": "Верифіковано",
+    "productCount": "{{count}} товарів",
+    "productCount_one": "{{count}} товар",
+    "productCount_few": "{{count}} товари",
+    "memberSince": "На платформі з {{date}}",
+    "products": "Товари",
+    "noProducts": "Товарів поки немає",
+    "noProductsHint": "Цей магазин ще не додав жодного товару."
+  },
+
+  "productCard": {
+    "inStock": "В наявності",
+    "outOfStock": "Немає в наявності",
+    "addToCart": "До кошика",
+    "addToWishlist": "До списку бажань"
+  },
+
+  "productPage": {
+    "notFound": "Товар не знайдено",
+    "notFoundHint": "Можливо, товар було видалено або посилання невірне.",
+    "inStock": "В наявності",
+    "outOfStock": "Немає в наявності",
+    "quantity": "Кількість",
+    "addToCart": "До кошика",
+    "buyNow": "Купити зараз",
+    "description": "Опис",
+    "specifications": "Характеристики",
+    "categories": "Категорії"
+  },
+
   "errors": {
     "access_denied": "Доступ заборонено",
     "insufficient_permissions": "У вас недостатньо прав для перегляду цієї сторінки.",
     "fetch_failed": "Помилка завантаження даних",
-    "save_failed": "Помилка збереження"
+    "save_failed": "Помилка збереження",
+    "delete_failed": "Помилка видалення",
+    "update_failed": "Помилка оновлення",
+    "upload_failed": "Помилка завантаження"
   },
 
   "profile": {
@@ -231,7 +287,10 @@
       "dashboard": "Дашборд",
       "categories": "Категорії",
       "tags": "Теги",
-      "stores": "Магазини"
+      "attributes": "Атрибути",
+      "stores": "Магазини",
+      "users": "Користувачі",
+      "roles": "Ролі"
     },
     "cards": {
       "categories": "Категорії",
@@ -241,7 +300,11 @@
       "stores": "Магазини",
       "stores_desc": "Керування магазинами продавців",
       "orders": "Замовлення",
-      "orders_desc": "Перегляд всіх замовлень"
+      "orders_desc": "Перегляд всіх замовлень",
+      "users": "Користувачі",
+      "users_desc": "Керування користувачами системи",
+      "roles": "Ролі та права",
+      "roles_desc": "Керування ролями та правами доступу"
     },
     "catalog": {
       "categories": "Категорії",
@@ -268,6 +331,32 @@
       "prev": "Назад",
       "next": "Вперед"
     },
+    "attributes": {
+      "title": "Визначення атрибутів",
+      "add": "Додати атрибут",
+      "edit": "Редагувати атрибут",
+      "code": "Код",
+      "name": "Назва",
+      "data_type": "Тип даних",
+      "unit": "Одиниця",
+      "display_order": "Порядок відображення",
+      "description": "Опис",
+      "is_required": "Обов'язковий",
+      "is_variant": "Варіант",
+      "allowed_values": "Дозволені значення",
+      "allowed_values_hint": "Введіть кожне значення з нового рядка",
+      "allowed_values_description": "Якщо вказано, атрибут може мати тільки ці значення. Залиште порожнім для будь-яких значень.",
+      "code_hint": "Унікальний код (тільки малі літери, цифри та підкреслення)",
+      "code_format_error": "Код має починатися з літери та містити тільки малі літери, цифри та підкреслення",
+      "flags": "Прапорці",
+      "no_attributes": "Атрибутів поки немає",
+      "any": "будь-яке",
+      "inactive": "Неактивний",
+      "type_string": "Текст",
+      "type_number": "Число",
+      "type_boolean": "Так/Ні",
+      "type_array": "Масив"
+    },
     "stores": {
       "title": "Управління магазинами",
       "name": "Назва",
@@ -290,6 +379,46 @@
       "of": "з",
       "prev": "Назад",
       "next": "Вперед"
+    },
+    "users": {
+      "title": "Управління користувачами",
+      "total": "Всього користувачів",
+      "search_placeholder": "Пошук за email або ім'ям...",
+      "user": "Користувач",
+      "email": "Email",
+      "roles": "Ролі",
+      "status": "Статус",
+      "created": "Створено",
+      "actions": "Дії",
+      "locked": "Заблоковано",
+      "active": "Активний",
+      "assign_roles": "Призначити ролі",
+      "assign_roles_to": "Призначити ролі для {{email}}",
+      "permissions_count": "{{count}} дозволів",
+      "lock": "Заблокувати",
+      "unlock": "Розблокувати",
+      "load_error": "Помилка завантаження користувачів",
+      "save_error": "Помилка збереження",
+      "lock_error": "Помилка блокування"
+    },
+    "roles": {
+      "title": "Управління ролями",
+      "create": "Створити роль",
+      "edit": "Редагувати роль",
+      "permissions_count": "{{count}} дозволів",
+      "users_count": "{{count}} користувачів",
+      "name": "Назва",
+      "description": "Опис",
+      "permissions": "Дозволи",
+      "name_placeholder": "Введіть назву ролі",
+      "description_placeholder": "Введіть опис ролі",
+      "delete_confirm_title": "Видалити роль?",
+      "delete_confirm_message": "Ви впевнені, що хочете видалити роль \"{{name}}\"? Ця дія незворотня.",
+      "load_error": "Помилка завантаження ролей",
+      "save_error": "Помилка збереження",
+      "delete_error": "Помилка видалення",
+      "built_in": "Системна",
+      "select_all": "Обрати всі"
     }
   },
 
@@ -328,5 +457,137 @@
     "quick_actions": "Швидкі дії",
     "add_product": "Додати товар",
     "edit_store": "Редагувати магазин"
+  },
+
+  "pagination": {
+    "previous": "Попередня",
+    "next": "Наступна",
+    "pageInfo": "Сторінка {{current}} з {{total}}"
+  },
+
+  "myProducts": {
+    "title": "Мої товари",
+    "totalCount": "Всього: {{count}} товарів",
+    "active": "Активний",
+    "inactive": "Неактивний",
+    "addProduct": "Додати товар",
+    "empty": "У вас ще немає товарів",
+    "emptyHint": "Створіть перший товар щоб розпочати продажі",
+    "createFirst": "Створити перший товар",
+    "inStock": "В наявності",
+    "outOfStock": "Немає в наявності",
+    "noPrice": "Ціна не вказана",
+    "manageVariants": "Варіанти",
+    "deleteConfirm": {
+      "title": "Видалити товар?",
+      "message": "Ви впевнені, що хочете видалити цей товар? Цю дію неможливо скасувати."
+    }
+  },
+
+  "product": {
+    "create_title": "Створити товар",
+    "edit_title": "Редагувати товар",
+    "notFound": "Товар не знайдено",
+    "edit_sku_info": "Для редагування варіантів (SKU), цін та атрибутів використовуйте окрему сторінку управління варіантами.",
+    "name_required": "Назва товару обов'язкова",
+    "back_to_store": "Назад до магазину",
+    "basic_info": "Основна інформація",
+    "name": "Назва товару",
+    "name_placeholder": "Введіть назву товару",
+    "description": "Опис",
+    "description_placeholder": "Опишіть ваш товар",
+    "categories": "Категорії",
+    "select_categories": "Виберіть категорії",
+    "categories_selected": "Вибрано: {{count}}",
+    "primary_category": "Головна категорія для хлібних крихт",
+    "primary": "Головна",
+    "set_as_primary": "Зробити головною",
+    "set_primary": "Встановити",
+    "tags": "Теги",
+    "select_tags": "Виберіть теги",
+    "tags_selected": "Вибрано: {{count}}",
+    "gallery": "Галерея зображень",
+    "gallery_hint": "Завантажте фотографії товару. Перше зображення буде головним.",
+    "add_image": "Додати фото",
+    "add_images": "Додати фотографії",
+    "current_images": "Поточні зображення",
+    "new_images": "Нові зображення",
+    "will_upload_on_save": "будуть завантажені при збереженні",
+    "confirm_delete_image": "Видалити це зображення?",
+    "set_as_base": "Клікніть, щоб встановити головним зображенням",
+    "base_image_current": "Поточне головне зображення",
+    "base": "Головне",
+    "sku_variants": "Варіанти товару (SKU)",
+    "sku_variants_hint": "Додайте варіанти товару з різними цінами, кількістю та характеристиками",
+    "add_sku": "Додати варіант",
+    "sku_variant": "Варіант",
+    "sku_info": "Ціна та наявність",
+    "price": "Ціна",
+    "stock_quantity": "Кількість на складі",
+    "attributes": "Атрибути (характеристики)",
+    "attributes_hint": "Додайте додаткові характеристики товару (колір, розмір, матеріал тощо)",
+    "add_attribute": "Додати атрибут",
+    "no_attributes": "Атрибути не додано",
+    "attribute_key": "Назва атрибуту",
+    "attribute_value": "Значення",
+    "create_button": "Створити товар",
+    "validation": {
+      "price_positive": "Ціна має бути більше 0",
+      "stock_positive": "Кількість має бути більше або рівна 0",
+      "duplicate_attributes": "Виявлено дублікати назв атрибутів"
+    }
+  },
+
+  "sku": {
+    "management_title": "Управління варіантами",
+    "back_to_products": "Назад до товарів",
+    "add_variant": "Додати варіант",
+    "save_all": "Зберегти всі",
+    "variant": "Варіант",
+    "new": "Новий",
+    "modified": "Змінено",
+    "price": "Ціна",
+    "stock_quantity": "Кількість на складі",
+    "attributes": "Атрибути",
+    "attributes_hint": "Атрибути визначають унікальність варіанту (колір, розмір, матеріал тощо). Код SKU генерується автоматично на основі атрибутів.",
+    "add_attribute": "Додати атрибут",
+    "attribute_key": "Назва атрибуту",
+    "attribute_value": "Значення",
+    "no_attributes": "Атрибути не додано",
+    "no_variants": "Варіанти товару відсутні",
+    "add_first_variant": "Додати перший варіант",
+    "confirm_delete": "Видалити?",
+    "cannot_delete_last": "Неможливо видалити останній варіант",
+    "created_success": "Варіант успішно створено",
+    "updated_success": "Варіант успішно оновлено",
+    "deleted_success": "Варіант успішно видалено",
+    "all_saved_success": "Всі зміни збережено",
+    "no_changes": "Немає змін для збереження",
+    "gallery": "Фото варіанту",
+    "gallery_hint": "Додайте фото для цього варіанту (наприклад, фото конкретного кольору)",
+    "add_image": "Додати фото",
+    "confirm_delete_image": "Видалити це фото?",
+    "image_uploaded": "Фото завантажено",
+    "image_deleted": "Фото видалено"
+  },
+
+  "common": {
+    "email": "E-mail",
+    "empty": "порожньо",
+    "user": "Користувач",
+    "save": "Зберегти",
+    "saving": "Збереження...",
+    "cancel": "Скасувати",
+    "delete": "Видалити",
+    "deleting": "Видалення...",
+    "edit": "Редагувати",
+    "dismiss": "Закрити",
+    "search": "Пошук",
+    "no_results": "Нічого не знайдено",
+    "back": "Назад",
+    "noResults": "Нічого не знайдено",
+    "error": "Помилка",
+    "home": "Головна",
+    "backToHome": "На головну"
   }
 }

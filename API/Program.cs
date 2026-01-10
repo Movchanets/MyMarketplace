@@ -13,7 +13,6 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
 using Microsoft.AspNetCore.Authorization;
 using API.Authorization;
 using Scalar.AspNetCore;
@@ -32,6 +31,9 @@ try
     Log.Information("Starting web application");
 
     var builder = WebApplication.CreateBuilder(args);
+
+    // Add Aspire service defaults (OpenTelemetry, Health Checks, Service Discovery)
+    builder.AddServiceDefaults();
 
     // Налаштування Serilog з конфігурації
     builder.Host.UseSerilog((context, services, configuration) => configuration
@@ -53,34 +55,7 @@ try
 
     // Scalar + OpenAPI
     builder.Services.AddEndpointsApiExplorer();
-    builder.Services.AddOpenApi("v1",
-        options =>
-        {
-            // Додаємо Bearer security scheme
-            options.AddDocumentTransformer((document, context, cancellationToken) =>
-            {
-                document.Components ??= new OpenApiComponents();
-                document.Components.SecuritySchemes["Bearer"] = new OpenApiSecurityScheme
-                {
-                    Type = SecuritySchemeType.Http,
-                    Scheme = "bearer",
-                    BearerFormat = "JWT",
-                    In = ParameterLocation.Header,
-                    Description = "Введіть ваш JWT токен у форматі: Bearer {token}"
-                };
-
-                // робимо глобальною вимогу токена для всіх методів
-                var item = new OpenApiSecurityRequirement();
-                item[new OpenApiSecurityScheme
-                {
-                    Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
-                }] = new List<string>();
-                document.SecurityRequirements.Add(item);
-
-                return Task.CompletedTask;
-            });
-        }
-        );
+    builder.Services.AddOpenApi();
 
 
     // DbContext
@@ -92,7 +67,7 @@ try
     }
     else
     {
-      
+
         builder.Services.AddDbContext<AppDbContext>(opt =>
           opt.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
     }
@@ -112,6 +87,9 @@ try
     builder.Services.AddScoped<IProductRepository, ProductRepository>();
     builder.Services.AddScoped<ISkuRepository, SkuRepository>();
     builder.Services.AddScoped<ITagRepository, TagRepository>();
+    builder.Services.AddScoped<IProductGalleryRepository, ProductGalleryRepository>();
+    builder.Services.AddScoped<ISkuGalleryRepository, SkuGalleryRepository>();
+    builder.Services.AddScoped<IAttributeDefinitionRepository, AttributeDefinitionRepository>();
     builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
     builder.Services.AddIdentity<ApplicationUser, RoleEntity>(options =>
@@ -135,6 +113,7 @@ try
             .Where(o => o.Length > 0)
             .Distinct()
             .ToArray();
+        Console.WriteLine("Allowed CORS Origins: " + string.Join(", ", allowedOrigins));
     }
     else
     {
@@ -159,9 +138,14 @@ try
     });
     // Memory cache for rate-limiting
     builder.Services.AddMemoryCache();
+    builder.Services.AddRateLimiterFromConfiguration(builder.Configuration);
+    // Redis distributed cache and Output Cache (uses Aspire if available)
+    builder.AddRedisCache();
     // JWT Authentication
     builder.Services.AddScoped<ITokenService, TokenService>();
     builder.Services.AddScoped<IUserService, UserService>();
+    builder.Services.AddScoped<IRoleService, RoleService>();
+    builder.Services.AddScoped<IAdminUserService, AdminUserService>();
     builder.Services.AddScoped<IUserClaimsPrincipalFactory<ApplicationUser>, ClaimsPrincipalFactory>();
     // Permission-based dynamic policies (policies like "Permission:users.read")
     builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
@@ -211,6 +195,34 @@ try
 
     if (app.Environment.IsDevelopment())
     {
+        // Виводимо конфігурацію при старті в dev режимі
+        var config = app.Configuration;
+        var redisEnabled = config.GetValue<bool>("Redis:Enabled");
+        var storageProvider = config["Storage:Provider"] ?? "local";
+        var dbConnection = config.GetConnectionString("DefaultConnection");
+        var dbHost = "unknown";
+        if (!string.IsNullOrEmpty(dbConnection))
+        {
+            var hostMatch = System.Text.RegularExpressions.Regex.Match(dbConnection, @"Host=([^;]+)");
+            dbHost = hostMatch.Success ? hostMatch.Groups[1].Value : "configured";
+        }
+
+        Log.Information("========== Development Configuration ==========");
+        Log.Information("Redis Caching: {RedisEnabled}", redisEnabled ? "ENABLED" : "DISABLED");
+        if (redisEnabled)
+        {
+            // Check Aspire connection string first, then fallback to config
+            var aspireRedis = config.GetConnectionString("redis");
+            var configRedis = config["Redis:ConnectionString"] ?? "localhost:6379";
+            var actualRedis = aspireRedis ?? configRedis;
+            Log.Information("Redis Connection: {RedisConnection} (Aspire: {AspireProvided})",
+                actualRedis,
+                aspireRedis != null ? "YES" : "NO");
+        }
+        Log.Information("Storage Provider: {StorageProvider}", storageProvider.ToUpper());
+        Log.Information("Database Host: {DbHost}", dbHost);
+        Log.Information("CORS Origins: {CorsOrigins}", config["AllowedCorsOrigins"] ?? "not configured");
+        Log.Information("===============================================");
 
         app.UseStaticFiles();
         app.MapOpenApi();
@@ -228,20 +240,27 @@ try
             options.Authentication.PreferredSecuritySchemes = new[] { "Bearer" };
         });
     }
+
+    // CORS must be before Authentication/Authorization to handle preflight OPTIONS requests
+    app.UseCors("AllowFrontend");
+
     app.UseAuthentication();
     app.UseAuthorization();
+    app.UseRateLimiter();
+    // Output caching middleware (must be after authorization)
+    app.UseOutputCache();
 
-
-
-    app.UseCors("AllowFrontend");
     app.MapControllers();
+
+    // Map Aspire default endpoints (health, alive)
+    app.MapDefaultEndpoints();
 
     // Skip seeding in Testing environment (handled by TestWebApplicationFactory)
     if (!app.Environment.IsEnvironment("Testing"))
     {
         await app.SeedDataAsync();
     }
-   
+
     Log.Information("Application started successfully");
     app.Run();
 }

@@ -48,6 +48,13 @@ public static class SeederDB
             await AddClaimToRoleIfNotExists(roleManager, adminRole, "permission", "users.read");
             await AddClaimToRoleIfNotExists(roleManager, adminRole, "permission", "users.update");
             await AddClaimToRoleIfNotExists(roleManager, adminRole, "permission", "users.delete");
+            // Roles management
+            await AddClaimToRoleIfNotExists(roleManager, adminRole, "permission", "roles.manage");
+            await AddClaimToRoleIfNotExists(roleManager, adminRole, "permission", "roles.read");
+            await AddClaimToRoleIfNotExists(roleManager, adminRole, "permission", "roles.create");
+            await AddClaimToRoleIfNotExists(roleManager, adminRole, "permission", "roles.update");
+            await AddClaimToRoleIfNotExists(roleManager, adminRole, "permission", "roles.delete");
+            // Stores
             await AddClaimToRoleIfNotExists(roleManager, adminRole, "permission", "stores.manage");
             await AddClaimToRoleIfNotExists(roleManager, adminRole, "permission", "stores.verify");
             await AddClaimToRoleIfNotExists(roleManager, adminRole, "permission", "stores.read.all");
@@ -55,6 +62,7 @@ public static class SeederDB
             await AddClaimToRoleIfNotExists(roleManager, adminRole, "permission", "stores.delete");
             await AddClaimToRoleIfNotExists(roleManager, adminRole, "permission", "categories.manage");
             await AddClaimToRoleIfNotExists(roleManager, adminRole, "permission", "tags.manage");
+            await AddClaimToRoleIfNotExists(roleManager, adminRole, "permission", "manage_catalog");
             await AddClaimToRoleIfNotExists(roleManager, adminRole, "permission", "payouts.read.all");
             await AddClaimToRoleIfNotExists(roleManager, adminRole, "permission", "payouts.process");
         }
@@ -125,6 +133,130 @@ public static class SeederDB
         var media = new MediaImage(storageKey, mimeType, width, height, altText);
         dbContext.MediaImages.Add(media);
         return media;
+    }
+
+    private static async Task<AttributeDefinition> EnsureAttributeDefinitionAsync(
+        AppDbContext dbContext,
+        string code,
+        string name,
+        string dataType = "string",
+        bool isRequired = false,
+        bool isVariant = false,
+        string? description = null,
+        string? unit = null,
+        int displayOrder = 0,
+        IEnumerable<string>? allowedValues = null)
+    {
+        var normalizedCode = code.ToLowerInvariant();
+        var existing = await dbContext.AttributeDefinitions.FirstOrDefaultAsync(a => a.Code == normalizedCode);
+        if (existing != null)
+        {
+            return existing;
+        }
+
+        var attribute = new AttributeDefinition(code, name, dataType, isRequired, isVariant, description, unit, displayOrder);
+        if (allowedValues != null)
+        {
+            attribute.SetAllowedValues(allowedValues);
+        }
+
+        dbContext.AttributeDefinitions.Add(attribute);
+        return attribute;
+    }
+
+    private static async Task SeedAttributeDefinitionsAsync(AppDbContext dbContext)
+    {
+        // Common product attributes
+        await EnsureAttributeDefinitionAsync(dbContext,
+            code: "color",
+            name: "Color",
+            dataType: "string",
+            isVariant: true,
+            description: "Product color variant",
+            displayOrder: 1,
+            allowedValues: new[] { "Black", "White", "Red", "Blue", "Green", "Gray", "Silver", "Gold" });
+
+        await EnsureAttributeDefinitionAsync(dbContext,
+            code: "size",
+            name: "Size",
+            dataType: "string",
+            isVariant: true,
+            description: "Size variant (clothing, footwear)",
+            displayOrder: 2,
+            allowedValues: new[] { "XS", "S", "M", "L", "XL", "XXL", "XXXL" });
+
+        await EnsureAttributeDefinitionAsync(dbContext,
+            code: "material",
+            name: "Material",
+            dataType: "string",
+            isVariant: false,
+            description: "Product material",
+            displayOrder: 3);
+
+        await EnsureAttributeDefinitionAsync(dbContext,
+            code: "brand",
+            name: "Brand",
+            dataType: "string",
+            isRequired: true,
+            isVariant: false,
+            description: "Product brand/manufacturer",
+            displayOrder: 4);
+
+        await EnsureAttributeDefinitionAsync(dbContext,
+            code: "weight",
+            name: "Weight",
+            dataType: "number",
+            isVariant: false,
+            description: "Product weight",
+            unit: "kg",
+            displayOrder: 5);
+
+        await EnsureAttributeDefinitionAsync(dbContext,
+            code: "storage",
+            name: "Storage Capacity",
+            dataType: "string",
+            isVariant: true,
+            description: "Storage capacity for electronics",
+            displayOrder: 6,
+            allowedValues: new[] { "16GB", "32GB", "64GB", "128GB", "256GB", "512GB", "1TB", "2TB" });
+
+        await EnsureAttributeDefinitionAsync(dbContext,
+            code: "ram",
+            name: "RAM",
+            dataType: "string",
+            isVariant: true,
+            description: "RAM capacity for electronics",
+            displayOrder: 7,
+            allowedValues: new[] { "4GB", "8GB", "16GB", "32GB", "64GB" });
+
+        await EnsureAttributeDefinitionAsync(dbContext,
+            code: "screen_size",
+            name: "Screen Size",
+            dataType: "number",
+            isVariant: false,
+            description: "Display diagonal size",
+            unit: "inch",
+            displayOrder: 8);
+
+        await EnsureAttributeDefinitionAsync(dbContext,
+            code: "warranty",
+            name: "Warranty",
+            dataType: "string",
+            isVariant: false,
+            description: "Warranty period",
+            displayOrder: 9,
+            allowedValues: new[] { "6 months", "1 year", "2 years", "3 years", "5 years" });
+
+        await EnsureAttributeDefinitionAsync(dbContext,
+            code: "connector",
+            name: "Connector Type",
+            dataType: "string",
+            isVariant: true,
+            description: "Cable/connector type",
+            displayOrder: 10,
+            allowedValues: new[] { "USB-A", "USB-C", "Lightning", "Micro-USB", "HDMI", "DisplayPort" });
+
+        await dbContext.SaveChangesAsync();
     }
 
     private static async Task SeedCatalogDemoDataAsync(AppDbContext dbContext, IHostEnvironment env)
@@ -271,6 +403,9 @@ public static class SeederDB
         await dbContext.Database.MigrateAsync();
 
         await EnsureRolesAndClaims(roleManager);
+
+        // Seed attribute definitions (always, for all environments)
+        await SeedAttributeDefinitionsAsync(dbContext);
 
         // створюємо адміністратора
         if (!userManager.Users.Any())

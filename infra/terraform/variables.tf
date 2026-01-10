@@ -5,27 +5,27 @@ variable "location" {
 
 variable "resource_group_name" {
   type    = string
-  default = "rg-appnet9"
+  default = "rg-mymarketplace"
 }
 
 variable "env_name" {
   type    = string
-  default = "cae-appnet9"
+  default = "cae-mymarketplace"
 }
 
 variable "api_name" {
   type    = string
-  default = "appnet9-api"
+  default = "mymarketplace-api"
 }
 
 variable "front_name" {
   type    = string
-  default = "appnet9-front"
+  default = "mymarketplace-front"
 }
 
 variable "storage_account_name" {
   type    = string
-  default = "stappnet9web"
+  default = "stmymarketplaceweb"
 }
 
 variable "storage_container_name" {
@@ -111,4 +111,23 @@ variable "allowed_cors_origins" {
   type        = string
   description = "Allowed CORS origins (comma-separated). Defaults to static website URL if empty."
   default     = ""
+}
+
+variable "redis_enabled" {
+  type        = bool
+  description = "Enable Redis caching"
+  default     = false
+}
+
+variable "redis_connection_string" {
+  type        = string
+  description = "Redis connection string (e.g., your-redis.redis.cache.windows.net:6380,password=xxx,ssl=True)"
+  sensitive   = true
+  default     = ""
+}
+
+variable "redis_instance_name" {
+  type        = string
+  description = "Redis instance name prefix"
+  default     = "MyMarketplace:"
 }

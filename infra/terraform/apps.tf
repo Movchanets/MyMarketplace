@@ -87,6 +87,18 @@ resource "azurerm_container_app" "api" {
         name  = "AllowedCorsOrigins"
         value = var.allowed_cors_origins != "" ? var.allowed_cors_origins : azurerm_storage_account.static.primary_web_endpoint
       }
+      env {
+        name  = "Redis__Enabled"
+        value = tostring(var.redis_enabled)
+      }
+      env {
+        name  = "Redis__ConnectionString"
+        value = var.redis_connection_string
+      }
+      env {
+        name  = "Redis__InstanceName"
+        value = var.redis_instance_name
+      }
     }
   }
 

@@ -2,8 +2,12 @@ name:  Deploy to Azure (Container Apps + Static Front)
 
 on:
   workflow_dispatch:
-  pull_request:
-    types: [opened, synchronize, reopened]
+  push:
+    branches:
+      - main
+  workflow_run:
+    workflows: ["CI - Pull Request"]
+    types: [completed]
     branches:
       - main
 
@@ -12,7 +16,7 @@ permissions:
   packages: write
 
 env:
-  DOTNET_VERSION: '9.0.x'
+  DOTNET_VERSION: '10.0.x'
   NODE_VERSION: '20.x'
 
 jobs:
@@ -21,6 +25,8 @@ jobs:
   # ============================================
   deploy-container-apps:
     runs-on: ubuntu-latest
+    # Run on: manual trigger, push to main, or successful CI workflow
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'push' || github.event.workflow_run.conclusion == 'success' }}
     outputs:
       api_url: ${{ steps.get-api-url.outputs.url }}
     env:
@@ -70,7 +76,7 @@ jobs:
         run: |
           OWNER_LC=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
           ACTOR_LC=$(echo "${{ github.actor }}" | tr '[:upper:]' '[:lower:]')
-          IMAGE_NAME="ghcr.io/$OWNER_LC/app.net-9/app-api:latest"
+          IMAGE_NAME="ghcr.io/$OWNER_LC/mymarketplace/app-api:latest"
           if ! az containerapp show --name ${{ secrets.AZURE_CONTAINERAPP_API_NAME }} --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} >/dev/null 2>&1; then
             echo "Creating API Container App..."
             az containerapp create \
@@ -96,7 +102,10 @@ jobs:
                 "SmtpSettings__Username=${{ secrets.SMTP_USERNAME }}" \
                 "SmtpSettings__Password=${{ secrets.SMTP_PASSWORD }}" \
                 "Turnstile__Secret=${{ secrets.TURNSTILE_SECRET }}" \
-                "AllowedCorsOrigins=${{ secrets.ALLOWED_CORS_ORIGINS }}"
+                "AllowedCorsOrigins=${{ secrets.ALLOWED_CORS_ORIGINS }}" \
+                "Redis__Enabled=${{ secrets.REDIS_ENABLED }}" \
+                "Redis__ConnectionString=${{ secrets.REDIS_CONNECTION_STRING }}" \
+                "Redis__InstanceName=${{ secrets.REDIS_INSTANCE_NAME }}"
           else
             echo "API Container App already exists. Will update image & env vars next."
           fi
@@ -104,7 +113,7 @@ jobs:
       - name: Build & Push API Image
         run: |
           OWNER_LC=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
-          IMAGE_NAME="ghcr.io/$OWNER_LC/app.net-9/app-api:latest"
+          IMAGE_NAME="ghcr.io/$OWNER_LC/mymarketplace/app-api:latest"
           docker build -t "$IMAGE_NAME" -f API/Dockerfile .
           docker push "$IMAGE_NAME"
 
@@ -114,7 +123,7 @@ jobs:
           az containerapp update \
             --name ${{ secrets.AZURE_CONTAINERAPP_API_NAME }} \
             --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
-            --image ghcr.io/$OWNER_LC/app.net-9/app-api:latest \
+            --image ghcr.io/$OWNER_LC/mymarketplace/app-api:latest \
             --set-env-vars \
               "ASPNETCORE_ENVIRONMENT=Production" \
               "JwtSettings__AccessTokenSecret=${{ secrets.JWT_ACCESS_TOKEN_SECRET }}" \
@@ -127,7 +136,10 @@ jobs:
               "SmtpSettings__Username=${{ secrets.SMTP_USERNAME }}" \
               "SmtpSettings__Password=${{ secrets.SMTP_PASSWORD }}" \
               "Turnstile__Secret=${{ secrets.TURNSTILE_SECRET }}" \
-              "AllowedCorsOrigins=${{ secrets.ALLOWED_CORS_ORIGINS }}"
+              "AllowedCorsOrigins=${{ secrets.ALLOWED_CORS_ORIGINS }}" \
+              "Redis__Enabled=${{ secrets.REDIS_ENABLED }}" \
+              "Redis__ConnectionString=${{ secrets.REDIS_CONNECTION_STRING }}" \
+              "Redis__InstanceName=${{ secrets.REDIS_INSTANCE_NAME }}"
 
       - name: Get API URL
         id: get-api-url

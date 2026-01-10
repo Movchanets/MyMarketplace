@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using Domain.Helpers;
 
 namespace Domain.Entities;
 
@@ -8,10 +9,23 @@ public class SkuEntity : BaseEntity<Guid>
 {
 	public Guid ProductId { get; private set; }
 	public virtual Product? Product { get; private set; }
+
+	/// <summary>
+	/// Human-readable SKU code generated from attributes.
+	/// Format: attribute-values or "default" if no attributes.
+	/// </summary>
 	public string SkuCode { get; private set; } = string.Empty;
+
 	public decimal Price { get; private set; }
 	public int StockQuantity { get; private set; }
 	public JsonDocument? Attributes { get; private set; }
+
+	/// <summary>
+	/// Gallery images specific to this SKU variant.
+	/// Used for visual attributes like color or material.
+	/// </summary>
+	private readonly List<SkuGallery> _gallery = new();
+	public virtual IReadOnlyCollection<SkuGallery> Gallery => _gallery.AsReadOnly();
 
 	private SkuEntity() { }
 
@@ -50,7 +64,18 @@ public class SkuEntity : BaseEntity<Guid>
 	{
 		Product = product ?? throw new ArgumentNullException(nameof(product));
 		ProductId = product.Id;
+		// Regenerate SKU code with product attributes
+		RegenerateSkuCode();
 		MarkAsUpdated();
+	}
+
+	/// <summary>
+	/// Regenerates the SKU code using merged product + SKU attributes.
+	/// Call this when product attributes change.
+	/// </summary>
+	public void RegenerateSkuCode()
+	{
+		SkuCode = GenerateSkuCode(Attributes, Product?.Attributes);
 	}
 
 	public void UpdatePrice(decimal price)
@@ -106,9 +131,102 @@ public class SkuEntity : BaseEntity<Guid>
 
 	public static string GenerateSkuCode(JsonDocument? attributes)
 	{
-		var canonical = BuildCanonicalAttributesString(attributes);
+		return GenerateSkuCode(attributes, null);
+	}
+
+	/// <summary>
+	/// Generates a human-readable SKU code from merged attributes (product + sku).
+	/// Format: value1-value2-hash (e.g., "red-xl-a1b2c3" or "default-a1b2c3").
+	/// </summary>
+	public static string GenerateSkuCode(JsonDocument? skuAttributes, JsonDocument? productAttributes)
+	{
+		// Merge product attributes with SKU attributes (SKU overrides product)
+		var merged = MergeAttributes(productAttributes, skuAttributes);
+
+		if (merged.Count == 0)
+		{
+			return "default";
+		}
+
+		// Build readable slug from attribute values
+		var slugParts = new List<string>();
+		foreach (var kvp in merged.OrderBy(k => k.Key, StringComparer.OrdinalIgnoreCase))
+		{
+			var valueStr = kvp.Value?.ToString() ?? "";
+			if (!string.IsNullOrWhiteSpace(valueStr))
+			{
+				// Slugify each value
+				try
+				{
+					var slugValue = SlugHelper.GenerateSlug(valueStr);
+					if (!string.IsNullOrEmpty(slugValue) && slugValue != "n-a")
+					{
+						slugParts.Add(slugValue);
+					}
+				}
+				catch
+				{
+					// Skip invalid values
+				}
+			}
+		}
+
+		if (slugParts.Count == 0)
+		{
+			return "default";
+		}
+
+		// Combine values into slug
+		var baseSlug = string.Join("-", slugParts);
+
+		// Add short hash suffix for uniqueness (from canonical string)
+		var canonical = BuildCanonicalAttributesString(skuAttributes);
 		var hash = SHA256.HashData(Encoding.UTF8.GetBytes(canonical));
-		return Convert.ToHexString(hash.AsSpan(0, 8));
+		var shortHash = Convert.ToHexString(hash.AsSpan(0, 3)).ToLowerInvariant();
+
+		return $"{baseSlug}-{shortHash}";
+	}
+
+	/// <summary>
+	/// Merges product-level attributes with SKU-level attributes.
+	/// SKU attributes take precedence over product attributes.
+	/// </summary>
+	private static Dictionary<string, object?> MergeAttributes(JsonDocument? productAttributes, JsonDocument? skuAttributes)
+	{
+		var result = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+
+		// First add product attributes
+		if (productAttributes?.RootElement.ValueKind == JsonValueKind.Object)
+		{
+			foreach (var prop in productAttributes.RootElement.EnumerateObject())
+			{
+				result[prop.Name] = GetJsonValue(prop.Value);
+			}
+		}
+
+		// Then override with SKU attributes
+		if (skuAttributes?.RootElement.ValueKind == JsonValueKind.Object)
+		{
+			foreach (var prop in skuAttributes.RootElement.EnumerateObject())
+			{
+				result[prop.Name] = GetJsonValue(prop.Value);
+			}
+		}
+
+		return result;
+	}
+
+	private static object? GetJsonValue(JsonElement element)
+	{
+		return element.ValueKind switch
+		{
+			JsonValueKind.String => element.GetString(),
+			JsonValueKind.Number => element.TryGetInt64(out var l) ? l : element.GetDouble(),
+			JsonValueKind.True => true,
+			JsonValueKind.False => false,
+			JsonValueKind.Null => null,
+			_ => element.GetRawText()
+		};
 	}
 
 	private static JsonDocument SerializeAttributes(IDictionary<string, object?> attributes)
@@ -154,4 +272,70 @@ public class SkuEntity : BaseEntity<Guid>
 
 		return builder.Length == 0 ? "default" : builder.ToString();
 	}
+
+	#region Gallery Management
+
+	/// <summary>
+	/// Adds an image to the SKU gallery (for visual variants like color).
+	/// </summary>
+	public void AddGalleryItem(MediaImage mediaImage, int displayOrder = 0)
+	{
+		if (mediaImage is null)
+		{
+			throw new ArgumentNullException(nameof(mediaImage));
+		}
+
+		if (_gallery.Any(g => g.MediaImageId == mediaImage.Id))
+		{
+			return; // Image already in gallery
+		}
+
+		var galleryItem = SkuGallery.Create(this, mediaImage, displayOrder);
+		_gallery.Add(galleryItem);
+		MarkAsUpdated();
+	}
+
+	/// <summary>
+	/// Removes an image from the SKU gallery.
+	/// </summary>
+	public SkuGallery? RemoveGalleryItem(Guid galleryItemId)
+	{
+		if (galleryItemId == Guid.Empty)
+		{
+			return null;
+		}
+
+		var existing = _gallery.FirstOrDefault(g => g.Id == galleryItemId);
+		if (existing is null)
+		{
+			return null;
+		}
+
+		_gallery.Remove(existing);
+		MarkAsUpdated();
+		return existing;
+	}
+
+	/// <summary>
+	/// Removes an image from the SKU gallery by MediaImageId.
+	/// </summary>
+	public SkuGallery? RemoveGalleryItemByMediaId(Guid mediaImageId)
+	{
+		if (mediaImageId == Guid.Empty)
+		{
+			return null;
+		}
+
+		var existing = _gallery.FirstOrDefault(g => g.MediaImageId == mediaImageId);
+		if (existing is null)
+		{
+			return null;
+		}
+
+		_gallery.Remove(existing);
+		MarkAsUpdated();
+		return existing;
+	}
+
+	#endregion
 }
