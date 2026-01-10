@@ -136,6 +136,7 @@ try
                   .AllowCredentials();
         });
     });
+    Log.Information("CORS configured with origins: {Origins}", string.Join(", ", allowedOrigins));
     // Memory cache for rate-limiting
     builder.Services.AddMemoryCache();
     builder.Services.AddRateLimiterFromConfiguration(builder.Configuration);
