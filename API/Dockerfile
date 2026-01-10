@@ -12,8 +12,7 @@ RUN dotnet publish API/API.csproj -c Release -o /out
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
-# Align with Azure Container Apps detected listening port (80)
-EXPOSE 80
-ENV ASPNETCORE_URLS=http://+:80
+# Azure Container Apps sets HTTP_PORTS=8080 by default
+EXPOSE 8080
 COPY --from=build /out .
 ENTRYPOINT ["dotnet", "API.dll"]
