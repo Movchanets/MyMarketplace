@@ -13,7 +13,6 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
 using Microsoft.AspNetCore.Authorization;
 using API.Authorization;
 using Scalar.AspNetCore;
@@ -56,34 +55,7 @@ try
 
     // Scalar + OpenAPI
     builder.Services.AddEndpointsApiExplorer();
-    builder.Services.AddOpenApi("v1",
-        options =>
-        {
-            // Додаємо Bearer security scheme
-            options.AddDocumentTransformer((document, context, cancellationToken) =>
-            {
-                document.Components ??= new OpenApiComponents();
-                document.Components.SecuritySchemes["Bearer"] = new OpenApiSecurityScheme
-                {
-                    Type = SecuritySchemeType.Http,
-                    Scheme = "bearer",
-                    BearerFormat = "JWT",
-                    In = ParameterLocation.Header,
-                    Description = "Введіть ваш JWT токен у форматі: Bearer {token}"
-                };
-
-                // робимо глобальною вимогу токена для всіх методів
-                var item = new OpenApiSecurityRequirement();
-                item[new OpenApiSecurityScheme
-                {
-                    Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
-                }] = new List<string>();
-                document.SecurityRequirements.Add(item);
-
-                return Task.CompletedTask;
-            });
-        }
-        );
+    builder.Services.AddOpenApi();
 
 
     // DbContext

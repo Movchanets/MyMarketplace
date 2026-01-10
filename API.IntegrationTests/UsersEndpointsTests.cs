@@ -76,7 +76,7 @@ public class UsersEndpointsTests : IClassFixture<TestWebApplicationFactory>
 		json.GetProperty("isSuccess").GetBoolean().Should().BeTrue();
 		var payload = json.GetProperty("payload");
 		payload.ValueKind.Should().Be(JsonValueKind.Array);
-		payload.GetArrayLength().Should().BeGreaterOrEqualTo(1);
+		payload.GetArrayLength().Should().BeGreaterThanOrEqualTo(1);
 		var foundAdmin = false;
 		foreach (var e in payload.EnumerateArray())
 		{

@@ -28,8 +28,8 @@ services:
       - ConnectionStrings__DefaultConnection=${DATABASE_CONNECTION_STRING}
       - Storage__Provider=Local
       - Storage__Local__Path=/app/uploads
-      - JwtSettings__Issuer=AppNetApi
-      - JwtSettings__Audience=AppNetClient
+      - JwtSettings__Issuer=MyMarketplaceApi
+      - JwtSettings__Audience=MyMarketplaceClient
       - JwtSettings__AccessTokenSecret=${JWT_ACCESS_TOKEN_SECRET:-change-me-min-32-chars-required}
       - JwtSettings__RefreshTokenSecret=${JWT_REFRESH_TOKEN_SECRET:-change-me-min-32-chars-required}
       - JwtSettings__AccessTokenExpirationMinutes=60

@@ -1,6 +1,6 @@
-# App.Net-9 — Інструкція для запуску
+# Інструкція для запуску
 
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/Movchanets/App.Net-9)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/Movchanets/MyMarketplace)
 Короткий посібник для запуску проекту локально, створення власних `.env` файлів та налаштування `appsettings`.
 
 ## Вимоги
@@ -251,10 +251,10 @@ npm run preview
 ```bash
 # Azure credentials
 AZURE_CREDENTIALS                    # Azure service principal JSON
-AZURE_RESOURCE_GROUP                 # rg-appnet9
-AZURE_CONTAINERAPPS_ENVIRONMENT_NAME # cae-appnet9
-AZURE_CONTAINERAPP_API_NAME          # appnet9-api
-AZURE_STORAGE_ACCOUNT_NAME           # stappnet9web
+AZURE_RESOURCE_GROUP                 # rg-mymarketplace
+AZURE_CONTAINERAPPS_ENVIRONMENT_NAME # cae-mymarketplace
+AZURE_CONTAINERAPP_API_NAME          # mymarketplace-api
+AZURE_STORAGE_ACCOUNT_NAME           # stmymarketplaceweb
 AZURE_STORAGE_CONTAINER_NAME         # images
 AZURE_LOCATION                       # westeurope
 
@@ -275,7 +275,7 @@ SMTP_PASSWORD                        # SMTP password
 
 # Security
 TURNSTILE_SECRET                     # Cloudflare Turnstile secret key
-ALLOWED_CORS_ORIGINS                 # https://stappnet9web.z6.web.core.windows.net
+ALLOWED_CORS_ORIGINS                 # https://stmymarketplaceweb.z6.web.core.windows.net
 
 # Frontend build
 VITE_API_URL                         # https://<containerapp-fqdn>/api
@@ -298,7 +298,7 @@ gh workflow run deploy.yml
 - ✅ **Безкоштовно** для публічних репозиторіїв
 - ✅ Необмежене сховище для публічних образів
 - ✅ Автоматична авторизація через `GITHUB_TOKEN`
-- ✅ Image URL: `ghcr.io/movchanets/app.net-9/app-api:latest`
+- ✅ Image URL: `ghcr.io/movchanets/mymarketplace/app-api:latest`
 
 **Azure Container Registry видалено** — економія $5/місяць.
 
@@ -314,7 +314,7 @@ Container App налаштовано на автоматичне масштаб�
 Перевірити кількість реплік:
 
 ```bash
-az containerapp revision list -n appnet9-api -g rg-appnet9 \
+az containerapp revision list -n mymarketplace-api -g rg-mymarketplace \
   --query "[?properties.active].{Name:name, Replicas:properties.replicas}" -o table
 ```
 
@@ -344,14 +344,14 @@ terraform apply
 
 ```bash
 # Перевірити статус Container App
-az containerapp show -n appnet9-api -g rg-appnet9 \
+az containerapp show -n mymarketplace-api -g rg-mymarketplace \
   --query "properties.{runningStatus:runningStatus, fqdn:configuration.ingress.fqdn}" -o json
 
 # Переглянути логи
-az containerapp logs show -n appnet9-api -g rg-appnet9 --tail 50 --type console
+az containerapp logs show -n mymarketplace-api -g rg-mymarketplace --tail 50 --type console
 
 # Оновити env vars
-az containerapp update -n appnet9-api -g rg-appnet9 \
+az containerapp update -n mymarketplace-api -g rg-mymarketplace \
   --set-env-vars "Storage__Provider=azure"
 ```
 
