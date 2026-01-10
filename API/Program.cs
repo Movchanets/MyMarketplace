@@ -240,14 +240,16 @@ try
             options.Authentication.PreferredSecuritySchemes = new[] { "Bearer" };
         });
     }
+
+    // CORS must be before Authentication/Authorization to handle preflight OPTIONS requests
+    app.UseCors("AllowFrontend");
+
     app.UseAuthentication();
     app.UseAuthorization();
     app.UseRateLimiter();
     // Output caching middleware (must be after authorization)
     app.UseOutputCache();
 
-
-    app.UseCors("AllowFrontend");
     app.MapControllers();
 
     // Map Aspire default endpoints (health, alive)
