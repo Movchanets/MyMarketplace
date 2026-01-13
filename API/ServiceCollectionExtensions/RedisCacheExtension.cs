@@ -1,5 +1,6 @@
 using Application.Interfaces;
 using Infrastructure.Services;
+using Microsoft.Extensions.Logging;
 
 namespace API.ServiceCollectionExtensions;
 
@@ -18,6 +19,7 @@ public static class RedisCacheExtension
 		var configuration = builder.Configuration;
 		var redisConfig = configuration.GetSection("Redis");
 		var enabled = redisConfig.GetValue<bool>("Enabled");
+		var logger = builder.Services.BuildServiceProvider().GetRequiredService<ILogger<IHostApplicationBuilder>>();
 
 		if (!enabled)
 		{
@@ -28,6 +30,7 @@ public static class RedisCacheExtension
 			builder.Services.AddScoped<ICacheInvalidationService, OutputCacheInvalidationService>();
 			// Basic health check (always healthy when Redis disabled)
 			builder.Services.AddHealthChecks();
+			Console.WriteLine("[CACHE] Redis cache is DISABLED. Using in-memory cache.");
 			return builder;
 		}
 
@@ -36,9 +39,12 @@ public static class RedisCacheExtension
 		var configConnectionString = redisConfig["ConnectionString"] ?? "localhost:6379";
 		var instanceName = redisConfig["InstanceName"] ?? "AppNet9:";
 
+		Console.WriteLine("[CACHE] Attempting to connect to Redis: {0}", configConnectionString);
+
 		if (!string.IsNullOrEmpty(aspireConnectionString))
 		{
 			// Use Aspire Redis client integration (handles service discovery automatically)
+			Console.WriteLine("[CACHE] Using Aspire Redis client integration");
 			builder.AddRedisDistributedCache("redis", settings =>
 			{
 				settings.DisableTracing = false;
@@ -52,6 +58,7 @@ public static class RedisCacheExtension
 		else
 		{
 			// Fallback: Use standard Redis configuration from appsettings
+			Console.WriteLine("[CACHE] Using standard StackExchange Redis configuration");
 			builder.Services.AddStackExchangeRedisCache(options =>
 			{
 				options.Configuration = configConnectionString;
@@ -77,6 +84,7 @@ public static class RedisCacheExtension
 		builder.Services.AddHealthChecks()
 			.AddRedis(healthCheckConnectionString, name: "redis", tags: ["cache", "redis"]);
 
+		Console.WriteLine("[CACHE] Redis cache configured successfully. Instance: {0}", instanceName);
 		return builder;
 	}
 
