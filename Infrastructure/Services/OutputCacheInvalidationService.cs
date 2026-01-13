@@ -22,16 +22,34 @@ public sealed class OutputCacheInvalidationService : ICacheInvalidationService
 
 	public async Task InvalidateByTagAsync(string tag, CancellationToken cancellationToken = default)
 	{
-		_logger.LogInformation("Invalidating cache entries with tag: {Tag}", tag);
-		await _cacheStore.EvictByTagAsync(tag, cancellationToken);
+		try
+		{
+			_logger.LogInformation("Starting cache invalidation for tag: {Tag}", tag);
+			await _cacheStore.EvictByTagAsync(tag, cancellationToken);
+			_logger.LogInformation("Cache invalidation successfully completed for tag: {Tag}", tag);
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Error invalidating cache for tag: {Tag}", tag);
+			throw;
+		}
 	}
 
 	public async Task InvalidateByTagsAsync(IEnumerable<string> tags, CancellationToken cancellationToken = default)
 	{
 		foreach (var tag in tags)
 		{
-			_logger.LogInformation("Invalidating cache entries with tag: {Tag}", tag);
-			await _cacheStore.EvictByTagAsync(tag, cancellationToken);
+			try
+			{
+				_logger.LogInformation("Starting cache invalidation for tag: {Tag}", tag);
+				await _cacheStore.EvictByTagAsync(tag, cancellationToken);
+				_logger.LogInformation("Cache invalidation successfully completed for tag: {Tag}", tag);
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Error invalidating cache for tag: {Tag}", tag);
+				throw;
+			}
 		}
 	}
 }
