@@ -36,7 +36,13 @@ public sealed class CreateCategoryCommandHandler : IRequestHandler<CreateCategor
 
 		try
 		{
-			var category = CategoryEntity.Create(request.Name, request.Description, request.ParentCategoryId);
+		var category = CategoryEntity.Create(request.Name, request.Description, request.ParentCategoryId);
+			
+			// Set emoji if provided
+			if (!string.IsNullOrWhiteSpace(request.Emoji))
+			{
+				category.SetEmoji(request.Emoji);
+			}
 
 			// Parent validation + set navigation
 			if (request.ParentCategoryId.HasValue)

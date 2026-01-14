@@ -33,7 +33,7 @@ public class CreateCategoryCommandValidatorTests
 	[Fact]
 	public void Validate_WhenParentIsEmptyGuid_ShouldFail()
 	{
-		var res = _validator.Validate(new CreateCategoryCommand("Ok", null, Guid.Empty));
+		var res = _validator.Validate(new CreateCategoryCommand("Ok", null, null, Guid.Empty));
 		res.IsValid.Should().BeFalse();
 	}
 }

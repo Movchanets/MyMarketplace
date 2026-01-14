@@ -90,6 +90,7 @@ try
     builder.Services.AddScoped<IProductGalleryRepository, ProductGalleryRepository>();
     builder.Services.AddScoped<ISkuGalleryRepository, SkuGalleryRepository>();
     builder.Services.AddScoped<IAttributeDefinitionRepository, AttributeDefinitionRepository>();
+    builder.Services.AddScoped<ISearchQueryRepository, SearchQueryRepository>();
     builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
     builder.Services.AddIdentity<ApplicationUser, RoleEntity>(options =>

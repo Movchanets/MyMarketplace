@@ -4,7 +4,7 @@ using Domain.Entities;
 
 namespace Application.Queries.Catalog;
 
-internal static class ProductMapping
+public static class ProductMapping
 {
 	public static ProductSummaryDto MapSummary(Product product)
 	{
@@ -15,6 +15,7 @@ internal static class ProductMapping
 				pc.Category.Name,
 				pc.Category.Slug,
 				pc.Category.Description,
+				pc.Category.Emoji,
 				pc.Category.ParentCategoryId,
 				pc.IsPrimary))
 			.ToList()
@@ -27,6 +28,7 @@ internal static class ProductMapping
 				pc.Category.Name,
 				pc.Category.Slug,
 				pc.Category.Description,
+				pc.Category.Emoji,
 				pc.Category.ParentCategoryId,
 				true))
 			.FirstOrDefault()
@@ -80,6 +82,7 @@ internal static class ProductMapping
 				pc.Category.Name,
 				pc.Category.Slug,
 				pc.Category.Description,
+				pc.Category.Emoji,
 				pc.Category.ParentCategoryId,
 				pc.IsPrimary))
 			.ToList()
@@ -92,6 +95,7 @@ internal static class ProductMapping
 				pc.Category.Name,
 				pc.Category.Slug,
 				pc.Category.Description,
+				pc.Category.Emoji,
 				pc.Category.ParentCategoryId,
 				true))
 			.FirstOrDefault()

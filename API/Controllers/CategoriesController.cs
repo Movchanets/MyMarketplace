@@ -81,7 +81,7 @@ public sealed class CategoriesController : ControllerBase
 	[Authorize(Policy = "Permission:categories.manage")]
 	public async Task<IActionResult> Update([FromRoute] Guid id, [FromBody] UpdateCategoryRequest request)
 	{
-		var command = new UpdateCategoryCommand(id, request.Name, request.Description, request.ParentCategoryId);
+		var command = new UpdateCategoryCommand(id, request.Name, request.Description, request.Emoji, request.ParentCategoryId);
 		var result = await _mediator.Send(command);
 		if (!result.IsSuccess) return BadRequest(result);
 		return Ok(result);
@@ -100,4 +100,4 @@ public sealed class CategoriesController : ControllerBase
 	}
 }
 
-public sealed record UpdateCategoryRequest(string Name, string? Description = null, Guid? ParentCategoryId = null);
+public sealed record UpdateCategoryRequest(string Name, string? Description = null, string? Emoji = null, Guid? ParentCategoryId = null);

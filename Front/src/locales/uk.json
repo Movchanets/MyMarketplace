@@ -43,6 +43,26 @@
     }
   },
 
+  "catalog": {
+    "button": "Каталог",
+    "no_categories": "Категорій поки немає",
+    "no_subcategories": "Підкатегорій немає",
+    "view_all": "Переглянути всі"
+  },
+
+  "search": {
+    "placeholder": "Я шукаю...",
+    "button": "Знайти",
+    "popular": "Популярні запити",
+    "history": "Історія пошуку",
+    "clear_history": "Очистити",
+    "remove_from_history": "Видалити з історії",
+    "no_suggestions": "Почніть вводити для пошуку",
+    "no_results": "За вашим запитом нічого не знайдено",
+    "results_title": "Результати пошуку",
+    "results_count": "Знайдено {{count}} товарів"
+  },
+
   "settings": {
     "tabs": {
       "profile": "Профіль",
@@ -318,6 +338,14 @@
       "description": "Опис",
       "parent_category": "Батьківська категорія",
       "no_parent": "Без батьківської категорії",
+      "emoji": "Емодзі",
+      "select_emoji": "Виберіть емодзі",
+      "emoji_selected": "Обрано",
+      "popular_emojis": "Популярні емодзі",
+      "custom_emoji": "Власне емодзі",
+      "enter_emoji": "Введіть емодзі або символ",
+      "add": "Додати",
+      "clear_emoji": "Очистити емодзі",
       "actions": "Дії",
       "edit": "Редагувати",
       "delete": "Видалити",

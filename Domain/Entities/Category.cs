@@ -10,6 +10,7 @@ public class Category : BaseEntity<Guid>
 	public string Name { get; private set; }
 	public string Slug { get; private set; }
 	public string? Description { get; private set; }
+	public string? Emoji { get; private set; }
 	public Guid? ParentCategoryId { get; private set; }
 	public virtual Category? ParentCategory { get; private set; }
 	public virtual IReadOnlyCollection<Category> Children => _children.AsReadOnly();
@@ -51,6 +52,12 @@ public class Category : BaseEntity<Guid>
 	public void UpdateDescription(string? description)
 	{
 		Description = string.IsNullOrWhiteSpace(description) ? null : description.Trim();
+		MarkAsUpdated();
+	}
+
+	public void SetEmoji(string? emoji)
+	{
+		Emoji = string.IsNullOrWhiteSpace(emoji) ? null : emoji.Trim();
 		MarkAsUpdated();
 	}
 

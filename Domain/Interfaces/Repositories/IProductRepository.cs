@@ -14,6 +14,12 @@ public interface IProductRepository
 	Task<IEnumerable<Product>> GetByStoreIdAsync(Guid storeId);
 	Task<Product?> GetBySkuCodeAsync(string skuCode);
 
+	/// <summary>
+	/// Searches products by query text (name, description, sku).
+	/// Returns active products from verified stores.
+	/// </summary>
+	Task<IEnumerable<Product>> SearchAsync(string query, int limit = 20);
+
 	void Add(Product product);
 	void Update(Product product);
 	void Delete(Product product);

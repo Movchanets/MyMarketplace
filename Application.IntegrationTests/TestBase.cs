@@ -72,6 +72,7 @@ public abstract class TestBase : IAsyncLifetime
         // Реєструємо репозиторії
         services.AddScoped<Domain.Interfaces.Repositories.IUserRepository, Infrastructure.Repositories.UserRepository>();
         services.AddScoped<Domain.Interfaces.Repositories.IMediaImageRepository, Infrastructure.Repositories.MediaImageRepository>();
+        services.AddScoped<Domain.Interfaces.Repositories.IProductRepository, Infrastructure.Repositories.ProductRepository>();
         services.AddScoped<Application.Interfaces.IUnitOfWork, Infrastructure.Services.UnitOfWork>();
 
         // Мокаємо IFileStorage та IImageService (не потрібні для більшості тестів)

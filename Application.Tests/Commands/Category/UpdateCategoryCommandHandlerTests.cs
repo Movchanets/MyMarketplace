@@ -70,7 +70,7 @@ public class UpdateCategoryCommandHandlerTests
 		var sut = CreateSut();
 
 		// Act
-		var res = await sut.Handle(new UpdateCategoryCommand(category.Id, "Cat2", null, parentId), CancellationToken.None);
+		var res = await sut.Handle(new UpdateCategoryCommand(category.Id, "Cat2", null, null, parentId), CancellationToken.None);
 
 		// Assert
 		res.IsSuccess.Should().BeFalse();

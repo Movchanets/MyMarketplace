@@ -31,6 +31,9 @@ public class CategoryConfiguration : IEntityTypeConfiguration<Category>
 		builder.Property(c => c.Description)
 			.HasMaxLength(2000);
 
+		builder.Property(c => c.Emoji)
+			.HasMaxLength(10);
+
 		builder.HasOne(c => c.ParentCategory)
 			.WithMany(c => c.Children)
 			.HasForeignKey(c => c.ParentCategoryId)

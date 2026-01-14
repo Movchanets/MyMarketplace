@@ -1,10 +1,12 @@
 import { useTranslation } from 'react-i18next'
+import { CatalogSection } from '../../components/catalog/CatalogSection'
 
 export default function Home() {
   const { t } = useTranslation()
 
   return (
     <div className="space-y-10">
+      {/* Hero section */}
       <section className="grid gap-6 md:grid-cols-2 md:items-center">
         <div className="space-y-4">
           <h1 className="text-3xl font-bold tracking-tight text-text md:text-5xl">{t('site.name')}</h1>
@@ -19,25 +21,12 @@ export default function Home() {
         <div className="card h-56 md:h-72" />
       </section>
 
-      {/* Quick visual token check */}
-      <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <div className="h-12 rounded bg-surface-card/80 ring-1 ring-white/10" />
-        <div className="h-12 rounded bg-surface ring-1 ring-white/10" />
-        <div className="h-12 rounded bg-brand ring-1 ring-white/10" />
-        <div className="h-12 rounded bg-brand-light ring-1 ring-white/10" />
-      </section>
+      {/* Catalog Section - Categories grid */}
+      <CatalogSection />
 
+      {/* Recommendations */}
       <section>
-        <h2 className="mb-4 text-xl font-semibold text-text">Популярні категорії</h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="card h-40" />
-          ))}
-        </div>
-      </section>
-
-      <section>
-        <h2 className="mb-4 text-xl font-semibold text-text">Рекомендації</h2>
+        <h2 className="mb-4 text-xl font-semibold text-text">{t('home.recommendations')}</h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
             <div key={i} className="card h-56" />

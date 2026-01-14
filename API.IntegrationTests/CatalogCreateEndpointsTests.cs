@@ -285,21 +285,125 @@ public class CatalogCreateEndpointsTests : IClassFixture<TestWebApplicationFacto
 		afterDemoProductsCount.Should().Be(initialDemoProductsCount);
 	}
 
-	[Fact]
-	public async Task GetCategories_Anonymous_ReturnsSeededCategories()
-	{
-		_client.DefaultRequestHeaders.Authorization = null;
-		var resp = await _client.GetAsync("/api/categories");
-		resp.StatusCode.Should().Be(HttpStatusCode.OK);
+  [Fact]
+  public async Task GetCategories_Anonymous_ReturnsSeededCategories()
+  {
+    _client.DefaultRequestHeaders.Authorization = null;
+    var resp = await _client.GetAsync("/api/categories");
+    resp.StatusCode.Should().Be(HttpStatusCode.OK);
 
-		var json = await resp.Content.ReadFromJsonAsync<JsonElement>();
-		json.GetProperty("isSuccess").GetBoolean().Should().BeTrue();
-		var payload = json.GetProperty("payload");
-		payload.ValueKind.Should().Be(JsonValueKind.Array);
+    var json = await resp.Content.ReadFromJsonAsync<JsonElement>();
+    json.GetProperty("isSuccess").GetBoolean().Should().BeTrue();
+    var payload = json.GetProperty("payload");
+    payload.ValueKind.Should().Be(JsonValueKind.Array);
 
-		var slugs = payload.EnumerateArray().Select(e => e.GetProperty("slug").GetString()).ToList();
-		slugs.Should().Contain("electronics");
-	}
+    var slugs = payload.EnumerateArray().Select(e => e.GetProperty("slug").GetString()).ToList();
+    slugs.Should().Contain("electronics");
+  }
+
+  [Fact]
+  public async Task PostCategories_WithEmoji_CreatesCategoryWithEmoji()
+  {
+    var adminToken = await LoginAdminAndGetAccessToken();
+    _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
+
+    var emoji = "📱";
+    var resp = await _client.PostAsJsonAsync("/api/categories", new
+    {
+      name = "Mobile Phones",
+      description = "Mobile phone category",
+      emoji = emoji
+    });
+
+    resp.StatusCode.Should().Be(HttpStatusCode.OK);
+
+    var json = await resp.Content.ReadFromJsonAsync<JsonElement>();
+    json.GetProperty("isSuccess").GetBoolean().Should().BeTrue();
+    var categoryId = json.GetProperty("payload").GetGuid();
+
+    // Verify emoji was saved
+    var getResp = await _client.GetAsync($"/api/categories/{categoryId}");
+    getResp.StatusCode.Should().Be(HttpStatusCode.OK);
+
+    var getJson = await getResp.Content.ReadFromJsonAsync<JsonElement>();
+    var payload = getJson.GetProperty("payload");
+    payload.GetProperty("emoji").GetString().Should().Be(emoji);
+  }
+
+  [Fact]
+  public async Task PutCategories_UpdateEmoji_UpdatesCategoryEmoji()
+  {
+    var adminToken = await LoginAdminAndGetAccessToken();
+    _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
+
+    // Create category without emoji first
+    var createResp = await _client.PostAsJsonAsync("/api/categories", new
+    {
+      name = "Test Category Update",
+      description = "Category for emoji update test"
+    });
+    var categoryId = (await createResp.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("payload").GetGuid();
+
+    // Update with emoji
+    var newEmoji = "🎧";
+    var updateResp = await _client.PutAsJsonAsync($"/api/categories/{categoryId}", new
+    {
+      name = "Test Category Update",
+      description = "Category for emoji update test",
+      emoji = newEmoji
+    });
+
+    updateResp.StatusCode.Should().Be(HttpStatusCode.OK);
+
+    // Verify emoji was updated
+    var getResp = await _client.GetAsync($"/api/categories/{categoryId}");
+    var getJson = await getResp.Content.ReadFromJsonAsync<JsonElement>();
+    var payload = getJson.GetProperty("payload");
+    payload.GetProperty("emoji").GetString().Should().Be(newEmoji);
+  }
+
+  [Fact]
+  public async Task GetCategories_IncludesEmojiInResponse()
+  {
+    _client.DefaultRequestHeaders.Authorization = null;
+    var resp = await _client.GetAsync("/api/categories");
+    resp.StatusCode.Should().Be(HttpStatusCode.OK);
+
+    var json = await resp.Content.ReadFromJsonAsync<JsonElement>();
+    json.GetProperty("isSuccess").GetBoolean().Should().BeTrue();
+    var payload = json.GetProperty("payload");
+    payload.ValueKind.Should().Be(JsonValueKind.Array);
+
+    // Check that at least some categories have emoji field (even if null)
+    var categories = payload.EnumerateArray().ToList();
+    categories.Should().NotBeEmpty();
+
+    foreach (var category in categories)
+    {
+      // Every category should have emoji field (can be null)
+      var hasEmoji = category.TryGetProperty("emoji", out var emojiProp);
+      hasEmoji.Should().BeTrue("Category should have emoji field");
+
+      if (emojiProp.ValueKind == JsonValueKind.String)
+      {
+        var emojiValue = emojiProp.GetString();
+        // If not null, should be reasonable length
+        if (emojiValue != null)
+        {
+          emojiValue.Length.Should().BeLessThanOrEqualTo(10, "Emoji should be max 10 chars");
+        }
+      }
+      else if (emojiProp.ValueKind == JsonValueKind.Null)
+      {
+        // Null is acceptable
+      }
+      else
+      {
+        // Should be string or null
+        Assert.Fail($"Emoji field should be string or null, but was {emojiProp.ValueKind}");
+      }
+    }
+  }
 
 	[Fact]
 	public async Task GetCategoryBySlug_Anonymous_ReturnsCategory()
