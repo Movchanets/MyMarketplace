@@ -332,8 +332,45 @@ export const productsApi = {
     return response.data
   },
 
-  delete: async (productId: string): Promise<ServiceResponse<void>> => {
-    const response = await axiosClient.delete<ServiceResponse<void>>(`/products/${productId}`)
+   delete: async (productId: string): Promise<ServiceResponse<void>> => {
+     const response = await axiosClient.delete<ServiceResponse<void>>(`/products/${productId}`)
+     return response.data
+   }
+ }
+
+// Favorites API
+export interface FavoriteProductDto {
+  id: string
+  name: string
+  slug: string
+  baseImageUrl: string | null
+  minPrice: number | null
+  inStock: boolean
+  favoritedAt: string
+}
+
+export interface MergeGuestFavoritesRequest {
+  productIds: string[];
+}
+
+export const favoritesApi = {
+  getFavorites: async (): Promise<ServiceResponse<FavoriteProductDto[]>> => {
+    const response = await axiosClient.get<ServiceResponse<FavoriteProductDto[]>>('/favorites')
+    return response.data
+  },
+
+  addToFavorites: async (productId: string): Promise<ServiceResponse<boolean>> => {
+    const response = await axiosClient.post<ServiceResponse<boolean>>('/favorites', { productId })
+    return response.data
+  },
+
+  removeFromFavorites: async (productId: string): Promise<ServiceResponse<boolean>> => {
+    const response = await axiosClient.delete<ServiceResponse<boolean>>(`/favorites/${productId}`)
+    return response.data
+  },
+
+  mergeGuestFavorites: async (productIds: string[]): Promise<ServiceResponse<number>> => {
+    const response = await axiosClient.post<ServiceResponse<number>>('/favorites/merge-guest', { productIds })
     return response.data
   }
 }

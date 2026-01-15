@@ -7,6 +7,7 @@ import {
   type SkuDto,
   type MediaImageDto
 } from '../../api/catalogApi'
+import { useFavoritesStore, useIsFavorited } from '../../store/favoritesStore'
 
 export default function ProductPage() {
   const { t } = useTranslation()
@@ -19,6 +20,10 @@ export default function ProductPage() {
   const [error, setError] = useState<string | null>(null)
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
   const [quantity, setQuantity] = useState(1)
+
+  // Favorites functionality
+  const { toggleFavorite, isToggling } = useFavoritesStore()
+  const isFavorited = useIsFavorited(product?.id || '')
 
   // Fetch product data by slug
   const fetchProduct = useCallback(async () => {
@@ -189,6 +194,11 @@ export default function ProductPage() {
     console.log('Buy now:', selectedSku.id, 'quantity:', quantity)
   }
 
+  const handleToggleFavorite = () => {
+    if (!product?.id) return
+    toggleFavorite(product.id)
+  }
+
   // Loading state
   if (loading) {
     return (
@@ -320,9 +330,37 @@ export default function ProductPage() {
 
         {/* Product Info */}
         <div className="space-y-6">
-          {/* Title & Price */}
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-text">{product.name}</h1>
+           {/* Title & Price */}
+           <div>
+             <div className="flex items-start justify-between gap-4">
+               <h1 className="text-2xl md:text-3xl font-bold text-text flex-1">{product.name}</h1>
+               <button
+                 onClick={handleToggleFavorite}
+                 disabled={isToggling.has(product.id)}
+                 className={`p-2 rounded-full transition-all duration-200 ${
+                   isFavorited
+                     ? 'bg-red-500 hover:bg-red-600 text-white'
+                     : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300'
+                 }`}
+                 title={isFavorited ? t('productPage.removeFromFavorites') : t('productPage.addToFavorites')}
+               >
+                 <svg
+                   className={`w-6 h-6 transition-colors ${
+                     isFavorited ? 'text-white' : 'text-gray-600 dark:text-gray-300'
+                   }`}
+                   fill={isFavorited ? 'currentColor' : 'none'}
+                   stroke="currentColor"
+                   viewBox="0 0 24 24"
+                 >
+                   <path
+                     strokeLinecap="round"
+                     strokeLinejoin="round"
+                     strokeWidth={2}
+                     d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                   />
+                 </svg>
+               </button>
+             </div>
             
             {selectedSku && (
               <div className="mt-3 flex items-baseline gap-3">

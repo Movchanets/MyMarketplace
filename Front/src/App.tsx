@@ -9,6 +9,7 @@ import Auth from './pages/auth/Auth'
 import ResetPassword from './pages/reset/ResetPassword'
 import SettingsPage from './pages/Cabinet/SettingsPage'
 import Cabinet from './pages/Cabinet/Cabinet'
+import Favorites from './pages/Cabinet/Favorites'
 import AdminPanel from './pages/admin/AdminPanel'
 import CategoriesManagement from './pages/admin/CategoriesManagement'
 import TagsManagement from './pages/admin/TagsManagement'
@@ -60,7 +61,7 @@ export default function App() {
           <Route path="products/:productId/skus" element={<SkuManagement />} />
           <Route path="orders" element={<div className="p-6">{t('menu.orders')} ({t('common.empty')})</div>} />
           <Route path="tracking" element={<div className="p-6">{t('menu.tracking')} ({t('common.empty')})</div>} />
-          <Route path="favorites" element={<div className="p-6">{t('menu.favorites')} ({t('common.empty')})</div>} />
+          <Route path="favorites" element={<Favorites />} />
           <Route path="wallet" element={<div className="p-6">{t('menu.wallet')} ({t('common.empty')})</div>} />
           <Route path="support" element={<div className="p-6">{t('menu.support')} ({t('common.empty')})</div>} />
           <Route path="help" element={<div className="p-6">{t('menu.help')} ({t('common.empty')})</div>} />

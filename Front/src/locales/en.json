@@ -34,14 +34,46 @@
     "my_profile": "My profile"
   },
 
-  "home": {
-    "popular_categories": "Popular categories",
-    "recommendations": "Recommendations",
-    "cta": {
-      "catalog": "Catalog",
-      "learn_more": "Learn more"
-    }
-  },
+   "home": {
+     "popular_categories": "Popular categories",
+     "recommendations": "Recommendations",
+     "cta": {
+       "catalog": "Catalog",
+       "learn_more": "Learn more"
+     }
+   },
+
+   "favorites": {
+     "items": "items",
+     "empty": {
+       "title": "No favorite products yet",
+       "description": "Add products to favorites to quickly find them later",
+       "browse": "Browse Products"
+     },
+     "productId": "Product ID",
+     "implementationNote": "Full implementation will be added after product data is available"
+   },
+
+   "productCard": {
+     "inStock": "In Stock",
+     "outOfStock": "Out of Stock",
+     "addToCart": "Add to Cart",
+     "addToWishlist": "Add to Wishlist",
+     "addToFavorites": "Add to Favorites",
+     "removeFromFavorites": "Remove from Favorites"
+   },
+
+   "productPage": {
+     "addToCart": "Add to Cart",
+     "buyNow": "Buy Now",
+     "inStock": "In Stock",
+     "outOfStock": "Out of Stock",
+     "description": "Description",
+     "specifications": "Specifications",
+     "quantity": "Quantity",
+     "addToFavorites": "Add to Favorites",
+     "removeFromFavorites": "Remove from Favorites"
+   },
 
   "catalog": {
     "button": "Catalog",

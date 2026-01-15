@@ -34,14 +34,46 @@
     "my_profile": "Мій профіль"
   },
 
-  "home": {
-    "popular_categories": "Популярні категорії",
-    "recommendations": "Рекомендації",
-    "cta": {
-      "catalog": "До каталогу",
-      "learn_more": "Дізнатись більше"
-    }
-  },
+   "home": {
+     "popular_categories": "Популярні категорії",
+     "recommendations": "Рекомендації",
+     "cta": {
+       "catalog": "До каталогу",
+       "learn_more": "Дізнатись більше"
+     }
+   },
+
+   "favorites": {
+     "items": "товарів",
+     "empty": {
+       "title": "Обраних товарів поки немає",
+       "description": "Додавайте товари до обраного, щоб швидко їх знайти пізніше",
+       "browse": "Переглянути товари"
+     },
+     "productId": "ID товару",
+     "implementationNote": "Повна реалізація буде додана після отримання даних про товари"
+   },
+
+   "productCard": {
+     "inStock": "В наявності",
+     "outOfStock": "Немає в наявності",
+     "addToCart": "Додати в кошик",
+     "addToWishlist": "Додати в обране",
+     "addToFavorites": "Додати в обране",
+     "removeFromFavorites": "Видалити з обраного"
+   },
+
+   "productPage": {
+     "addToCart": "Додати в кошик",
+     "buyNow": "Купити зараз",
+     "inStock": "В наявності",
+     "outOfStock": "Немає в наявності",
+     "description": "Опис",
+     "specifications": "Характеристики",
+     "quantity": "Кількість",
+     "addToFavorites": "Додати в обране",
+     "removeFromFavorites": "Видалити з обраного"
+   },
 
   "catalog": {
     "button": "Каталог",
