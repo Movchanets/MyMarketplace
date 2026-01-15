@@ -29,10 +29,13 @@ public class Product : BaseEntity<Guid>
     private readonly List<ProductGallery> _gallery = new();
     public virtual IReadOnlyCollection<ProductGallery> Gallery => _gallery.AsReadOnly();
 
-    private readonly List<ProductCategory> _productCategories = new();
-    public virtual IReadOnlyCollection<ProductCategory> ProductCategories => _productCategories.AsReadOnly();
+     private readonly List<ProductCategory> _productCategories = new();
+     public virtual IReadOnlyCollection<ProductCategory> ProductCategories => _productCategories.AsReadOnly();
 
-    private Product() { }
+     private readonly List<ProductFavorite> _favorites = new();
+     public virtual IReadOnlyCollection<ProductFavorite> Favorites => _favorites.AsReadOnly();
+
+     private Product() { }
 
     public Product(string name, string? description = null)
     {

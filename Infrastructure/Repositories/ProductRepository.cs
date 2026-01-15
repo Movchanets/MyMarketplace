@@ -79,6 +79,29 @@ public class ProductRepository : IProductRepository
 			.FirstOrDefaultAsync(p => p.Skus.Any(s => s.SkuCode == normalized));
 	}
 
+	public async Task<IEnumerable<Product>> SearchAsync(string query, int limit = 20)
+	{
+		if (string.IsNullOrWhiteSpace(query))
+		{
+			return Enumerable.Empty<Product>();
+		}
+
+		var normalized = query.Trim().ToLowerInvariant();
+
+		return await WithDetails()
+			.Where(p => p.IsActive && 
+			            p.Store != null && 
+			            p.Store.IsVerified && 
+			            !p.Store.IsSuspended &&
+			            (p.Name.ToLower().Contains(normalized) ||
+			             (p.Description != null && p.Description.ToLower().Contains(normalized)) ||
+			             p.Skus.Any(s => s.SkuCode.ToLower().Contains(normalized))))
+			.OrderByDescending(p => p.Name.ToLower().StartsWith(normalized)) // Exact prefix matches first
+			.ThenByDescending(p => p.CreatedAt)
+			.Take(limit)
+			.ToListAsync();
+	}
+
 	public void Add(Product product)
 	{
 		_db.Products.Add(product);

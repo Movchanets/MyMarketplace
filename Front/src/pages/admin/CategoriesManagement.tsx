@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { categoriesApi, type CategoryDto, type CreateCategoryRequest, type UpdateCategoryRequest } from '../../api/catalogApi'
+import EmojiPicker from '../../components/common/EmojiPicker'
 
 const ITEMS_PER_PAGE = 10
 
@@ -23,7 +24,8 @@ export default function CategoriesManagement() {
   const [formData, setFormData] = useState<CreateCategoryRequest>({
     name: '',
     description: '',
-    parentCategoryId: null
+    parentCategoryId: null,
+    emoji: null
   })
 
   // Create a map for quick parent lookup
@@ -63,7 +65,7 @@ export default function CategoriesManagement() {
   }, [fetchCategories])
 
   const resetForm = () => {
-    setFormData({ name: '', description: '', parentCategoryId: null })
+    setFormData({ name: '', description: '', parentCategoryId: null, emoji: null })
     setEditingId(null)
     setShowCreateForm(false)
     setFormErrors({})
@@ -112,7 +114,8 @@ export default function CategoriesManagement() {
       const updateData: UpdateCategoryRequest = {
         name: formData.name,
         description: formData.description,
-        parentCategoryId: formData.parentCategoryId
+        parentCategoryId: formData.parentCategoryId,
+        emoji: formData.emoji
       }
       const response = await categoriesApi.update(editingId, updateData)
       if (response.isSuccess) {
@@ -144,7 +147,8 @@ export default function CategoriesManagement() {
     setFormData({
       name: category.name,
       description: category.description || '',
-      parentCategoryId: category.parentCategoryId
+      parentCategoryId: category.parentCategoryId,
+      emoji: category.emoji
     })
     setEditingId(category.id)
     setShowCreateForm(true)
@@ -170,8 +174,11 @@ export default function CategoriesManagement() {
         <h2 className="text-2xl font-bold text-text">{t('admin.catalog.categories')}</h2>
         <button
           onClick={() => { resetForm(); setShowCreateForm(true) }}
-          className="btn btn-brand"
+          className="inline-flex items-center px-4 py-2.5 text-sm font-semibold text-white bg-brand hover:bg-brand-dark rounded-lg transition-colors duration-200 shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 focus:ring-offset-surface"
         >
+          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+          </svg>
           {t('admin.catalog.add_category')}
         </button>
       </div>
@@ -252,6 +259,10 @@ export default function CategoriesManagement() {
                   ))}
               </select>
             </div>
+            <EmojiPicker
+              value={formData.emoji || null}
+              onChange={(emoji) => setFormData({ ...formData, emoji })}
+            />
             <div className="flex gap-2">
               <button type="submit" className="btn btn-brand">
                 {editingId ? t('admin.catalog.save') : t('admin.catalog.create')}
@@ -269,6 +280,9 @@ export default function CategoriesManagement() {
         <table className="min-w-full divide-y divide-border">
           <thead className="bg-surface-secondary">
             <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">
+                {t('admin.catalog.emoji')}
+              </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">
                 {t('admin.catalog.name')}
               </th>
@@ -289,13 +303,20 @@ export default function CategoriesManagement() {
           <tbody className="bg-surface divide-y divide-border">
             {paginatedCategories.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-6 py-4 text-center text-text-muted">
+                <td colSpan={6} className="px-6 py-4 text-center text-text-muted">
                   {t('admin.catalog.no_categories')}
                 </td>
               </tr>
             ) : (
               paginatedCategories.map(category => (
                 <tr key={category.id} className="hover:bg-surface-secondary/50 transition-colors">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {category.emoji ? (
+                      <span className="text-2xl">{category.emoji}</span>
+                    ) : (
+                      <span className="text-text-muted text-sm">-</span>
+                    )}
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-text font-medium">
                     {category.name}
                   </td>
@@ -314,20 +335,28 @@ export default function CategoriesManagement() {
                   <td className="px-6 py-4 text-text-muted text-sm max-w-xs truncate">
                     {category.description || '-'}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                    <button
-                      onClick={() => startEdit(category)}
-                      className="text-brand hover:text-brand-light mr-3 transition-colors"
-                    >
-                      {t('admin.catalog.edit')}
-                    </button>
-                    <button
-                      onClick={() => handleDelete(category.id)}
-                      className="text-red-500 hover:text-red-400 transition-colors"
-                    >
-                      {t('admin.catalog.delete')}
-                    </button>
-                  </td>
+                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                     <div className="flex items-center justify-end gap-2">
+                       <button
+                         onClick={() => startEdit(category)}
+                         className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-brand bg-brand/10 hover:bg-brand/20 hover:text-brand-dark rounded-md transition-colors duration-200 border border-transparent hover:border-brand/30"
+                       >
+                         <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                         </svg>
+                         {t('admin.catalog.edit')}
+                       </button>
+                       <button
+                         onClick={() => handleDelete(category.id)}
+                         className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 hover:text-red-700 rounded-md transition-colors duration-200 border border-transparent hover:border-red-200"
+                       >
+                         <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                         </svg>
+                         {t('admin.catalog.delete')}
+                       </button>
+                     </div>
+                   </td>
                 </tr>
               ))
             )}

@@ -50,5 +50,5 @@ public sealed class GetCategoriesQueryHandler
 	}
 
 	private static CategoryDto MapCategory(Domain.Entities.Category category)
-		=> new(category.Id, category.Name, category.Slug, category.Description, category.ParentCategoryId);
+		=> new(category.Id, category.Name, category.Slug, category.Description, category.Emoji, category.ParentCategoryId);
 }

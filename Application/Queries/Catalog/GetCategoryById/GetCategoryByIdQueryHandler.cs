@@ -26,8 +26,8 @@ public sealed class GetCategoryByIdQueryHandler : IRequestHandler<GetCategoryByI
 				return new ServiceResponse<CategoryDto>(false, "Category not found");
 			}
 
-			return new ServiceResponse<CategoryDto>(true, "Category retrieved successfully",
-				new CategoryDto(category.Id, category.Name, category.Slug, category.Description, category.ParentCategoryId));
+		return new ServiceResponse<CategoryDto>(true, "Category retrieved successfully",
+				new CategoryDto(category.Id, category.Name, category.Slug, category.Description, category.Emoji, category.ParentCategoryId));
 		}
 		catch (Exception ex)
 		{

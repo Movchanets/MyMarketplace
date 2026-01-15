@@ -18,7 +18,7 @@ namespace Infrastructure.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.10")
+                .HasAnnotation("ProductVersion", "10.0.1")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -103,6 +103,10 @@ namespace Infrastructure.Migrations
                     b.Property<string>("Description")
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("Emoji")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -249,6 +253,33 @@ namespace Infrastructure.Migrations
                     b.ToTable("ProductCategories", (string)null);
                 });
 
+            modelBuilder.Entity("Domain.Entities.ProductFavorite", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.HasKey("UserId", "ProductId");
+
+                    b.HasIndex("CreatedAt")
+                        .HasDatabaseName("IX_ProductFavorites_CreatedAt");
+
+                    b.HasIndex("ProductId")
+                        .HasDatabaseName("IX_ProductFavorites_ProductId");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("IX_ProductFavorites_UserId");
+
+                    b.ToTable("ProductFavorites", (string)null);
+                });
+
             modelBuilder.Entity("Domain.Entities.ProductGallery", b =>
                 {
                     b.Property<Guid>("Id")
@@ -305,6 +336,46 @@ namespace Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("ProductTags", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Entities.SearchQuery", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("LastSearchedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("NormalizedQuery")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Query")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<long>("SearchCount")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LastSearchedAt");
+
+                    b.HasIndex("NormalizedQuery")
+                        .IsUnique();
+
+                    b.HasIndex("SearchCount");
+
+                    b.ToTable("SearchQueries", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Entities.SkuEntity", b =>
@@ -759,6 +830,25 @@ namespace Infrastructure.Migrations
                     b.Navigation("Product");
                 });
 
+            modelBuilder.Entity("Domain.Entities.ProductFavorite", b =>
+                {
+                    b.HasOne("Domain.Entities.Product", "Product")
+                        .WithMany("Favorites")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.User", "User")
+                        .WithMany("Favorites")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Domain.Entities.ProductGallery", b =>
                 {
                     b.HasOne("Domain.Entities.MediaImage", "MediaImage")
@@ -922,6 +1012,8 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Entities.Product", b =>
                 {
+                    b.Navigation("Favorites");
+
                     b.Navigation("Gallery");
 
                     b.Navigation("ProductCategories");
@@ -944,6 +1036,11 @@ namespace Infrastructure.Migrations
             modelBuilder.Entity("Domain.Entities.Tag", b =>
                 {
                     b.Navigation("ProductTags");
+                });
+
+            modelBuilder.Entity("Domain.Entities.User", b =>
+                {
+                    b.Navigation("Favorites");
                 });
 
             modelBuilder.Entity("Infrastructure.Entities.Identity.ApplicationUser", b =>

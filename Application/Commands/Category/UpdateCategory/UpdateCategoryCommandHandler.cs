@@ -53,8 +53,9 @@ public sealed class UpdateCategoryCommandHandler : IRequestHandler<UpdateCategor
 				return new ServiceResponse(false, "Category with same slug already exists");
 			}
 
-			category.Rename(request.Name);
+		category.Rename(request.Name);
 			category.UpdateDescription(request.Description);
+			category.SetEmoji(request.Emoji);
 
 			if (request.ParentCategoryId.HasValue)
 			{

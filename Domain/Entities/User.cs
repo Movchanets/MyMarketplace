@@ -71,16 +71,20 @@ public class User : BaseEntity<Guid>
     }
 
 
-    /// <summary>
-    /// Чи заблокований користувач
-    /// </summary>
-    public bool IsBlocked
-    {
-        get => _isBlocked;
-        private set => _isBlocked = value;
-    }
-    public Guid? AvatarId { get; private set; }
-    public virtual MediaImage? Avatar { get; private set; }
+     /// <summary>
+     /// Чи заблокований користувач
+     /// </summary>
+     public bool IsBlocked
+     {
+         get => _isBlocked;
+         private set => _isBlocked = value;
+     }
+     public Guid? AvatarId { get; private set; }
+     public virtual MediaImage? Avatar { get; private set; }
+
+     // Navigation properties
+     private readonly List<ProductFavorite> _favorites = new();
+     public virtual IReadOnlyCollection<ProductFavorite> Favorites => _favorites.AsReadOnly();
 
 
     // Бізнес-методи

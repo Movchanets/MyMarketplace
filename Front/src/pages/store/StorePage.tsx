@@ -66,10 +66,7 @@ export default function StorePage() {
     console.log('Add to cart:', productId)
   }
 
-  const handleAddToWishlist = (productId: string) => {
-    // TODO: Implement wishlist functionality
-    console.log('Add to wishlist:', productId)
-  }
+
 
   // Loading state
   if (loading) {
@@ -166,7 +163,6 @@ export default function StorePage() {
                   product={product}
                   onClick={handleProductClick}
                   onAddToCart={handleAddToCart}
-                  onAddToWishlist={handleAddToWishlist}
                 />
               ))}
             </div>

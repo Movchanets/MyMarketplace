@@ -57,7 +57,7 @@ public class CreateCategoryCommandHandlerTests
 			.ReturnsAsync((Domain.Entities.Category?)null);
 
 		var sut = CreateSut();
-		var cmd = new CreateCategoryCommand("Phones", null, parentId);
+		var cmd = new CreateCategoryCommand("Phones", null, null, parentId);
 
 		// Act
 		var res = await sut.Handle(cmd, CancellationToken.None);

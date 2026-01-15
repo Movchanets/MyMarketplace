@@ -34,13 +34,65 @@
     "my_profile": "My profile"
   },
 
-  "home": {
-    "popular_categories": "Popular categories",
-    "recommendations": "Recommendations",
-    "cta": {
-      "catalog": "Catalog",
-      "learn_more": "Learn more"
-    }
+   "home": {
+     "popular_categories": "Popular categories",
+     "recommendations": "Recommendations",
+     "cta": {
+       "catalog": "Catalog",
+       "learn_more": "Learn more"
+     }
+   },
+
+   "favorites": {
+     "items": "items",
+     "empty": {
+       "title": "No favorite products yet",
+       "description": "Add products to favorites to quickly find them later",
+       "browse": "Browse Products"
+     },
+     "productId": "Product ID",
+     "implementationNote": "Full implementation will be added after product data is available"
+   },
+
+   "productCard": {
+     "inStock": "In Stock",
+     "outOfStock": "Out of Stock",
+     "addToCart": "Add to Cart",
+     "addToWishlist": "Add to Wishlist",
+     "addToFavorites": "Add to Favorites",
+     "removeFromFavorites": "Remove from Favorites"
+   },
+
+   "productPage": {
+     "addToCart": "Add to Cart",
+     "buyNow": "Buy Now",
+     "inStock": "In Stock",
+     "outOfStock": "Out of Stock",
+     "description": "Description",
+     "specifications": "Specifications",
+     "quantity": "Quantity",
+     "addToFavorites": "Add to Favorites",
+     "removeFromFavorites": "Remove from Favorites"
+   },
+
+  "catalog": {
+    "button": "Catalog",
+    "no_categories": "No categories yet",
+    "no_subcategories": "No subcategories",
+    "view_all": "View all"
+  },
+
+  "search": {
+    "placeholder": "I'm looking for...",
+    "button": "Search",
+    "popular": "Popular searches",
+    "history": "Search history",
+    "clear_history": "Clear",
+    "remove_from_history": "Remove from history",
+    "no_suggestions": "Start typing to search",
+    "no_results": "No results found for your query",
+    "results_title": "Search results",
+    "results_count": "Found {{count}} products"
   },
 
   "settings": {
@@ -316,6 +368,14 @@
       "description": "Description",
       "parent_category": "Parent Category",
       "no_parent": "No parent category",
+      "emoji": "Emoji",
+      "select_emoji": "Select emoji",
+      "emoji_selected": "Selected",
+      "popular_emojis": "Popular emojis",
+      "custom_emoji": "Custom emoji",
+      "enter_emoji": "Enter emoji or symbol",
+      "add": "Add",
+      "clear_emoji": "Clear emoji",
       "actions": "Actions",
       "edit": "Edit",
       "delete": "Delete",

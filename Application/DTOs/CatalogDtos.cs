@@ -33,6 +33,7 @@ public sealed record CategoryDto(
 	string Name,
 	string Slug,
 	string? Description,
+	string? Emoji,
 	Guid? ParentCategoryId,
 	bool IsPrimary = false
 );

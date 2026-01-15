@@ -31,7 +31,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
     public DbSet<SkuGallery> SkuGalleries { get; set; }
     public DbSet<Store> Stores { get; set; }
     public DbSet<ProductCategory> ProductCategories { get; set; }
-    public DbSet<AttributeDefinition> AttributeDefinitions { get; set; }
+ 	public DbSet<AttributeDefinition> AttributeDefinitions { get; set; }
+ 	public DbSet<SearchQuery> SearchQueries { get; set; }
+ 	public DbSet<ProductFavorite> ProductFavorites { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

@@ -1,15 +1,17 @@
 import { useTranslation } from 'react-i18next'
+import { useFavoritesStore, useIsFavorited } from '../../store/favoritesStore'
 import type { ProductSummaryDto } from '../../api/catalogApi'
 
 interface ProductCardProps {
   product: ProductSummaryDto
   onAddToCart?: (productId: string) => void
-  onAddToWishlist?: (productId: string) => void
   onClick?: (productSlug: string) => void
 }
 
-export default function ProductCard({ product, onAddToCart, onAddToWishlist, onClick }: ProductCardProps) {
+export default function ProductCard({ product, onAddToCart, onClick }: ProductCardProps) {
   const { t } = useTranslation()
+  const { toggleFavorite, isToggling } = useFavoritesStore()
+  const isFavorited = useIsFavorited(product.id)
 
   const handleCardClick = () => {
     onClick?.(product.slug)
@@ -20,9 +22,9 @@ export default function ProductCard({ product, onAddToCart, onAddToWishlist, onC
     onAddToCart?.(product.id)
   }
 
-  const handleAddToWishlist = (e: React.MouseEvent) => {
+  const handleToggleFavorite = (e: React.MouseEvent) => {
     e.stopPropagation()
-    onAddToWishlist?.(product.id)
+    toggleFavorite(product.id)
   }
 
   return (
@@ -59,13 +61,27 @@ export default function ProductCard({ product, onAddToCart, onAddToWishlist, onC
           )}
         </div>
 
-        {/* Wishlist Button */}
+        {/* Favorite Button */}
         <button
-          onClick={handleAddToWishlist}
-          className="absolute top-3 right-3 p-2 rounded-full bg-white/80 dark:bg-gray-900/80 hover:bg-white dark:hover:bg-gray-900 shadow-sm backdrop-blur-sm transition-all opacity-0 group-hover:opacity-100"
-          title={t('productCard.addToWishlist')}
+          onClick={handleToggleFavorite}
+          disabled={isToggling.has(product.id)}
+          className={`absolute top-3 right-3 p-2 rounded-full shadow-sm backdrop-blur-sm transition-all opacity-0 group-hover:opacity-100 ${
+            isFavorited
+              ? 'bg-red-500 hover:bg-red-600'
+              : 'bg-white/80 dark:bg-gray-900/80 hover:bg-white dark:hover:bg-gray-900'
+          }`}
+          title={isFavorited ? t('productCard.removeFromFavorites') : t('productCard.addToFavorites')}
         >
-          <svg className="w-5 h-5 text-gray-600 dark:text-gray-300 hover:text-red-500 dark:hover:text-red-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg
+            className={`w-5 h-5 transition-colors ${
+              isFavorited
+                ? 'text-white'
+                : 'text-gray-600 dark:text-gray-300 hover:text-red-500 dark:hover:text-red-400'
+            }`}
+            fill={isFavorited ? 'currentColor' : 'none'}
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
           </svg>
         </button>

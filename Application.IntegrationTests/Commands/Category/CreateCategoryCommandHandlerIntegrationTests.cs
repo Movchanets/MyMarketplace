@@ -44,7 +44,7 @@ public class CreateCategoryCommandHandlerIntegrationTests : TestBase
 		var cache = new MemoryCache(new MemoryCacheOptions());
 		var handler = new CreateCategoryCommandHandler(repo, uow, cache, NullLogger<CreateCategoryCommandHandler>.Instance);
 
-		var command = new CreateCategoryCommand("Phones", null, Guid.NewGuid());
+		var command = new CreateCategoryCommand("Phones", null, null, Guid.NewGuid());
 
 		// Act
 		var result = await handler.Handle(command, CancellationToken.None);
