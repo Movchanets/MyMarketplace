@@ -96,7 +96,7 @@ export default function Auth() {
 
   return (
     <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center p-4">
-      <div className="w-full max-w-md rounded-2xl bg-surface-card p-8 shadow-2xl">
+      <div className="w-full max-w-md rounded-2xl bg-surface p-8 shadow-2xl">
         {error && (
           <div className="mb-4 rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-500">
             {error}

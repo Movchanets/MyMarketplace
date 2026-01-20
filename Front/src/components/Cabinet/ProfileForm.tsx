@@ -226,7 +226,7 @@ export default function ProfileForm() {
     }
   }
 
-  if (!profile && !error) return <div className="text-sm text-text-muted">{t('auth.loading')}</div>
+  if (!profile && !error) return <div className="text-sm text-foreground-muted">{t('auth.loading')}</div>
 
   const profileIdOrEmail = profile ? ((profile as { id?: string; email?: string }).id ?? (profile as { id?: string; email?: string }).email ?? 'me') : 'empty'
   const infoFormKey = `profile-info-${profileIdOrEmail}`
@@ -237,7 +237,7 @@ export default function ProfileForm() {
     <div className="space-y-8">
       {/* Profile Picture Section */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-text dark:text-white">{t('profile.picture')}</h3>
+        <h3 className="text-lg font-semibold text-foreground dark:text-white">{t('profile.picture')}</h3>
         {error && <div className="text-sm text-red-600">{error}</div>}
         {success && <div className="text-sm text-green-600">{success}</div>}
         

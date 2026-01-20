@@ -68,13 +68,13 @@ export default function LanguageSelector({ className, align = 'right', dropUp = 
   return (
     <div className={className} ref={ref}>
       <div className="relative inline-block text-left">
-        <button
-          type="button"
-          aria-haspopup="true"
-          aria-expanded={open}
-          onClick={() => setOpen((s) => !s)}
-          className="inline-flex items-center gap-2 rounded-md border border-surface/60 bg-white dark:bg-[#071428] px-3 py-1 text-sm shadow-sm hover:shadow-md"
-        >
+         <button
+           type="button"
+           aria-haspopup="true"
+           aria-expanded={open}
+           onClick={() => setOpen((s) => !s)}
+           className="inline-flex items-center gap-2 rounded-md border border-border bg-surface px-3 py-1 text-sm shadow-sm hover:shadow-md text-foreground"
+         >
           <span className="text-xl" aria-hidden>
             <current.Flag />
           </span>
@@ -85,28 +85,28 @@ export default function LanguageSelector({ className, align = 'right', dropUp = 
         </button>
 
         {open && (
-          <div
-            role="menu"
-            aria-orientation="vertical"
-            className={`absolute ${
-              dropUp ? `bottom-full mb-2 origin-bottom-${align === 'right' ? 'right' : 'left'}` : `mt-2 origin-top-${align === 'right' ? 'right' : 'left'}`
-            } w-44 rounded-md bg-white dark:bg-[#071428] shadow-lg ring-1 ring-black/5 focus:outline-none z-50 ${
-              align === 'right' ? 'right-0' : 'left-0'
-            }`}
-          >
+           <div
+             role="menu"
+             aria-orientation="vertical"
+             className={`absolute ${
+               dropUp ? `bottom-full mb-2 origin-bottom-${align === 'right' ? 'right' : 'left'}` : `mt-2 origin-top-${align === 'right' ? 'right' : 'left'}`
+             } w-44 rounded-md bg-surface border border-border shadow-lg ring-1 ring-black/5 focus:outline-none z-50 ${
+               align === 'right' ? 'right-0' : 'left-0'
+             }`}
+           >
             <div className="py-1">
               {LANGS.map((l) => (
                 <button
                   key={l.code}
                   role="menuitem"
                   onClick={() => change(l.code)}
-                  className={`w-full text-left px-3 py-2 text-sm hover:bg-surface-card flex items-center gap-3 ${
-                    i18n.language === l.code ? 'font-semibold bg-surface-card' : 'font-normal'
-                  }`}
+                   className={`w-full text-left px-3 py-2 text-sm hover:bg-surface-hover flex items-center gap-3 text-foreground ${
+                     i18n.language === l.code ? 'font-semibold bg-surface-hover' : 'font-normal'
+                   }`}
                 >
-                  <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-surface/10">
-                    <l.Flag />
-                  </span>
+                   <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-surface-hover/50">
+                     <l.Flag />
+                   </span>
                   <span className="flex-1">{t(l.labelKey) || l.labelFallback}</span>
                 </button>
               ))}

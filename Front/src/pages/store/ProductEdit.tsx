@@ -12,6 +12,9 @@ import {
   type MediaImageDto
 } from '../../api/catalogApi'
 
+import { ErrorAlert } from '../../components/ui/ErrorAlert'
+import { InfoAlert } from '../../components/ui/InfoAlert'
+
 interface FormErrors {
   name?: string
 }
@@ -262,9 +265,9 @@ export default function ProductEdit() {
 
   if (error && !product) {
     return (
-      <div className="max-w-2xl mx-auto py-8 px-4">
-        <div className="text-center">
-          <p className="text-red-500 mb-4">{error}</p>
+     <div className="max-w-2xl mx-auto py-8 px-4">
+         <div className="text-center">
+           <p className="text-error mb-4">{error}</p>
           <button
             onClick={() => navigate('/cabinet/products')}
             className="btn btn-secondary"
@@ -278,51 +281,49 @@ export default function ProductEdit() {
 
   return (
     <div className="max-w-2xl mx-auto py-8 px-4">
-      <h1 className="text-2xl font-bold text-text mb-6">{t('product.edit_title')}</h1>
+      <h1 className="text-2xl font-bold text-foreground mb-6">{t('product.edit_title')}</h1>
 
       {error && (
-        <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-600 dark:text-red-400">
-          {error}
-        </div>
+        <ErrorAlert className="mb-4">{error}</ErrorAlert>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Name */}
         <div>
-          <label className="block text-sm font-medium text-text mb-2">
+          <label className="block text-sm font-medium text-foreground mb-2">
             {t('product.name')} *
           </label>
           <input
             type="text"
             value={name}
             onChange={e => setName(e.target.value)}
-            className={`w-full px-4 py-2 border rounded-lg bg-background text-text focus:outline-none focus:ring-2 focus:ring-brand ${
-              formErrors.name ? 'border-red-500' : 'border-border'
+            className={`w-full px-4 py-2 border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-brand ${
+              formErrors.name ? 'border-error' : 'border-border'
             }`}
             placeholder={t('product.name_placeholder')}
           />
           {formErrors.name && (
-            <p className="mt-1 text-sm text-red-500">{formErrors.name}</p>
+            <p className="mt-1 text-sm text-error">{formErrors.name}</p>
           )}
         </div>
 
         {/* Description */}
         <div>
-          <label className="block text-sm font-medium text-text mb-2">
+          <label className="block text-sm font-medium text-foreground mb-2">
             {t('product.description')}
           </label>
           <textarea
             value={description}
             onChange={e => setDescription(e.target.value)}
             rows={4}
-            className="w-full px-4 py-2 border border-border rounded-lg bg-background text-text focus:outline-none focus:ring-2 focus:ring-brand resize-none"
+            className="w-full px-4 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-brand resize-none"
             placeholder={t('product.description_placeholder')}
           />
         </div>
 
         {/* Categories */}
         <div className="relative">
-          <label className="block text-sm font-medium text-text mb-2">
+          <label className="block text-sm font-medium text-foreground mb-2">
             {t('product.categories')}
           </label>
           
@@ -372,7 +373,7 @@ export default function ProductEdit() {
           <button
             type="button"
             onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
-            className="w-full px-4 py-2 border border-border rounded-lg bg-background text-left text-text-muted hover:border-brand transition-colors"
+            className="w-full px-4 py-2 border border-border rounded-lg bg-background text-left text-foreground-muted hover:border-brand transition-colors"
           >
             {t('product.select_categories')}
           </button>
@@ -386,12 +387,12 @@ export default function ProductEdit() {
                   value={categorySearch}
                   onChange={e => setCategorySearch(e.target.value)}
                   placeholder={t('common.search')}
-                  className="w-full px-3 py-2 border border-border rounded bg-background text-text text-sm"
+                  className="w-full px-3 py-2 border border-border rounded bg-background text-foreground text-sm"
                 />
               </div>
               <div className="p-2">
                 {filteredCategories.length === 0 ? (
-                  <p className="text-text-muted text-sm py-2 px-3">{t('common.noResults')}</p>
+                  <p className="text-foreground-muted text-sm py-2 px-3">{t('common.noResults')}</p>
                 ) : (
                   filteredCategories.map(cat => {
                     const isPrimary = primaryCategoryId === cat.id
@@ -414,7 +415,7 @@ export default function ProductEdit() {
                             }}
                             className="rounded border-border text-brand focus:ring-brand"
                           />
-                          <span className="text-text">{cat.name}</span>
+                          <span className="text-foreground">{cat.name}</span>
                           {isPrimary && (
                             <span className="text-xs bg-brand/20 text-brand px-2 py-1 rounded">
                               {t('product.primary')}
@@ -442,15 +443,15 @@ export default function ProductEdit() {
 
         {/* Gallery */}
         <div>
-          <label className="block text-sm font-medium text-text mb-2">
+          <label className="block text-sm font-medium text-foreground mb-2">
             {t('product.gallery')}
           </label>
-          <p className="text-xs text-text-muted mb-3">{t('product.gallery_hint')}</p>
+          <p className="text-xs text-foreground-muted mb-3">{t('product.gallery_hint')}</p>
 
           {/* Existing Images */}
           {existingImages.length > 0 && (
             <div className="mb-4">
-              <p className="text-xs font-medium text-text mb-2">{t('product.current_images')}</p>
+              <p className="text-xs font-medium text-foreground mb-2">{t('product.current_images')}</p>
               <div className="flex flex-wrap gap-3">
                 {existingImages.map((img) => {
                   const isBaseImage = product?.baseImageUrl === img.url
@@ -497,9 +498,9 @@ export default function ProductEdit() {
           {/* New Images to Upload (will be saved with form) */}
           {newImages.length > 0 && (
             <div className="mb-4">
-              <p className="text-xs font-medium text-text mb-2">
+              <p className="text-xs font-medium text-foreground mb-2">
                 {t('product.new_images')} 
-                <span className="text-text-muted ml-1">({t('product.will_upload_on_save')})</span>
+                <span className="text-foreground-muted ml-1">({t('product.will_upload_on_save')})</span>
               </p>
               <div className="flex flex-wrap gap-3">
                 {newImages.map((img) => (
@@ -509,12 +510,12 @@ export default function ProductEdit() {
                       alt=""
                       className="w-24 h-24 object-cover rounded-lg border-2 border-dashed border-brand/50"
                     />
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveNewImage(img.id)}
-                      className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full 
-                        opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
+                       <button
+                       type="button"
+                       onClick={() => handleRemoveNewImage(img.id)}
+                       className="absolute -top-2 -right-2 p-1 bg-error text-white rounded-full 
+                       opacity-0 group-hover:opacity-100 transition-opacity"
+                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                       </svg>
@@ -528,10 +529,10 @@ export default function ProductEdit() {
           {/* Add New Images */}
           <label className="inline-flex flex-col items-center justify-center px-4 py-3 border-2 border-dashed 
             border-border rounded-lg cursor-pointer hover:border-brand transition-colors">
-            <svg className="w-8 h-8 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-8 h-8 text-foreground-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
-            <span className="text-sm text-text-muted mt-1">{t('product.add_images')}</span>
+            <span className="text-sm text-foreground-muted mt-1">{t('product.add_images')}</span>
             <input
               type="file"
               accept="image/*"
@@ -544,25 +545,25 @@ export default function ProductEdit() {
 
         {/* Tags */}
         <div className="relative">
-          <label className="block text-sm font-medium text-text mb-2">
+          <label className="block text-sm font-medium text-foreground mb-2">
             {t('product.tags')}
           </label>
           
           {/* Selected tags chips */}
           <div className="flex flex-wrap gap-2 mb-2">
-            {selectedTags.map(id => {
-              const tag = tags.find(t => t.id === id)
-              return tag ? (
-                <span
-                  key={id}
-                  className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-text text-sm"
-                >
+             {selectedTags.map(id => {
+               const tag = tags.find(t => t.id === id)
+               return tag ? (
+                 <span
+                   key={id}
+                   className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-foreground/10 text-foreground text-sm"
+                 >
                   {tag.name}
                   <button
                     type="button"
-                    onClick={() => toggleTag(id)}
-                    className="hover:text-red-500"
-                  >
+                     onClick={() => toggleTag(id)}
+                     className="hover:text-error"
+                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
@@ -576,7 +577,7 @@ export default function ProductEdit() {
           <button
             type="button"
             onClick={() => setShowTagDropdown(!showTagDropdown)}
-            className="w-full px-4 py-2 border border-border rounded-lg bg-background text-left text-text-muted hover:border-brand transition-colors"
+            className="w-full px-4 py-2 border border-border rounded-lg bg-background text-left text-foreground-muted hover:border-brand transition-colors"
           >
             {t('product.select_tags')}
           </button>
@@ -590,12 +591,12 @@ export default function ProductEdit() {
                   value={tagSearch}
                   onChange={e => setTagSearch(e.target.value)}
                   placeholder={t('common.search')}
-                  className="w-full px-3 py-2 border border-border rounded bg-background text-text text-sm"
+                  className="w-full px-3 py-2 border border-border rounded bg-background text-foreground text-sm"
                 />
               </div>
               <div className="p-2">
                 {filteredTags.length === 0 ? (
-                  <p className="text-text-muted text-sm py-2 px-3">{t('common.noResults')}</p>
+                  <p className="text-foreground-muted text-sm py-2 px-3">{t('common.noResults')}</p>
                 ) : (
                   filteredTags.map(tag => (
                     <label
@@ -608,7 +609,7 @@ export default function ProductEdit() {
                         onChange={() => toggleTag(tag.id)}
                         className="rounded border-border text-brand focus:ring-brand"
                       />
-                      <span className="text-text">{tag.name}</span>
+                      <span className="text-foreground">{tag.name}</span>
                     </label>
                   ))
                 )}
@@ -617,12 +618,12 @@ export default function ProductEdit() {
           )}
         </div>
 
-        {/* Info about SKUs */}
-        <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-          <p className="text-sm text-blue-700 dark:text-blue-300">
-            {t('product.edit_sku_info')}
-          </p>
-        </div>
+         {/* Info about SKUs */}
+         <InfoAlert>
+           <p className="text-sm">
+             {t('product.edit_sku_info')}
+           </p>
+         </InfoAlert>
 
         {/* Submit */}
         <div className="flex gap-4">

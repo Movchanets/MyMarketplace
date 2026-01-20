@@ -88,10 +88,10 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="relative w-full max-w-md rounded-2xl bg-surface-card p-8 shadow-2xl">
+      <div className="relative w-full max-w-md rounded-2xl bg-surface p-8 shadow-2xl">
         <button
           onClick={onClose}
-          className="absolute right-4 top-4 text-text-muted hover:text-text"
+          className="absolute right-4 top-4 text-foreground-muted hover:text-foreground"
         >
           <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

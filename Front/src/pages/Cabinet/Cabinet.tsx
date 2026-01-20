@@ -6,7 +6,7 @@ import LanguageSelector from '../../components/ui/LanguageSelector'
 
 const linkClass = ({ isActive }: { isActive: boolean }) =>
   `flex items-center gap-3 px-4 py-3 text-sm rounded-md transition-colors ${
-    isActive ? 'bg-brand text-white' : 'text-text-muted hover:text-text hover:bg-surface-card'
+    isActive ? 'bg-brand text-white' : 'text-foreground-muted hover:text-foreground hover:bg-surface'
   }`
 
 export default function Cabinet() {
@@ -20,12 +20,12 @@ export default function Cabinet() {
         <div className="bg-transparent rounded-md overflow-hidden shadow-sm">
           <div className="flex">
             {/* left persistent sidenav */}
-            <aside className="w-64 bg-white dark:bg-[#0b1228] dark:border-surface/30 border-r border-surface/40 p-4 text-text dark:text-gray-100 flex flex-col">
+            <aside className="w-64 bg-white dark:bg-[#0b1228] dark:border-surface/30 border-r border-surface/40 p-4 text-foreground dark:text-gray-100 flex flex-col">
               <div className="mb-4 flex items-center gap-3">
                 <div className="h-10 w-10 rounded-full bg-violet-200 dark:bg-violet-600 flex items-center justify-center text-sm font-semibold text-white">BM</div>
                 <div>
                   <div className="text-sm font-medium">{(user?.firstName && user?.lastName) ? (user.firstName + ' ' + user.lastName) : t('common.user')}</div>
-                  <div className="text-xs text-text-muted">{user?.email || ''}</div>
+                  <div className="text-xs text-foreground-muted">{user?.email || ''}</div>
                 </div>
               </div>
 
@@ -75,7 +75,7 @@ export default function Cabinet() {
               <div className="mt-4">
                 <button
                   onClick={() => setConfirmOpen(true)}
-                  className="w-full rounded-md border border-text/20 px-4 py-2 text-sm text-text hover:bg-text/5"
+                  className="w-full rounded-md border border-foreground/20 px-4 py-2 text-sm text-foreground hover:bg-foreground/5"
                 >
                   {t('logout')}
                 </button>
@@ -87,12 +87,12 @@ export default function Cabinet() {
               <div className="fixed inset-0 z-60 flex items-center justify-center">
                 <div className="absolute inset-0 bg-black/40" onClick={() => setConfirmOpen(false)} />
                 <div className="relative z-10 w-full max-w-md rounded-md bg-white dark:bg-[#071428] p-6 shadow-lg">
-                  <h3 className="text-lg font-semibold text-text dark:text-white">{t('confirm_logout_title')}</h3>
-                  <p className="mt-2 text-sm text-text-muted dark:text-text-muted/80">{t('confirm_logout_text')}</p>
+                  <h3 className="text-lg font-semibold text-foreground dark:text-white">{t('confirm_logout_title')}</h3>
+                  <p className="mt-2 text-sm text-foreground-muted dark:text-foreground-muted/80">{t('confirm_logout_text')}</p>
                   <div className="mt-4 flex justify-end gap-2">
                     <button
                       onClick={() => setConfirmOpen(false)}
-                      className="rounded-md px-3 py-2 text-sm bg-transparent text-text-muted hover:text-text"
+                      className="rounded-md px-3 py-2 text-sm bg-transparent text-foreground-muted hover:text-foreground"
                     >
                       {t('cancel')}
                     </button>

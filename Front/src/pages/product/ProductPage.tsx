@@ -199,35 +199,35 @@ export default function ProductPage() {
     toggleFavorite(product.id)
   }
 
-  // Loading state
-  if (loading) {
-    return (
-      <div className="max-w-6xl mx-auto p-6">
-        <div className="animate-pulse">
-          <div className="grid md:grid-cols-2 gap-8">
-            <div className="aspect-square bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
-            <div className="space-y-4">
-              <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
-              <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
-              <div className="h-24 bg-gray-200 dark:bg-gray-700 rounded"></div>
-              <div className="h-12 bg-gray-200 dark:bg-gray-700 rounded w-1/3"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    )
-  }
+   // Loading state
+   if (loading) {
+     return (
+       <div className="max-w-6xl mx-auto p-6">
+         <div className="animate-pulse">
+           <div className="grid md:grid-cols-2 gap-8">
+             <div className="aspect-square bg-surface-hover dark:bg-background rounded-xl"></div>
+             <div className="space-y-4">
+               <div className="h-8 bg-surface-hover dark:bg-background rounded w-3/4"></div>
+               <div className="h-6 bg-surface-hover dark:bg-background rounded w-1/4"></div>
+               <div className="h-24 bg-surface-hover dark:bg-background rounded"></div>
+               <div className="h-12 bg-surface-hover dark:bg-background rounded w-1/3"></div>
+             </div>
+           </div>
+         </div>
+       </div>
+     )
+   }
 
   // Error state
   if (error || !product) {
     return (
       <div className="max-w-2xl mx-auto p-6 text-center">
         <div className="card p-12">
-          <svg className="w-20 h-20 mx-auto text-text-muted mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-20 h-20 mx-auto text-foreground-muted mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          <h1 className="text-2xl font-bold text-text mb-3">{t('productPage.notFound')}</h1>
-          <p className="text-text-muted mb-6">{error || t('productPage.notFoundHint')}</p>
+          <h1 className="text-2xl font-bold text-foreground mb-3">{t('productPage.notFound')}</h1>
+          <p className="text-foreground-muted mb-6">{error || t('productPage.notFoundHint')}</p>
           <Link to="/" className="btn btn-brand">
             {t('common.backToHome')}
           </Link>
@@ -239,7 +239,7 @@ export default function ProductPage() {
   return (
     <div className="max-w-6xl mx-auto p-6">
       {/* Breadcrumb using primary category */}
-      <nav className="flex items-center gap-2 text-sm text-text-muted mb-6">
+      <nav className="flex items-center gap-2 text-sm text-foreground-muted mb-6">
         <Link to="/" className="hover:text-brand transition-colors">{t('common.home')}</Link>
         <span>/</span>
         {product.primaryCategory ? (
@@ -263,7 +263,7 @@ export default function ProductPage() {
             <span>/</span>
           </>
         )}
-        <span className="text-text">{product.name}</span>
+        <span className="text-foreground">{product.name}</span>
       </nav>
 
       <div className="grid md:grid-cols-2 gap-8">
@@ -279,7 +279,7 @@ export default function ProductPage() {
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center">
-                <svg className="w-24 h-24 text-text-muted opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-24 h-24 text-foreground-muted opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
               </div>
@@ -333,21 +333,21 @@ export default function ProductPage() {
            {/* Title & Price */}
            <div>
              <div className="flex items-start justify-between gap-4">
-               <h1 className="text-2xl md:text-3xl font-bold text-text flex-1">{product.name}</h1>
+               <h1 className="text-2xl md:text-3xl font-bold text-foreground flex-1">{product.name}</h1>
                <button
-                 onClick={handleToggleFavorite}
-                 disabled={isToggling.has(product.id)}
-                 className={`p-2 rounded-full transition-all duration-200 ${
-                   isFavorited
-                     ? 'bg-red-500 hover:bg-red-600 text-white'
-                     : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300'
-                 }`}
+                  onClick={handleToggleFavorite}
+                  disabled={isToggling.has(product.id)}
+                  className={`p-2 rounded-full transition-all duration-200 ${
+                    isFavorited
+                      ? 'bg-error hover:bg-error-dark text-white'
+                      : 'bg-surface-hover dark:bg-background hover:bg-surface-hover dark:hover:bg-background text-foreground-muted dark:text-foreground-muted'
+                  }`}
                  title={isFavorited ? t('productPage.removeFromFavorites') : t('productPage.addToFavorites')}
                >
                  <svg
-                   className={`w-6 h-6 transition-colors ${
-                     isFavorited ? 'text-white' : 'text-gray-600 dark:text-gray-300'
-                   }`}
+                    className={`w-6 h-6 transition-colors ${
+                      isFavorited ? 'text-white' : 'text-foreground-muted dark:text-foreground-muted'
+                    }`}
                    fill={isFavorited ? 'currentColor' : 'none'}
                    stroke="currentColor"
                    viewBox="0 0 24 24"
@@ -368,7 +368,7 @@ export default function ProductPage() {
                   {selectedSku.price.toFixed(2)} ₴
                 </span>
                 {selectedSku.skuCode && (
-                  <span className="text-sm text-text-muted font-mono">
+                  <span className="text-sm text-foreground-muted font-mono">
                     {selectedSku.skuCode}
                   </span>
                 )}
@@ -376,33 +376,33 @@ export default function ProductPage() {
             )}
           </div>
 
-          {/* Stock Status */}
-          {selectedSku && (
-            <div className="flex items-center gap-2">
-              {selectedSku.stockQuantity > 0 ? (
-                <>
-                  <span className="w-3 h-3 rounded-full bg-green-500"></span>
-                  <span className="text-green-600 dark:text-green-400 font-medium">
-                    {t('productPage.inStock')} ({selectedSku.stockQuantity})
-                  </span>
-                </>
-              ) : (
-                <>
-                  <span className="w-3 h-3 rounded-full bg-red-500"></span>
-                  <span className="text-red-600 dark:text-red-400 font-medium">
-                    {t('productPage.outOfStock')}
-                  </span>
-                </>
-              )}
-            </div>
-          )}
+           {/* Stock Status */}
+           {selectedSku && (
+             <div className="flex items-center gap-2">
+               {selectedSku.stockQuantity > 0 ? (
+                 <>
+                   <span className="w-3 h-3 rounded-full bg-success"></span>
+                   <span className="text-success font-medium">
+                     {t('productPage.inStock')} ({selectedSku.stockQuantity})
+                   </span>
+                 </>
+               ) : (
+                 <>
+                   <span className="w-3 h-3 rounded-full bg-error"></span>
+                   <span className="text-error font-medium">
+                     {t('productPage.outOfStock')}
+                   </span>
+                 </>
+               )}
+             </div>
+           )}
 
           {/* Variant Selection */}
           {Object.keys(variantAttributes).length > 0 && (
             <div className="space-y-4">
               {Object.entries(variantAttributes).map(([attrKey, values]) => (
                 <div key={attrKey}>
-                  <label className="block text-sm font-medium text-text mb-2">
+                  <label className="block text-sm font-medium text-foreground mb-2">
                     {attrKey}: <span className="text-brand">{selectedAttributes[attrKey] || '—'}</span>
                   </label>
                   <div className="flex flex-wrap gap-2">
@@ -411,18 +411,18 @@ export default function ProductPage() {
                       const isAvailable = isAttributeValueAvailable(attrKey, value)
                       
                       return (
-                        <button
-                          key={value}
-                          onClick={() => handleAttributeChange(attrKey, value)}
-                          disabled={!isAvailable}
-                          className={`px-4 py-2 rounded-lg border-2 text-sm font-medium transition-all ${
-                            isSelected
-                              ? 'border-brand bg-brand text-white'
-                              : isAvailable
-                                ? 'border-border hover:border-brand text-text'
-                                : 'border-border bg-gray-100 dark:bg-gray-800 text-text-muted opacity-50 cursor-not-allowed line-through'
-                          }`}
-                        >
+                         <button
+                           key={value}
+                           onClick={() => handleAttributeChange(attrKey, value)}
+                           disabled={!isAvailable}
+                           className={`px-4 py-2 rounded-lg border-2 text-sm font-medium transition-all ${
+                             isSelected
+                               ? 'border-brand bg-brand text-white'
+                               : isAvailable
+                                 ? 'border-border hover:border-brand text-foreground'
+                                 : 'border-border bg-surface-hover dark:bg-background text-foreground-muted opacity-50 cursor-not-allowed line-through'
+                           }`}
+                         >
                           {value}
                         </button>
                       )
@@ -437,7 +437,7 @@ export default function ProductPage() {
           <div className="space-y-4 pt-4 border-t border-border">
             {/* Quantity Selector */}
             <div className="flex items-center gap-4">
-              <label className="text-sm font-medium text-text">{t('productPage.quantity')}:</label>
+              <label className="text-sm font-medium text-foreground">{t('productPage.quantity')}:</label>
               <div className="flex items-center border border-border rounded-lg">
                 <button
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
@@ -453,7 +453,7 @@ export default function ProductPage() {
                   max={selectedSku?.stockQuantity || 99}
                   value={quantity}
                   onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                  className="w-16 text-center py-2 border-x border-border bg-transparent text-text focus:outline-none"
+                  className="w-16 text-center py-2 border-x border-border bg-transparent text-foreground focus:outline-none"
                 />
                 <button
                   onClick={() => setQuantity(Math.min(selectedSku?.stockQuantity || 99, quantity + 1))}
@@ -491,20 +491,20 @@ export default function ProductPage() {
           {/* Description */}
           {product.description && (
             <div className="pt-4 border-t border-border">
-              <h3 className="text-lg font-semibold text-text mb-2">{t('productPage.description')}</h3>
-              <p className="text-text-muted whitespace-pre-wrap">{product.description}</p>
+              <h3 className="text-lg font-semibold text-foreground mb-2">{t('productPage.description')}</h3>
+              <p className="text-foreground-muted whitespace-pre-wrap">{product.description}</p>
             </div>
           )}
 
           {/* Attributes */}
           {selectedSku?.mergedAttributes && Object.keys(selectedSku.mergedAttributes).length > 0 && (
             <div className="pt-4 border-t border-border">
-              <h3 className="text-lg font-semibold text-text mb-3">{t('productPage.specifications')}</h3>
+              <h3 className="text-lg font-semibold text-foreground mb-3">{t('productPage.specifications')}</h3>
               <dl className="grid grid-cols-2 gap-2">
                 {Object.entries(selectedSku.mergedAttributes).map(([key, value]) => (
                   <div key={key} className="flex justify-between py-2 border-b border-border/50">
-                    <dt className="text-text-muted">{key}</dt>
-                    <dd className="text-text font-medium">{String(value)}</dd>
+                    <dt className="text-foreground-muted">{key}</dt>
+                    <dd className="text-foreground font-medium">{String(value)}</dd>
                   </div>
                 ))}
               </dl>
@@ -514,13 +514,13 @@ export default function ProductPage() {
           {/* Categories (excluding primary) as clickable tags */}
           {product.categories.filter(c => !c.isPrimary).length > 0 && (
             <div className="pt-4 border-t border-border">
-              <h3 className="text-sm font-medium text-text-muted mb-2">{t('productPage.categories')}</h3>
+              <h3 className="text-sm font-medium text-foreground-muted mb-2">{t('productPage.categories')}</h3>
               <div className="flex flex-wrap gap-2">
                 {product.categories.filter(c => !c.isPrimary).map(category => (
                   <Link
                     key={category.id}
                     to={`/category/${category.slug}`}
-                    className="px-3 py-1.5 text-sm rounded-lg bg-background-secondary text-text hover:bg-brand/10 hover:text-brand transition-colors"
+                    className="px-3 py-1.5 text-sm rounded-lg bg-background-secondary text-foreground hover:bg-brand/10 hover:text-brand transition-colors"
                   >
                     {category.name}
                   </Link>

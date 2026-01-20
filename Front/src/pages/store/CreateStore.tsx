@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { myStoreApi, type CreateStoreRequest } from '../../api/storeApi'
+import { ErrorAlert } from '../../components/ui/ErrorAlert'
 
 interface FormErrors {
   name?: string
@@ -85,56 +86,54 @@ export default function CreateStore() {
 
   return (
     <div className="max-w-2xl mx-auto p-6">
-      <h1 className="text-2xl font-bold text-text mb-6">{t('store.create.title')}</h1>
+      <h1 className="text-2xl font-bold text-foreground mb-6">{t('store.create.title')}</h1>
 
       {error && (
-        <div className="bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-300 px-4 py-3 rounded mb-6">
-          {error}
-        </div>
+        <ErrorAlert className="mb-6">{error}</ErrorAlert>
       )}
 
       <div className="card p-6">
-        <p className="text-text-muted mb-6">{t('store.create.description')}</p>
+        <p className="text-foreground-muted mb-6">{t('store.create.description')}</p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-text mb-1">
+            <label className="block text-sm font-medium text-foreground mb-1">
               {t('store.create.name')} *
             </label>
             <input
               type="text"
               value={formData.name}
               onChange={handleNameChange}
-              className={`w-full px-3 py-2 rounded-lg border bg-surface text-text 
+              className={`w-full px-3 py-2 rounded-lg border bg-surface text-foreground 
                 focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent
-                ${formErrors.name ? 'border-red-500' : 'border-gray-600'}`}
+                ${formErrors.name ? 'border-error' : 'border-border'}`}
               placeholder={t('store.create.name_placeholder')}
               maxLength={200}
             />
             {formErrors.name && (
-              <p className="mt-1 text-sm text-red-500">{formErrors.name}</p>
+              <p className="mt-1 text-sm text-error">{formErrors.name}</p>
             )}
-            <p className="mt-1 text-xs text-text-muted">{formData.name.length}/200</p>
+            <p className="mt-1 text-xs text-foreground-muted">{formData.name.length}/200</p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-text mb-1">
+            <label className="block text-sm font-medium text-foreground mb-1">
               {t('store.create.store_description')}
             </label>
             <textarea
               value={formData.description || ''}
               onChange={handleDescriptionChange}
-              className={`w-full px-3 py-2 rounded-lg border bg-surface text-text 
+              className={`w-full px-3 py-2 rounded-lg border bg-surface text-foreground 
                 focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent resize-y
-                ${formErrors.description ? 'border-red-500' : 'border-gray-600'}`}
+                ${formErrors.description ? 'border-error' : 'border-border'}`}
               rows={4}
               placeholder={t('store.create.description_placeholder')}
               maxLength={2000}
             />
             {formErrors.description && (
-              <p className="mt-1 text-sm text-red-500">{formErrors.description}</p>
+              <p className="mt-1 text-sm text-error">{formErrors.description}</p>
             )}
-            <p className="mt-1 text-xs text-text-muted">{(formData.description || '').length}/2000</p>
+            <p className="mt-1 text-xs text-foreground-muted">{(formData.description || '').length}/2000</p>
           </div>
 
           <div className="flex gap-3 pt-4">

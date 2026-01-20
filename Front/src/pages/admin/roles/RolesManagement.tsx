@@ -168,7 +168,7 @@ export default function RolesManagement() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-text">{t('admin.roles.title')}</h2>
+        <h2 className="text-2xl font-bold text-foreground">{t('admin.roles.title')}</h2>
         <button onClick={handleOpenCreateModal} className="btn-primary flex items-center gap-2">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -202,9 +202,9 @@ export default function RolesManagement() {
                   </svg>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-text">{role.name}</h3>
+                  <h3 className="font-semibold text-foreground">{role.name}</h3>
                   {role.description && (
-                    <p className="text-sm text-text-muted">{role.description}</p>
+                    <p className="text-sm text-foreground-muted">{role.description}</p>
                   )}
                 </div>
               </div>
@@ -213,7 +213,7 @@ export default function RolesManagement() {
                 <div className="flex gap-1">
                   <button
                     onClick={() => handleOpenEditModal(role)}
-                    className="p-1.5 text-text-muted hover:text-brand hover:bg-brand/10 rounded"
+                    className="p-1.5 text-foreground-muted hover:text-brand hover:bg-brand/10 rounded"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -221,7 +221,7 @@ export default function RolesManagement() {
                   </button>
                   <button
                     onClick={() => setDeleteConfirm(role.id)}
-                    className="p-1.5 text-text-muted hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
+                    className="p-1.5 text-foreground-muted hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -232,7 +232,7 @@ export default function RolesManagement() {
               {builtInRoles.includes(role.name) && (
                 <button
                   onClick={() => handleOpenEditModal(role)}
-                  className="p-1.5 text-text-muted hover:text-brand hover:bg-brand/10 rounded"
+                  className="p-1.5 text-foreground-muted hover:text-brand hover:bg-brand/10 rounded"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -241,7 +241,7 @@ export default function RolesManagement() {
               )}
             </div>
 
-            <div className="flex items-center gap-4 text-sm text-text-muted">
+            <div className="flex items-center gap-4 text-sm text-foreground-muted">
               <div className="flex items-center gap-1">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
@@ -260,12 +260,12 @@ export default function RolesManagement() {
             {role.permissions.length > 0 && (
               <div className="mt-3 flex flex-wrap gap-1">
                 {role.permissions.slice(0, 5).map(perm => (
-                  <span key={perm} className="px-2 py-0.5 text-xs bg-surface-alt rounded text-text-muted">
+                  <span key={perm} className="px-2 py-0.5 text-xs bg-surface-alt rounded text-foreground-muted">
                     {perm}
                   </span>
                 ))}
                 {role.permissions.length > 5 && (
-                  <span className="px-2 py-0.5 text-xs bg-surface-alt rounded text-text-muted">
+                  <span className="px-2 py-0.5 text-xs bg-surface-alt rounded text-foreground-muted">
                     +{role.permissions.length - 5}
                   </span>
                 )}
@@ -280,12 +280,12 @@ export default function RolesManagement() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-surface rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] flex flex-col">
             <div className="flex items-center justify-between p-4 border-b border-border">
-              <h3 className="text-lg font-semibold text-text">
+              <h3 className="text-lg font-semibold text-foreground">
                 {editingRole ? t('admin.roles.edit') : t('admin.roles.create')}
               </h3>
               <button 
                 onClick={() => setShowModal(false)}
-                className="text-text-muted hover:text-text"
+                className="text-foreground-muted hover:text-foreground"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -296,7 +296,7 @@ export default function RolesManagement() {
             <div className="p-4 space-y-4 overflow-y-auto flex-1">
               {/* Name */}
               <div>
-                <label className="block text-sm font-medium text-text mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   {t('admin.roles.name')} *
                 </label>
                 <input
@@ -304,20 +304,20 @@ export default function RolesManagement() {
                   value={formData.name}
                   onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                   disabled={!!(editingRole && builtInRoles.includes(editingRole.name))}
-                  className="w-full px-3 py-2 rounded-lg border border-border bg-surface text-text focus:ring-2 focus:ring-brand focus:border-transparent disabled:opacity-50"
+                  className="w-full px-3 py-2 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-brand focus:border-transparent disabled:opacity-50"
                   placeholder={t('admin.roles.name_placeholder')}
                 />
               </div>
 
               {/* Description */}
               <div>
-                <label className="block text-sm font-medium text-text mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   {t('admin.roles.description')}
                 </label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                  className="w-full px-3 py-2 rounded-lg border border-border bg-surface text-text focus:ring-2 focus:ring-brand focus:border-transparent"
+                  className="w-full px-3 py-2 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-brand focus:border-transparent"
                   rows={2}
                   placeholder={t('admin.roles.description_placeholder')}
                 />
@@ -325,7 +325,7 @@ export default function RolesManagement() {
 
               {/* Permissions */}
               <div>
-                <label className="block text-sm font-medium text-text mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   {t('admin.roles.permissions')} ({formData.permissions.length})
                 </label>
                 
@@ -349,8 +349,8 @@ export default function RolesManagement() {
                               onChange={(e) => { e.stopPropagation(); toggleAllInCategory(category) }}
                               className="w-4 h-4 text-brand rounded focus:ring-brand"
                             />
-                            <span className="font-medium text-text">{category}</span>
-                            <span className="text-sm text-text-muted">
+                            <span className="font-medium text-foreground">{category}</span>
+                            <span className="text-sm text-foreground-muted">
                               ({selectedCount}/{categoryPerms.length})
                             </span>
                           </div>
@@ -383,8 +383,8 @@ export default function RolesManagement() {
                                   className="w-4 h-4 text-brand rounded focus:ring-brand mt-0.5"
                                 />
                                 <div>
-                                  <div className="text-sm font-medium text-text">{perm.name}</div>
-                                  <div className="text-xs text-text-muted">{perm.description}</div>
+                                  <div className="text-sm font-medium text-foreground">{perm.name}</div>
+                                  <div className="text-xs text-foreground-muted">{perm.description}</div>
                                 </div>
                               </label>
                             ))}
@@ -400,7 +400,7 @@ export default function RolesManagement() {
             <div className="flex justify-end gap-3 p-4 border-t border-border">
               <button
                 onClick={() => setShowModal(false)}
-                className="px-4 py-2 text-text-muted hover:text-text"
+                className="px-4 py-2 text-foreground-muted hover:text-foreground"
               >
                 {t('common.cancel')}
               </button>
@@ -420,13 +420,13 @@ export default function RolesManagement() {
       {deleteConfirm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-surface rounded-xl shadow-xl max-w-sm w-full p-6">
-            <h3 className="text-lg font-semibold text-text mb-2">{t('admin.roles.delete_confirm_title')}</h3>
-            <p className="text-text-muted mb-4">{t('admin.roles.delete_confirm_message')}</p>
+            <h3 className="text-lg font-semibold text-foreground mb-2">{t('admin.roles.delete_confirm_title')}</h3>
+            <p className="text-foreground-muted mb-4">{t('admin.roles.delete_confirm_message')}</p>
             
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setDeleteConfirm(null)}
-                className="px-4 py-2 text-text-muted hover:text-text"
+                className="px-4 py-2 text-foreground-muted hover:text-foreground"
               >
                 {t('common.cancel')}
               </button>

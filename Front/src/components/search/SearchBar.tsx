@@ -77,10 +77,10 @@ export function SearchBar() {
             onFocus={handleFocus}
             onKeyDown={handleKeyDown}
             placeholder={t('search.placeholder')}
-            className="h-10 w-full rounded-l-lg border border-r-0 border-text/20 bg-surface px-4 pr-10 text-sm text-text placeholder:text-text-muted focus:border-brand focus:outline-none"
+            className="h-10 w-full rounded-l-lg border border-r-0 border-foreground/20 bg-surface px-4 pr-10 text-sm text-foreground placeholder:text-foreground-muted focus:border-brand focus:outline-none"
           />
           {/* Search icon inside input */}
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none">
+          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-foreground-muted pointer-events-none">
             &#128269;
           </span>
         </div>

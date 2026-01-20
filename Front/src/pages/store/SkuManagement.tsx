@@ -14,6 +14,9 @@ import {
   type AttributeDefinitionDto,
 } from '../../api/attributeDefinitionsApi'
 import AttributeSelector from '../../components/catalog/AttributeSelector'
+import { ErrorAlert } from '../../components/ui/ErrorAlert'
+import { SuccessAlert } from '../../components/ui/SuccessAlert'
+import { WarningAlert } from '../../components/ui/WarningAlert'
 
 interface AttributeField {
   key: string
@@ -406,9 +409,9 @@ export default function SkuManagement() {
 
   if (error && !product) {
     return (
-      <div className="p-6 max-w-4xl mx-auto">
-        <div className="text-center">
-          <p className="text-red-500 mb-4">{error}</p>
+     <div className="p-6 max-w-4xl mx-auto">
+         <div className="text-center">
+           <p className="text-error mb-4">{error}</p>
           <button
             onClick={() => navigate('/cabinet/products')}
             className="btn btn-secondary"
@@ -436,9 +439,9 @@ export default function SkuManagement() {
 
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-text">{t('sku.management_title')}</h1>
+            <h1 className="text-2xl font-bold text-foreground">{t('sku.management_title')}</h1>
             {product && (
-              <p className="text-text-muted mt-1">{product.name}</p>
+              <p className="text-foreground-muted mt-1">{product.name}</p>
             )}
           </div>
           
@@ -463,29 +466,23 @@ export default function SkuManagement() {
         </div>
       </div>
 
-      {/* Messages */}
-      {error && (
-        <div className="mb-6 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-300 px-4 py-3 rounded">
-          {error}
-        </div>
-      )}
+       {/* Messages */}
+       {error && (
+         <ErrorAlert className="mb-6">{error}</ErrorAlert>
+       )}
 
-      {successMessage && (
-        <div className="mb-6 bg-green-100 dark:bg-green-900/30 border border-green-400 dark:border-green-700 text-green-700 dark:text-green-300 px-4 py-3 rounded">
-          {successMessage}
-        </div>
-      )}
+       {successMessage && (
+         <SuccessAlert className="mb-6">{successMessage}</SuccessAlert>
+       )}
 
-      {formErrors.skus && (
-        <div className="mb-6 bg-yellow-100 dark:bg-yellow-900/30 border border-yellow-400 dark:border-yellow-700 text-yellow-700 dark:text-yellow-300 px-4 py-3 rounded">
-          {formErrors.skus}
-        </div>
-      )}
+       {formErrors.skus && (
+         <WarningAlert className="mb-6">{formErrors.skus}</WarningAlert>
+       )}
 
       {/* SKU List */}
       {skus.length === 0 ? (
         <div className="card p-8 text-center">
-          <p className="text-text-muted mb-4">{t('sku.no_variants')}</p>
+          <p className="text-foreground-muted mb-4">{t('sku.no_variants')}</p>
           <button onClick={handleAddSku} className="btn btn-brand">
             {t('sku.add_first_variant')}
           </button>
@@ -500,24 +497,24 @@ export default function SkuManagement() {
               {/* SKU Header */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <h3 className="font-semibold text-text">
+                  <h3 className="font-semibold text-foreground">
                     {t('sku.variant')} #{index + 1}
                   </h3>
                   {sku.skuCode && (
-                    <span className="px-2 py-1 bg-gray-100 dark:bg-gray-800 text-text-muted text-xs rounded font-mono">
+                    <span className="px-2 py-1 bg-gray-100 dark:bg-gray-800 text-foreground-muted text-xs rounded font-mono">
                       {sku.skuCode}
                     </span>
                   )}
-                  {sku.isNew && (
-                    <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs rounded">
-                      {t('sku.new')}
-                    </span>
-                  )}
-                  {sku.isModified && !sku.isNew && (
-                    <span className="px-2 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 text-xs rounded">
-                      {t('sku.modified')}
-                    </span>
-                  )}
+                   {sku.isNew && (
+                     <span className="px-2 py-1 bg-info-light dark:bg-info-dark/20 text-info dark:text-info text-xs rounded">
+                       {t('sku.new')}
+                     </span>
+                   )}
+                   {sku.isModified && !sku.isNew && (
+                     <span className="px-2 py-1 bg-warning-light dark:bg-warning-dark/20 text-warning dark:text-warning text-xs rounded">
+                       {t('sku.modified')}
+                     </span>
+                   )}
                 </div>
                 
                 <div className="flex items-center gap-2">
@@ -531,14 +528,14 @@ export default function SkuManagement() {
                     </button>
                   )}
                   
-                  {deleteConfirm === sku.id ? (
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-red-500">{t('sku.confirm_delete')}</span>
-                      <button
-                        onClick={() => handleRemoveSku(sku.id)}
-                        disabled={saving}
-                        className="btn btn-danger text-sm"
-                      >
+                   {deleteConfirm === sku.id ? (
+                     <div className="flex items-center gap-2">
+                       <span className="text-sm text-error">{t('sku.confirm_delete')}</span>
+                       <button
+                         onClick={() => handleRemoveSku(sku.id)}
+                         disabled={saving}
+                         className="btn btn-error text-sm"
+                       >
                         {t('common.delete')}
                       </button>
                       <button
@@ -548,12 +545,12 @@ export default function SkuManagement() {
                         {t('common.cancel')}
                       </button>
                     </div>
-                  ) : (
-                    <button
-                      onClick={() => handleRemoveSku(sku.id)}
-                      disabled={saving || (skus.length === 1 && !sku.isNew)}
-                      className="text-red-500 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                      title={skus.length === 1 && !sku.isNew ? t('sku.cannot_delete_last') : t('common.delete')}
+                   ) : (
+                     <button
+                       onClick={() => handleRemoveSku(sku.id)}
+                       disabled={saving || (skus.length === 1 && !sku.isNew)}
+                       className="text-error hover:text-error-dark disabled:opacity-50 disabled:cursor-not-allowed"
+                       title={skus.length === 1 && !sku.isNew ? t('sku.cannot_delete_last') : t('common.delete')}
                     >
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -566,25 +563,25 @@ export default function SkuManagement() {
               {/* Price & Stock */}
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-text mb-1">
+                  <label className="block text-sm font-medium text-foreground mb-1">
                     {t('sku.price')} *
                   </label>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted">₴</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground-muted">₴</span>
                     <input
                       type="number"
                       step="0.01"
                       min="0"
                       value={sku.price}
                       onChange={e => handleSkuChange(sku.id, 'price', e.target.value)}
-                      className="w-full pl-8 pr-4 py-2 border border-border rounded-lg bg-background text-text focus:outline-none focus:ring-2 focus:ring-brand"
+                      className="w-full pl-8 pr-4 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-brand"
                       placeholder="0.00"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-text mb-1">
+                  <label className="block text-sm font-medium text-foreground mb-1">
                     {t('sku.stock_quantity')} *
                   </label>
                   <input
@@ -592,7 +589,7 @@ export default function SkuManagement() {
                     min="0"
                     value={sku.stockQuantity}
                     onChange={e => handleSkuChange(sku.id, 'stockQuantity', e.target.value)}
-                    className="w-full px-4 py-2 border border-border rounded-lg bg-background text-text focus:outline-none focus:ring-2 focus:ring-brand"
+                    className="w-full px-4 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-brand"
                     placeholder="0"
                   />
                 </div>
@@ -600,7 +597,7 @@ export default function SkuManagement() {
 
               {/* Attributes */}
               <div className="space-y-3">
-                <label className="text-sm font-medium text-text">{t('sku.attributes')}</label>
+                <label className="text-sm font-medium text-foreground">{t('sku.attributes')}</label>
                 <AttributeSelector
                   attributes={sku.attributes}
                   availableAttributes={attributeDefinitions}
@@ -612,8 +609,8 @@ export default function SkuManagement() {
               {!sku.isNew && (
                 <div className="space-y-3 pt-4 border-t border-border">
                   <div>
-                    <label className="text-sm font-medium text-text">{t('sku.gallery')}</label>
-                    <p className="text-xs text-text-muted mt-0.5">{t('sku.gallery_hint')}</p>
+                    <label className="text-sm font-medium text-foreground">{t('sku.gallery')}</label>
+                    <p className="text-xs text-foreground-muted mt-0.5">{t('sku.gallery_hint')}</p>
                   </div>
 
                   <div className="flex flex-wrap gap-3 items-start">
@@ -625,13 +622,13 @@ export default function SkuManagement() {
                           alt={img.altText || ''}
                           className="w-20 h-20 object-cover rounded-lg border border-border"
                         />
-                        <button
-                          type="button"
-                          onClick={() => handleGalleryImageDelete(sku.id, img.id)}
-                          disabled={deletingGalleryImages.has(img.id)}
-                          className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full 
-                            opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
-                        >
+                         <button
+                           type="button"
+                           onClick={() => handleGalleryImageDelete(sku.id, img.id)}
+                           disabled={deletingGalleryImages.has(img.id)}
+                           className="absolute -top-2 -right-2 p-1 bg-error text-white rounded-full 
+                           opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
+                         >
                           {deletingGalleryImages.has(img.id) ? (
                             <svg className="w-3 h-3 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -649,15 +646,15 @@ export default function SkuManagement() {
                     <label className="w-20 h-20 flex flex-col items-center justify-center border-2 border-dashed 
                       border-border rounded-lg cursor-pointer hover:border-brand transition-colors">
                       {uploadingGallery.has(sku.id) ? (
-                        <svg className="w-6 h-6 text-text-muted animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-6 h-6 text-foreground-muted animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                         </svg>
                       ) : (
                         <>
-                          <svg className="w-6 h-6 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-6 h-6 text-foreground-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                           </svg>
-                          <span className="text-xs text-text-muted mt-1">{t('sku.add_image')}</span>
+                          <span className="text-xs text-foreground-muted mt-1">{t('sku.add_image')}</span>
                         </>
                       )}
                       <input

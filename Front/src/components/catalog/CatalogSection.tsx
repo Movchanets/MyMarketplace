@@ -27,7 +27,7 @@ export function CatalogSection() {
   if (isLoading) {
     return (
       <section className="py-6">
-        <h2 className="mb-4 text-xl font-semibold text-text">{t('home.popular_categories')}</h2>
+        <h2 className="mb-4 text-xl font-semibold text-foreground">{t('home.popular_categories')}</h2>
         <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
           {[...Array(6)].map((_, i) => (
             <div key={i} className="card h-28 animate-pulse bg-surface" />
@@ -43,7 +43,7 @@ export function CatalogSection() {
 
   return (
     <section className="py-6">
-      <h2 className="mb-4 text-xl font-semibold text-text">{t('home.popular_categories')}</h2>
+      <h2 className="mb-4 text-xl font-semibold text-foreground">{t('home.popular_categories')}</h2>
       <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
         {categories.map((category) => (
           <Link
@@ -72,7 +72,7 @@ export function CatalogSection() {
                 </svg>
               </span>
             )}
-            <span className="text-sm font-medium text-text group-hover:text-brand">
+            <span className="text-sm font-medium text-foreground group-hover:text-brand">
               {category.name}
             </span>
           </Link>

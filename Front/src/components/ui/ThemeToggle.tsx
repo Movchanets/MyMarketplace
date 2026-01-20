@@ -32,14 +32,14 @@ export function ThemeToggle() {
   return (
     <button
       onClick={toggleTheme}
-      className="relative group inline-flex flex-col items-center no-underline px-1 py-0.5 rounded-md hover:bg-surface-card transition-colors"
+      className="relative group inline-flex flex-col items-center no-underline px-1 py-0.5 rounded-md hover:bg-surface transition-colors"
       title={getThemeLabel()}
       aria-label={getThemeLabel()}
     >
-      <span className="h-9 w-9 inline-flex items-center justify-center text-lg text-text-muted group-hover:text-text transition-colors">
+      <span className="h-9 w-9 inline-flex items-center justify-center text-lg text-foreground-muted group-hover:text-foreground transition-colors">
         {getThemeIcon()}
       </span>
-      <span className="mt-1 text-xs text-text-muted hidden sm:block transition-colors duration-150 group-hover:text-text group-hover:font-medium">
+      <span className="mt-1 text-xs text-foreground-muted hidden sm:block transition-colors duration-150 group-hover:text-foreground group-hover:font-medium">
         {getThemeLabel()}
       </span>
     </button>

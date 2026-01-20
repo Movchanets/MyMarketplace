@@ -9,11 +9,11 @@ export default function Home() {
       {/* Hero section */}
       <section className="grid gap-6 md:grid-cols-2 md:items-center">
         <div className="space-y-4">
-          <h1 className="text-3xl font-bold tracking-tight text-text md:text-5xl">{t('site.name')}</h1>
-          <p className="max-w-prose text-text-muted">{t('site.home.tagline')}</p>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground md:text-5xl">{t('site.name')}</h1>
+          <p className="max-w-prose text-foreground-muted">{t('site.home.tagline')}</p>
           <div className="flex gap-3">
             <button className="btn-primary">{t('home.cta.catalog')}</button>
-            <button className="rounded-md border border-text/20 px-4 py-2 text-text hover:bg-text/5">
+            <button className="rounded-md border border-foreground/20 px-4 py-2 text-foreground hover:bg-foreground/5">
               {t('home.cta.learn_more')}
             </button>
           </div>
@@ -26,7 +26,7 @@ export default function Home() {
 
       {/* Recommendations */}
       <section>
-        <h2 className="mb-4 text-xl font-semibold text-text">{t('home.recommendations')}</h2>
+        <h2 className="mb-4 text-xl font-semibold text-foreground">{t('home.recommendations')}</h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
             <div key={i} className="card h-56" />

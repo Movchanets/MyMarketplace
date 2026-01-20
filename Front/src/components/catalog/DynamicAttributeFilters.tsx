@@ -55,33 +55,33 @@ export const DynamicAttributeFilters: React.FC<DynamicAttributeFiltersProps> = (
     }
   };
 
-  if (availableFilters.length === 0) {
-    return (
-      <div className="text-gray-500 text-sm">
-        Немає доступних фільтрів для цієї категорії
-      </div>
-    );
-  }
+   if (availableFilters.length === 0) {
+     return (
+       <div className="text-foreground-muted text-sm">
+         Немає доступних фільтрів для цієї категорії
+       </div>
+     );
+   }
 
   return (
     <div className="space-y-6">
       {/* Clear All Button */}
       {hasAnyFilters && (
-        <button
-          onClick={onClearAll}
-          className="w-full py-2 px-4 text-sm font-medium text-blue-600 hover:text-blue-700 border border-blue-600 hover:border-blue-700 rounded-lg transition-colors"
-        >
-          Скинути всі фільтри
-        </button>
+         <button
+           onClick={onClearAll}
+           className="w-full py-2 px-4 text-sm font-medium text-info hover:text-info border border-info hover:border-info rounded-lg transition-colors"
+         >
+           Скинути всі фільтри
+         </button>
       )}
 
       {/* Filter Groups */}
-      {availableFilters.map((filter) => (
-        <div key={filter.code} className="border-b border-gray-200 pb-4">
-          <h3 className="font-semibold text-gray-900 mb-3">
-            {filter.name}
-            {filter.unit && <span className="text-gray-500 text-sm ml-1">({filter.unit})</span>}
-          </h3>
+       {availableFilters.map((filter) => (
+         <div key={filter.code} className="border-b border-border pb-4">
+           <h3 className="font-semibold text-foreground mb-3">
+             {filter.name}
+             {filter.unit && <span className="text-foreground-muted text-sm ml-1">({filter.unit})</span>}
+           </h3>
 
           {/* String/Boolean Filters - Checkboxes */}
           {filter.availableValues && filter.availableValues.length > 0 && (
@@ -89,19 +89,19 @@ export const DynamicAttributeFilters: React.FC<DynamicAttributeFiltersProps> = (
               {filter.availableValues.map((option) => {
                 const isChecked = selectedFilters[filter.code]?.in?.includes(option.value) || false;
                 return (
-                  <label
-                    key={option.value}
-                    className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={isChecked}
-                      onChange={(e) => handleStringFilterChange(filter.code, option.value, e.target.checked)}
-                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                    />
-                    <span className="text-sm text-gray-700 flex-1">{option.value}</span>
-                    <span className="text-xs text-gray-500">({option.count})</span>
-                  </label>
+                   <label
+                     key={option.value}
+                     className="flex items-center gap-2 cursor-pointer hover:bg-surface-hover p-2 rounded"
+                   >
+                     <input
+                       type="checkbox"
+                       checked={isChecked}
+                       onChange={(e) => handleStringFilterChange(filter.code, option.value, e.target.checked)}
+                       className="w-4 h-4 text-info border-border rounded focus:ring-info"
+                     />
+                     <span className="text-sm text-foreground flex-1">{option.value}</span>
+                     <span className="text-xs text-foreground-muted">({option.count})</span>
+                   </label>
                 );
               })}
             </div>
@@ -109,56 +109,56 @@ export const DynamicAttributeFilters: React.FC<DynamicAttributeFiltersProps> = (
 
           {/* Number Filters - Range Inputs */}
           {filter.numberRange && (
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 text-xs text-gray-500">
-                <span>Діапазон: {filter.numberRange.min}</span>
-                <span>—</span>
-                <span>{filter.numberRange.max}</span>
-                {filter.unit && <span>{filter.unit}</span>}
-              </div>
+             <div className="space-y-3">
+               <div className="flex items-center gap-2 text-xs text-foreground-muted">
+                 <span>Діапазон: {filter.numberRange.min}</span>
+                 <span>—</span>
+                 <span>{filter.numberRange.max}</span>
+                 {filter.unit && <span>{filter.unit}</span>}
+               </div>
 
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block text-xs text-gray-600 mb-1">Від</label>
-                  <input
-                    type="number"
-                    min={filter.numberRange.min}
-                    max={filter.numberRange.max}
-                    step={filter.numberRange.step || 1}
-                    value={selectedFilters[filter.code]?.gte ?? ''}
-                    onChange={(e) =>
-                      handleNumberRangeChange(
-                        filter.code,
-                        'min',
-                        e.target.value ? Number(e.target.value) : null
-                      )
-                    }
-                    placeholder={String(filter.numberRange.min)}
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
+               <div className="grid grid-cols-2 gap-2">
+                 <div>
+                   <label className="block text-xs text-foreground-muted mb-1">Від</label>
+                   <input
+                     type="number"
+                     min={filter.numberRange.min}
+                     max={filter.numberRange.max}
+                     step={filter.numberRange.step || 1}
+                     value={selectedFilters[filter.code]?.gte ?? ''}
+                     onChange={(e) =>
+                       handleNumberRangeChange(
+                         filter.code,
+                         'min',
+                         e.target.value ? Number(e.target.value) : null
+                       )
+                     }
+                     placeholder={String(filter.numberRange.min)}
+                     className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-info"
+                   />
+                 </div>
 
-                <div>
-                  <label className="block text-xs text-gray-600 mb-1">До</label>
-                  <input
-                    type="number"
-                    min={filter.numberRange.min}
-                    max={filter.numberRange.max}
-                    step={filter.numberRange.step || 1}
-                    value={selectedFilters[filter.code]?.lte ?? ''}
-                    onChange={(e) =>
-                      handleNumberRangeChange(
-                        filter.code,
-                        'max',
-                        e.target.value ? Number(e.target.value) : null
-                      )
-                    }
-                    placeholder={String(filter.numberRange.max)}
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-              </div>
-            </div>
+                 <div>
+                   <label className="block text-xs text-foreground-muted mb-1">До</label>
+                   <input
+                     type="number"
+                     min={filter.numberRange.min}
+                     max={filter.numberRange.max}
+                     step={filter.numberRange.step || 1}
+                     value={selectedFilters[filter.code]?.lte ?? ''}
+                     onChange={(e) =>
+                       handleNumberRangeChange(
+                         filter.code,
+                         'max',
+                         e.target.value ? Number(e.target.value) : null
+                       )
+                     }
+                     placeholder={String(filter.numberRange.max)}
+                     className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-info"
+                   />
+                 </div>
+               </div>
+             </div>
           )}
         </div>
       ))}
