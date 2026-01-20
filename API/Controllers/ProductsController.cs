@@ -11,7 +11,9 @@ using Application.Commands.Product.ToggleProductActive;
 using Application.Commands.Product.UpdateProduct;
 using Application.Commands.Sku.Gallery.AddSkuGalleryImage;
 using Application.Commands.Sku.Gallery.RemoveSkuGalleryImage;
+using Application.DTOs;
 using Application.Interfaces;
+using Application.Queries.Catalog.FilterProducts;
 using Application.Queries.Catalog.GetMyProducts;
 using Application.Queries.Catalog.GetProductById;
 using Application.Queries.Catalog.GetProductBySkuCode;
@@ -109,6 +111,31 @@ public sealed class ProductsController : ControllerBase
 	public async Task<IActionResult> GetByCategory([FromRoute] Guid categoryId)
 	{
 		var result = await _mediator.Send(new GetProductsByCategoryIdQuery(categoryId));
+		if (!result.IsSuccess) return BadRequest(result);
+		return Ok(result);
+	}
+
+	/// <summary>
+	/// Фільтрація продуктів з підтримкою динамічних JSONB атрибутів.
+	/// Приймає складні фільтри: категорія, теги, ціна, наявність, та атрибути (color, storage, brand тощо).
+	/// </summary>
+	[HttpPost("filter")]
+	[AllowAnonymous]
+	public async Task<IActionResult> FilterProducts([FromBody] ProductFilterRequest request)
+	{
+		var query = new FilterProductsQuery(
+			request.CategoryId,
+			request.TagIds,
+			request.MinPrice,
+			request.MaxPrice,
+			request.InStock,
+			request.Attributes,
+			request.Sort,
+			request.Page,
+			request.PageSize
+		);
+
+		var result = await _mediator.Send(query);
 		if (!result.IsSuccess) return BadRequest(result);
 		return Ok(result);
 	}

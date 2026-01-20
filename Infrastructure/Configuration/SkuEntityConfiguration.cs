@@ -25,6 +25,12 @@ public class SkuEntityConfiguration : IEntityTypeConfiguration<SkuEntity>
 		builder.Property(s => s.Attributes)
 			.HasColumnType("jsonb");
 
+		// AttributeValues collection (one-to-many)
+		builder.HasMany(s => s.AttributeValues)
+			.WithOne(av => av.Sku)
+			.HasForeignKey(av => av.SkuId)
+			.OnDelete(DeleteBehavior.Cascade);
+
 		builder.HasIndex(s => new { s.ProductId, s.SkuCode }).IsUnique();
 
 		// Index for direct SkuCode lookups (GET /products/s/{productSlug}?sku={skuCode})

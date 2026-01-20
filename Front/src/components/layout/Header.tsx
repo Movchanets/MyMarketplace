@@ -7,6 +7,7 @@ import { useAuthStore } from '../../store/authStore'
 import SidenavMenu from '../navigation/SidenavMenu'
 import { CatalogButton } from '../catalog/CatalogButton'
 import { SearchBar } from '../search/SearchBar'
+import { ThemeToggle } from '../ui/ThemeToggle'
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   `px-3 py-2 rounded-md text-sm font-medium transition-colors ${
@@ -52,6 +53,9 @@ export function Header() {
 
           {/* User section */}
           <div className="flex shrink-0 items-center gap-2">
+            {/* Theme Toggle */}
+            <ThemeToggle />
+
             {isAuthenticated ? (
               <div className="flex items-center gap-3">
                 <span className="hidden text-sm text-text xl:block">{t('greeting', { name: user?.firstName || '' })}</span>

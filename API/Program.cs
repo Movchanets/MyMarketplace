@@ -47,7 +47,11 @@ try
             outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}"));
 
     // Controllers
-    builder.Services.AddControllers();
+    builder.Services.AddControllers()
+        .AddJsonOptions(options =>
+        {
+            options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+        });
     // HttpContextAccessor для доступу до HttpContext в сервісах
     builder.Services.AddHttpContextAccessor();
     // Application services (validators, MediatR behaviors, etc.)

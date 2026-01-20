@@ -14,6 +14,7 @@ public sealed class CreateProductCommandHandler : IRequestHandler<CreateProductC
 	private readonly IUserRepository _userRepository;
 	private readonly ICategoryRepository _categoryRepository;
 	private readonly ITagRepository _tagRepository;
+	private readonly IAttributeDefinitionRepository _attributeDefinitionRepository;
 	private readonly IUnitOfWork _unitOfWork;
 	private readonly ILogger<CreateProductCommandHandler> _logger;
 
@@ -23,6 +24,7 @@ public sealed class CreateProductCommandHandler : IRequestHandler<CreateProductC
 		IUserRepository userRepository,
 		ICategoryRepository categoryRepository,
 		ITagRepository tagRepository,
+		IAttributeDefinitionRepository attributeDefinitionRepository,
 		IUnitOfWork unitOfWork,
 		ILogger<CreateProductCommandHandler> logger)
 	{
@@ -31,6 +33,7 @@ public sealed class CreateProductCommandHandler : IRequestHandler<CreateProductC
 		_userRepository = userRepository;
 		_categoryRepository = categoryRepository;
 		_tagRepository = tagRepository;
+		_attributeDefinitionRepository = attributeDefinitionRepository;
 		_unitOfWork = unitOfWork;
 		_logger = logger;
 	}
@@ -96,11 +99,18 @@ public sealed class CreateProductCommandHandler : IRequestHandler<CreateProductC
 				}
 			}
 
-			var sku = SkuEntity.Create(product.Id, request.Price, request.StockQuantity, request.Attributes);
-			product.AddSku(sku);
+		var sku = SkuEntity.Create(product.Id, request.Price, request.StockQuantity, request.Attributes);
+		product.AddSku(sku);
+		
+		// Convert JSONB attributes to typed attributes
+		if (request.Attributes != null && request.Attributes.Count > 0)
+		{
+			var attributeDefinitions = await _attributeDefinitionRepository.GetAllAsync();
+			sku.SetTypedAttributes(request.Attributes, attributeDefinitions);
+		}
 
-			_productRepository.Add(product);
-			await _unitOfWork.SaveChangesAsync(cancellationToken);
+		_productRepository.Add(product);
+		await _unitOfWork.SaveChangesAsync(cancellationToken);
 
 			_logger.LogInformation("Product {ProductId} created successfully", product.Id);
 			return new ServiceResponse<Guid>(true, "Product created successfully", product.Id);

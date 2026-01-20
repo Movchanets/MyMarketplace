@@ -2,6 +2,7 @@ using Application.Commands.Category.CreateCategory;
 using Application.Commands.Category.DeleteCategory;
 using Application.Commands.Category.UpdateCategory;
 using Application.Queries.Catalog.GetCategories;
+using Application.Queries.Catalog.GetCategoryAvailableFilters;
 using Application.Queries.Catalog.GetCategoryById;
 using Application.Queries.Catalog.GetCategoryBySlug;
 using MediatR;
@@ -59,6 +60,20 @@ public sealed class CategoriesController : ControllerBase
 	{
 		var result = await _mediator.Send(new GetCategoryBySlugQuery(slug));
 		if (!result.IsSuccess) return NotFound(result);
+		return Ok(result);
+	}
+
+	/// <summary>
+	/// Отримати доступні фільтри для товарів в категорії
+	/// Аналізує реальні дані товарів і повертає тільки ті фільтри, які мають значення
+	/// </summary>
+	[HttpGet("{id:guid}/available-filters")]
+	[AllowAnonymous]
+	[OutputCache(Duration = 900)] // Cache for 15 minutes
+	public async Task<IActionResult> GetAvailableFilters([FromRoute] Guid id)
+	{
+		var result = await _mediator.Send(new GetCategoryAvailableFiltersQuery(id));
+		if (!result.IsSuccess) return BadRequest(result);
 		return Ok(result);
 	}
 

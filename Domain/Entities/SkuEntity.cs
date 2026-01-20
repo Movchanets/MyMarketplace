@@ -18,7 +18,19 @@ public class SkuEntity : BaseEntity<Guid>
 
 	public decimal Price { get; private set; }
 	public int StockQuantity { get; private set; }
+	
+	/// <summary>
+	/// JSONB storage for rare/non-filterable attributes (backward compatibility).
+	/// Use AttributeValues collection for filterable attributes.
+	/// </summary>
 	public JsonDocument? Attributes { get; private set; }
+
+	/// <summary>
+	/// Typed attribute values for efficient filtering and querying.
+	/// Replaces JSONB for common filterable attributes like color, storage, RAM, etc.
+	/// </summary>
+	private readonly List<SkuAttributeValue> _attributeValues = new();
+	public virtual IReadOnlyCollection<SkuAttributeValue> AttributeValues => _attributeValues.AsReadOnly();
 
 	/// <summary>
 	/// Gallery images specific to this SKU variant.
@@ -178,6 +190,13 @@ public class SkuEntity : BaseEntity<Guid>
 
 		// Combine values into slug
 		var baseSlug = string.Join("-", slugParts);
+		
+		// Truncate if too long (keep room for hash suffix: -XXXXXX = 7 chars)
+		const int maxBaseLength = 25; // Leave 7 chars for hash
+		if (baseSlug.Length > maxBaseLength)
+		{
+			baseSlug = baseSlug.Substring(0, maxBaseLength);
+		}
 
 		// Add short hash suffix for uniqueness (from canonical string)
 		var canonical = BuildCanonicalAttributesString(skuAttributes);
@@ -335,6 +354,141 @@ public class SkuEntity : BaseEntity<Guid>
 		_gallery.Remove(existing);
 		MarkAsUpdated();
 		return existing;
+	}
+
+	#endregion
+
+	#region Attribute Management (Typed + JSONB Hybrid)
+
+	/// <summary>
+	/// Set or update a typed attribute value (automatically determines type).
+	/// Prefers typed storage (AttributeValues) over JSONB.
+	/// </summary>
+	/// <param name="attributeDefinitionId">ID of the attribute definition</param>
+	/// <param name="value">The value to set (string, number, or boolean)</param>
+	public void SetTypedAttribute(Guid attributeDefinitionId, object? value)
+	{
+		var existing = _attributeValues.FirstOrDefault(av => av.AttributeDefinitionId == attributeDefinitionId);
+		
+		if (existing != null)
+		{
+			existing.Update(value);
+		}
+		else
+		{
+			var newAttr = SkuAttributeValue.Create(Id, attributeDefinitionId, value);
+			_attributeValues.Add(newAttr);
+		}
+		
+		MarkAsUpdated();
+	}
+
+	/// <summary>
+	/// Set multiple typed attributes at once from a dictionary.
+	/// Used during SKU creation/update with AttributeDefinitions.
+	/// </summary>
+	/// <param name="attributes">Dictionary of attribute code -> value</param>
+	/// <param name="attributeDefinitions">Available attribute definitions</param>
+	public void SetTypedAttributes(
+		IDictionary<string, object?> attributes,
+		IEnumerable<AttributeDefinition> attributeDefinitions)
+	{
+		var attrDefMap = attributeDefinitions.ToDictionary(ad => ad.Code, StringComparer.OrdinalIgnoreCase);
+
+		foreach (var (code, value) in attributes)
+		{
+			if (attrDefMap.TryGetValue(code, out var attrDef))
+			{
+				SetTypedAttribute(attrDef.Id, value);
+			}
+		}
+	}
+
+	/// <summary>
+	/// Get a typed attribute value by attribute definition ID.
+	/// </summary>
+	public object? GetTypedAttribute(Guid attributeDefinitionId)
+	{
+		var attr = _attributeValues.FirstOrDefault(av => av.AttributeDefinitionId == attributeDefinitionId);
+		return attr?.GetValue();
+	}
+
+	/// <summary>
+	/// Get a typed attribute value by code (requires AttributeDefinition to be loaded).
+	/// </summary>
+	public object? GetTypedAttributeByCode(string code)
+	{
+		var attr = _attributeValues.FirstOrDefault(av => 
+			av.AttributeDefinition.Code.Equals(code, StringComparison.OrdinalIgnoreCase));
+		return attr?.GetValue();
+	}
+
+	/// <summary>
+	/// Get strongly typed attribute value.
+	/// Example: sku.GetTypedAttribute<string>("color") or sku.GetTypedAttribute<int>("storage")
+	/// </summary>
+	public T? GetTypedAttribute<T>(string code)
+	{
+		var value = GetTypedAttributeByCode(code);
+		if (value == null) return default;
+
+		try
+		{
+			return (T)Convert.ChangeType(value, typeof(T));
+		}
+		catch
+		{
+			return default;
+		}
+	}
+
+	/// <summary>
+	/// Remove a typed attribute.
+	/// </summary>
+	public void RemoveTypedAttribute(Guid attributeDefinitionId)
+	{
+		var attr = _attributeValues.FirstOrDefault(av => av.AttributeDefinitionId == attributeDefinitionId);
+		if (attr != null)
+		{
+			_attributeValues.Remove(attr);
+			MarkAsUpdated();
+		}
+	}
+
+	/// <summary>
+	/// Get all attributes as a unified dictionary (combines typed + JSONB).
+	/// Typed attributes take precedence over JSONB.
+	/// Useful for display and backward compatibility.
+	/// </summary>
+	public Dictionary<string, object?> GetAllAttributes()
+	{
+		var result = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+
+		// Add JSONB attributes first
+		if (Attributes != null)
+		{
+			foreach (var prop in Attributes.RootElement.EnumerateObject())
+			{
+				result[prop.Name] = GetJsonValue(prop.Value);
+			}
+		}
+
+		// Override with typed attributes (they take precedence)
+		foreach (var av in _attributeValues)
+		{
+			result[av.AttributeDefinition.Code] = av.GetValue();
+		}
+
+		return result;
+	}
+
+	/// <summary>
+	/// Clear all typed attributes (useful for bulk updates).
+	/// </summary>
+	public void ClearTypedAttributes()
+	{
+		_attributeValues.Clear();
+		MarkAsUpdated();
 	}
 
 	#endregion

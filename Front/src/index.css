@@ -1,7 +1,24 @@
 @import "tailwindcss";
 
 @theme {
-  /* Базові токени для темної теми (за замовчуванням) */
+  /* Базові токени для світлої теми (за замовчуванням) */
+  --color-brand: #0ea5e9;        /* sky-500 */
+  --color-brand-dark: #0284c7;   /* sky-600 */
+  --color-brand-light: #38bdf8;  /* sky-400 */
+
+  --color-surface: #f8fafc;      /* slate-50 */
+  --color-surface-card: #ffffff; /* white */
+
+  --color-text: #0f172a;         /* slate-900 */
+  --color-text-muted: #64748b;   /* slate-500 */
+
+  --font-brand: "Inter", system-ui, Avenir, Helvetica, Arial, sans-serif;
+
+  --shadow-card: 0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1);
+}
+
+/* Темна тема через клас .dark */
+.dark {
   --color-brand: #0ea5e9;        /* sky-500 */
   --color-brand-dark: #0284c7;   /* sky-600 */
   --color-brand-light: #38bdf8;  /* sky-400 */
@@ -12,23 +29,7 @@
   --color-text: #e2e8f0;         /* slate-200 */
   --color-text-muted: #94a3b8;   /* slate-400 */
 
-  --font-brand: "Inter", system-ui, Avenir, Helvetica, Arial, sans-serif;
-
   --shadow-card: 0 10px 25px -5px rgba(0,0,0,0.35), 0 8px 10px -6px rgba(0,0,0,0.25);
-}
-
-/* Світла тема через media query (поза @theme) */
-@media (prefers-color-scheme: light) {
-  * {
-    --color-brand: #0284c7;
-    --color-brand-dark: #075985;
-    --color-brand-light: #0ea5e9;
-    --color-surface: #f8fafc;
-    --color-surface-card: #ffffff;
-    --color-text: #0f172a;
-    --color-text-muted: #64748b;
-    --shadow-card: 0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1);
-  }
 }
 
 

@@ -35,10 +35,10 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="p-6 text-text dark:text-white">
-      <h1 className="text-2xl font-semibold mb-4 text-text dark:text-white">{t('menu.settings')}</h1>
+    <div className="p-6">
+      <h1 className="text-2xl font-semibold mb-4">{t('menu.settings')}</h1>
 
-      <div className="mb-6 border-b border-surface/60 dark:border-surface/30">
+      <div className="mb-6 border-b border-surface/60 dark:border-surface-card/30">
         <nav className="flex gap-2 -mb-px">
           {tabs.map((t) => (
             <button
@@ -46,8 +46,8 @@ export default function SettingsPage() {
               onClick={() => onSelect(t.id)}
               className={`px-4 py-2 text-sm rounded-t-md border-b-2 transition-colors ${
                 active === t.id
-                  ? 'border-brand text-brand bg-surface dark:bg-surface/5'
-                  : 'border-transparent text-text-muted dark:text-text-muted/80 hover:text-text dark:hover:text-white'
+                  ? 'border-brand text-brand bg-surface dark:bg-surface-card/5'
+                  : 'border-transparent text-text-muted dark:text-text-muted hover:text-text dark:hover:text-text'
               }`}
               aria-current={active === t.id ? 'page' : undefined}
             >
@@ -57,7 +57,7 @@ export default function SettingsPage() {
         </nav>
       </div>
 
-      <div className="bg-white dark:bg-[#071428] p-6 rounded-md shadow-sm text-text dark:text-white">
+      <div className="bg-surface-card p-6 rounded-md shadow-sm">
         {active === 'profile' && (
           <section>
             <h2 className="text-lg font-medium mb-2 text-text dark:text-white">{t('settings.profile.title')}</h2>
