@@ -13,7 +13,7 @@ interface SidenavMenuProps {
 
 const linkClass = ({ isActive }: { isActive: boolean }) =>
   `flex items-center gap-3 px-4 py-3 text-sm rounded-md transition-colors ${
-    isActive ? 'bg-brand text-white' : 'text-text-muted hover:text-text hover:bg-surface-card'
+    isActive ? 'bg-brand text-white' : 'text-foreground-muted hover:text-foreground hover:bg-surface-hover'
   }`
 
 export function SidenavMenu({ isOpen, onClose, user }: SidenavMenuProps) {
@@ -69,27 +69,27 @@ export function SidenavMenu({ isOpen, onClose, user }: SidenavMenuProps) {
         className={`absolute inset-0 bg-black/40 transition-opacity duration-200 ${isVisible ? 'opacity-100' : 'opacity-0'}`}
       />
 
-      <aside
-        className={`absolute right-0 top-0 h-full w-72 bg-surface-card p-4 shadow-xl transform transition-transform duration-200 flex flex-col ${
-          isVisible ? 'translate-x-0' : 'translate-x-full'
-        }`}
-      >
-        <div className="mb-6 flex items-center gap-3">
-          <div className="h-12 w-12 shrink-0 rounded-full bg-surface/80 flex items-center justify-center text-lg font-semibold">
-              {(() => {
-                const img = user?.avatarUrl
-                return img ? (
-                  <img src={img} alt={user?.name ?? 'avatar'} className="h-12 w-12 rounded-full object-cover" />
-                ) : (
-                  <span className="text-text">{initials}</span>
-                )
-              })()}
-            </div>
-          <div>
-            <div className="text-sm font-medium text-text">{user?.firstName + ' ' + user?.lastName || 'Користувач'}</div>
-            <div className="text-xs text-text-muted">{user?.email || ''}</div>
-          </div>
-        </div>
+       <aside
+         className={`absolute right-0 top-0 h-full w-72 bg-surface p-4 shadow-xl transform transition-transform duration-200 flex flex-col border-l border-border ${
+           isVisible ? 'translate-x-0' : 'translate-x-full'
+         }`}
+       >
+           <div className="mb-6 flex items-center gap-3">
+             <div className="h-12 w-12 shrink-0 rounded-full bg-surface-hover flex items-center justify-center text-lg font-semibold">
+               {(() => {
+                 const img = user?.avatarUrl
+                 return img ? (
+                   <img src={img} alt={user?.name ?? 'avatar'} className="h-12 w-12 rounded-full object-cover" />
+                 ) : (
+                   <span className="text-foreground">{initials}</span>
+                 )
+               })()}
+             </div>
+             <div>
+               <div className="text-sm font-medium text-foreground">{user?.firstName + ' ' + user?.lastName || 'Користувач'}</div>
+               <div className="text-xs text-foreground-muted">{user?.email || ''}</div>
+             </div>
+           </div>
 
         <nav className="flex flex-col gap-1">
           <NavLink to="/cabinet/orders" className={linkClass} onClick={onClose}>
@@ -145,10 +145,10 @@ export function SidenavMenu({ isOpen, onClose, user }: SidenavMenuProps) {
         </div>
 
         <div className="mt-auto">
-          <button
-            onClick={() => setConfirmOpen(true)}
-            className="w-full rounded-md border border-text/20 px-4 py-2 text-sm text-text hover:bg-text/5 bg-white dark:bg-[#071428]"
-          >
+           <button
+             onClick={() => setConfirmOpen(true)}
+             className="w-full rounded-md border border-border px-4 py-2 text-sm text-foreground hover:bg-surface-hover bg-surface transition-colors"
+           >
             {t('logout')}
           </button>
         </div>
@@ -157,31 +157,31 @@ export function SidenavMenu({ isOpen, onClose, user }: SidenavMenuProps) {
       {confirmOpen && (
         <div className="fixed inset-0 z-60 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/40" onClick={() => setConfirmOpen(false)} />
-          <div
-            role="dialog"
-            aria-modal="true"
-            className="relative z-10 w-full max-w-md rounded-md bg-white dark:bg-[#071428] p-6 shadow-lg"
-          >
-            <h3 className="text-lg font-semibold text-text dark:text-white">{t('confirm_logout_title')}</h3>
-            <p className="mt-2 text-sm text-text-muted dark:text-text-muted/80">{t('confirm_logout_text')}</p>
-            <div className="mt-4 flex justify-end gap-2">
-              <button
-                onClick={() => setConfirmOpen(false)}
-                className="rounded-md px-3 py-2 text-sm bg-transparent text-text-muted hover:text-text"
-              >
-                {t('cancel')}
-              </button>
-              <button
-                onClick={() => {
-                  logout()
-                  onClose()
-                  navigate('/')
-                }}
-                className="rounded-md bg-brand px-3 py-2 text-sm text-white"
-              >
-                {t('logout')}
-              </button>
-            </div>
+           <div
+             role="dialog"
+             aria-modal="true"
+             className="relative z-10 w-full max-w-md rounded-md bg-surface p-6 shadow-lg border border-border"
+           >
+             <h3 className="text-lg font-semibold text-foreground">{t('confirm_logout_title')}</h3>
+             <p className="mt-2 text-sm text-foreground-muted">{t('confirm_logout_text')}</p>
+             <div className="mt-4 flex justify-end gap-2">
+               <button
+                 onClick={() => setConfirmOpen(false)}
+                 className="rounded-md px-3 py-2 text-sm bg-transparent text-foreground-muted hover:text-foreground"
+               >
+                 {t('cancel')}
+               </button>
+               <button
+                 onClick={() => {
+                   logout()
+                   onClose()
+                   navigate('/')
+                 }}
+                 className="rounded-md bg-brand px-3 py-2 text-sm text-white"
+               >
+                 {t('logout')}
+               </button>
+             </div>
           </div>
         </div>
       )}

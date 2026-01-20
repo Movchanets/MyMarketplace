@@ -116,6 +116,56 @@ public sealed record ProductSearchRequest(
 	int PageSize = 24
 );
 
+/// <summary>
+/// Advanced product filter request with JSONB attribute filtering support.
+/// </summary>
+public sealed record ProductFilterRequest(
+	Guid? CategoryId = null,
+	List<Guid>? TagIds = null,
+	decimal? MinPrice = null,
+	decimal? MaxPrice = null,
+	bool? InStock = null,
+	Dictionary<string, AttributeFilterValue>? Attributes = null,
+	ProductSort Sort = ProductSort.Relevance,
+	int Page = 1,
+	int PageSize = 24
+);
+
+/// <summary>
+/// Filter value for a single attribute with support for different comparison operators.
+/// </summary>
+public sealed record AttributeFilterValue
+{
+	/// <summary>
+	/// For string/boolean: list of values (OR logic - match any).
+	/// Example: ["Black", "Blue"] matches products with color=Black OR color=Blue
+	/// </summary>
+	public List<string>? In { get; init; }
+
+	/// <summary>
+	/// Exact match for single value (string/number/boolean).
+	/// Example: "Samsung" matches brand=Samsung
+	/// </summary>
+	public string? Equal { get; init; }
+
+	/// <summary>
+	/// Greater than or equal (for numbers).
+	/// Example: 128 matches storage >= 128
+	/// </summary>
+	public decimal? Gte { get; init; }
+
+	/// <summary>
+	/// Less than or equal (for numbers).
+	/// Example: 512 matches storage <= 512
+	/// </summary>
+	public decimal? Lte { get; init; }
+
+	/// <summary>
+	/// Equal to (for numbers - alternative to Equal for type safety).
+	/// </summary>
+	public decimal? Eq { get; init; }
+}
+
 // Attribute Definition DTOs
 public sealed record AttributeDefinitionDto(
 	Guid Id,

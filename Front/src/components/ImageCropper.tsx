@@ -38,9 +38,9 @@ export default function ImageCropper({ imageSrc, onCropComplete, onCancel }: Ima
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
       <div className="relative w-full max-w-2xl mx-4 bg-white dark:bg-[#071428] rounded-lg shadow-xl overflow-hidden">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-surface/40">
-          <h3 className="text-lg font-semibold text-text dark:text-white">{t('profile.crop_image')}</h3>
-        </div>
+         <div className="px-6 py-4 border-b border-border">
+           <h3 className="text-lg font-semibold text-foreground dark:text-white">{t('profile.crop_image')}</h3>
+         </div>
 
         {/* Cropper Area */}
         <div className="relative h-96 bg-gray-900">
@@ -58,8 +58,8 @@ export default function ImageCropper({ imageSrc, onCropComplete, onCancel }: Ima
         </div>
 
         {/* Zoom Control */}
-        <div className="px-6 py-4 border-b border-surface/40">
-          <label className="block text-sm font-medium mb-2 text-text dark:text-white">{t('profile.zoom')}</label>
+         <div className="px-6 py-4 border-b border-border">
+          <label className="block text-sm font-medium mb-2 text-foreground dark:text-white">{t('profile.zoom')}</label>
           <input
             type="range"
             min={1}
@@ -76,7 +76,7 @@ export default function ImageCropper({ imageSrc, onCropComplete, onCancel }: Ima
           <button
             onClick={onCancel}
             disabled={isProcessing}
-            className="px-4 py-2 rounded-md border border-text/20 text-text hover:bg-text/5 disabled:opacity-50"
+             className="px-4 py-2 rounded-md border border-border text-foreground hover:bg-surface-hover disabled:opacity-50"
           >
             {t('cancel')}
           </button>

@@ -77,6 +77,11 @@ export const categoriesApi = {
   delete: async (id: string): Promise<ServiceResponse<void>> => {
     const response = await axiosClient.delete<ServiceResponse<void>>(`/categories/${id}`)
     return response.data
+  },
+
+  getAvailableFilters: async (id: string): Promise<ServiceResponse<CategoryAvailableFiltersDto>> => {
+    const response = await axiosClient.get<ServiceResponse<CategoryAvailableFiltersDto>>(`/categories/${id}/available-filters`)
+    return response.data
   }
 }
 
@@ -147,6 +152,77 @@ export interface ProductSummaryDto {
   primaryCategory: CategoryDto | null
   categories: CategoryDto[]
   tags: TagDto[]
+}
+
+// Filter types
+export interface AttributeValueOptionDto {
+  value: string
+  count: number
+}
+
+export interface NumberRangeDto {
+  min: number
+  max: number
+  step?: number | null
+}
+
+export interface AttributeFilterDto {
+  code: string
+  name: string
+  dataType: string
+  unit: string | null
+  displayOrder: number
+  availableValues: AttributeValueOptionDto[] | null
+  numberRange: NumberRangeDto | null
+}
+
+export interface PriceRangeDto {
+  min: number
+  max: number
+}
+
+export interface CategoryAvailableFiltersDto {
+  categoryId: string
+  categoryName: string
+  attributes: AttributeFilterDto[]
+  priceRange: PriceRangeDto | null
+  totalProductCount: number
+}
+
+export interface AttributeFilterValue {
+  in?: string[]
+  equal?: string
+  gte?: number
+  lte?: number
+  eq?: number
+}
+
+export const ProductSort = {
+  Relevance: 'Relevance',
+  Newest: 'Newest',
+  PriceAsc: 'PriceAsc',
+  PriceDesc: 'PriceDesc'
+} as const
+
+export type ProductSort = typeof ProductSort[keyof typeof ProductSort]
+
+export interface ProductFilterRequest {
+  categoryId?: string | null
+  tagIds?: string[] | null
+  minPrice?: number | null
+  maxPrice?: number | null
+  inStock?: boolean | null
+  attributes?: Record<string, AttributeFilterValue> | null
+  sort?: ProductSort
+  page?: number
+  pageSize?: number
+}
+
+export interface PagedResponse<T> {
+  items: T[]
+  page: number
+  pageSize: number
+  total: number
 }
 
 export interface ProductDetailsDto {
@@ -236,6 +312,11 @@ export const productsApi = {
 
   getByCategory: async (categoryId: string): Promise<ServiceResponse<ProductSummaryDto[]>> => {
     const response = await axiosClient.get<ServiceResponse<ProductSummaryDto[]>>(`/products/by-category/${categoryId}`)
+    return response.data
+  },
+
+  filter: async (request: ProductFilterRequest): Promise<ServiceResponse<PagedResponse<ProductSummaryDto>>> => {
+    const response = await axiosClient.post<ServiceResponse<PagedResponse<ProductSummaryDto>>>('/products/filter', request)
     return response.data
   },
 

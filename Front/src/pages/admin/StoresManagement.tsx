@@ -105,7 +105,7 @@ export default function StoresManagement() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-text">{t('admin.stores.title')}</h2>
+        <h2 className="text-2xl font-bold text-foreground">{t('admin.stores.title')}</h2>
       </div>
 
       {error && (
@@ -120,22 +120,22 @@ export default function StoresManagement() {
           <table className="min-w-full divide-y divide-border">
             <thead className="bg-surface-secondary">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-foreground-muted uppercase tracking-wider">
                   {t('admin.stores.name')}
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-foreground-muted uppercase tracking-wider">
                   {t('admin.stores.owner')}
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-foreground-muted uppercase tracking-wider">
                   {t('admin.stores.status')}
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-foreground-muted uppercase tracking-wider">
                   {t('admin.stores.products')}
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-foreground-muted uppercase tracking-wider">
                   {t('admin.stores.created')}
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-text-muted uppercase tracking-wider">
+                <th className="px-6 py-3 text-right text-xs font-medium text-foreground-muted uppercase tracking-wider">
                   {t('admin.catalog.actions')}
                 </th>
               </tr>
@@ -143,7 +143,7 @@ export default function StoresManagement() {
             <tbody className="bg-surface divide-y divide-border">
               {paginatedStores.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-4 text-center text-text-muted">
+                  <td colSpan={6} className="px-6 py-4 text-center text-foreground-muted">
                     {t('admin.stores.no_stores')}
                   </td>
                 </tr>
@@ -151,12 +151,12 @@ export default function StoresManagement() {
                 paginatedStores.map(store => (
                   <tr key={store.id} className="hover:bg-surface-secondary/50 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-text font-medium">{store.name}</div>
-                      <div className="text-text-muted text-sm">{store.slug}</div>
+                      <div className="text-foreground font-medium">{store.name}</div>
+                      <div className="text-foreground-muted text-sm">{store.slug}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-text text-sm">{store.ownerName || '-'}</div>
-                      <div className="text-text-muted text-xs">{store.ownerEmail || '-'}</div>
+                      <div className="text-foreground text-sm">{store.ownerName || '-'}</div>
+                      <div className="text-foreground-muted text-xs">{store.ownerEmail || '-'}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex flex-col gap-1">
@@ -176,10 +176,10 @@ export default function StoresManagement() {
                         )}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-text-muted text-sm">
+                    <td className="px-6 py-4 whitespace-nowrap text-foreground-muted text-sm">
                       {store.productCount}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-text-muted text-sm">
+                    <td className="px-6 py-4 whitespace-nowrap text-foreground-muted text-sm">
                       {formatDate(store.createdAt)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
@@ -225,7 +225,7 @@ export default function StoresManagement() {
         {/* Pagination */}
         {totalPages > 1 && (
           <div className="flex items-center justify-between px-6 py-4 border-t border-border bg-surface-secondary/30">
-            <div className="text-sm text-text-muted">
+            <div className="text-sm text-foreground-muted">
               {t('admin.catalog.showing')} {(currentPage - 1) * ITEMS_PER_PAGE + 1}-
               {Math.min(currentPage * ITEMS_PER_PAGE, stores.length)} {t('admin.catalog.of')} {stores.length}
             </div>
@@ -233,7 +233,7 @@ export default function StoresManagement() {
               <button
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
-                className="px-3 py-1 rounded border border-border text-text-muted hover:bg-surface-secondary 
+                className="px-3 py-1 rounded border border-border text-foreground-muted hover:bg-surface-secondary 
                   disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {t('admin.catalog.prev')}
@@ -245,7 +245,7 @@ export default function StoresManagement() {
                   className={`px-3 py-1 rounded border transition-colors ${
                     currentPage === page
                       ? 'bg-brand text-white border-brand'
-                      : 'border-border text-text-muted hover:bg-surface-secondary'
+                      : 'border-border text-foreground-muted hover:bg-surface-secondary'
                   }`}
                 >
                   {page}
@@ -254,7 +254,7 @@ export default function StoresManagement() {
               <button
                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
-                className="px-3 py-1 rounded border border-border text-text-muted hover:bg-surface-secondary 
+                className="px-3 py-1 rounded border border-border text-foreground-muted hover:bg-surface-secondary 
                   disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {t('admin.catalog.next')}

@@ -10,15 +10,18 @@ namespace Application.Commands.Product.Sku.UpdateSku;
 public sealed class UpdateSkuCommandHandler : IRequestHandler<UpdateSkuCommand, ServiceResponse>
 {
 	private readonly ISkuRepository _skuRepository;
+	private readonly IAttributeDefinitionRepository _attributeDefinitionRepository;
 	private readonly IUnitOfWork _unitOfWork;
 	private readonly ILogger<UpdateSkuCommandHandler> _logger;
 
 	public UpdateSkuCommandHandler(
 		ISkuRepository skuRepository,
+		IAttributeDefinitionRepository attributeDefinitionRepository,
 		IUnitOfWork unitOfWork,
 		ILogger<UpdateSkuCommandHandler> logger)
 	{
 		_skuRepository = skuRepository;
+		_attributeDefinitionRepository = attributeDefinitionRepository;
 		_unitOfWork = unitOfWork;
 		_logger = logger;
 	}
@@ -42,22 +45,30 @@ public sealed class UpdateSkuCommandHandler : IRequestHandler<UpdateSkuCommand, 
 				return new ServiceResponse(false, "Store is suspended");
 			}
 
-			sku.UpdatePrice(request.Price);
-			sku.UpdateStock(request.StockQuantity);
+		sku.UpdatePrice(request.Price);
+		sku.UpdateStock(request.StockQuantity);
 
-			// Update attributes if provided
-			if (request.Attributes is not null)
+		// Update attributes if provided
+		if (request.Attributes is not null)
+		{
+			// Clear existing typed attributes
+			sku.ClearTypedAttributes();
+			
+			// Update JSONB attributes
+			foreach (var attr in request.Attributes)
 			{
-				foreach (var attr in request.Attributes)
-				{
-					sku.SetAttribute(attr.Key, attr.Value);
-				}
+				sku.SetAttribute(attr.Key, attr.Value);
 			}
+			
+			// Convert to typed attributes
+			var attributeDefinitions = await _attributeDefinitionRepository.GetAllAsync();
+			sku.SetTypedAttributes(request.Attributes, attributeDefinitions);
+		}
 
-			_skuRepository.Update(sku);
+		_skuRepository.Update(sku);
 
-			await _unitOfWork.SaveChangesAsync(cancellationToken);
-			return new ServiceResponse(true, "SKU updated successfully");
+		await _unitOfWork.SaveChangesAsync(cancellationToken);
+		return new ServiceResponse(true, "SKU updated successfully");
 		}
 		catch (Exception ex)
 		{

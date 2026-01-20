@@ -70,14 +70,14 @@ export default function EmojiPicker({ value, onChange, className = '' }: EmojiPi
 
   return (
     <div className={`relative ${className}`} ref={dropdownRef}>
-      <label className="block text-sm font-medium text-text mb-1">
+      <label className="block text-sm font-medium text-foreground mb-1">
         {t('admin.catalog.emoji')}
       </label>
       
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-3 py-2 rounded-lg border border-gray-600 bg-surface text-text 
+        className="w-full px-3 py-2 rounded-lg border border-border bg-surface text-foreground 
           hover:border-brand focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent
           transition-colors flex items-center justify-between"
       >
@@ -85,14 +85,14 @@ export default function EmojiPicker({ value, onChange, className = '' }: EmojiPi
           {value ? (
             <>
               <span className="text-2xl">{value}</span>
-              <span className="text-sm text-text-muted">{t('admin.catalog.emoji_selected')}</span>
+              <span className="text-sm text-foreground-muted">{t('admin.catalog.emoji_selected')}</span>
             </>
           ) : (
-            <span className="text-text-muted">{t('admin.catalog.select_emoji')}</span>
+            <span className="text-foreground-muted">{t('admin.catalog.select_emoji')}</span>
           )}
         </span>
         <svg 
-          className={`w-5 h-5 text-text-muted transition-transform ${isOpen ? 'rotate-180' : ''}`} 
+          className={`w-5 h-5 text-foreground-muted transition-transform ${isOpen ? 'rotate-180' : ''}`} 
           fill="none" 
           stroke="currentColor" 
           viewBox="0 0 24 24"
@@ -102,10 +102,10 @@ export default function EmojiPicker({ value, onChange, className = '' }: EmojiPi
       </button>
 
       {isOpen && (
-        <div className="absolute z-50 mt-2 w-full bg-surface border border-gray-600 rounded-lg shadow-lg max-h-96 overflow-y-auto">
+        <div className="absolute z-50 mt-2 w-full bg-surface border border-border rounded-lg shadow-lg max-h-96 overflow-y-auto">
           <div className="p-3">
             <div className="mb-3">
-              <p className="text-xs font-medium text-text-muted mb-2 uppercase">
+              <p className="text-xs font-medium text-foreground-muted mb-2 uppercase">
                 {t('admin.catalog.popular_emojis')}
               </p>
               <div className="grid grid-cols-10 gap-1">
@@ -125,7 +125,7 @@ export default function EmojiPicker({ value, onChange, className = '' }: EmojiPi
             </div>
 
             <div className="border-t border-border pt-3 mb-3">
-              <p className="text-xs font-medium text-text-muted mb-2 uppercase">
+              <p className="text-xs font-medium text-foreground-muted mb-2 uppercase">
                 {t('admin.catalog.custom_emoji')}
               </p>
               <div className="flex gap-2">
@@ -135,7 +135,7 @@ export default function EmojiPicker({ value, onChange, className = '' }: EmojiPi
                   onChange={(e) => setCustomEmoji(e.target.value)}
                   placeholder={t('admin.catalog.enter_emoji')}
                   maxLength={10}
-                  className="flex-1 px-3 py-2 rounded-lg border border-gray-600 bg-surface text-text 
+                  className="flex-1 px-3 py-2 rounded-lg border border-border bg-surface text-foreground 
                     focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent text-sm"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
@@ -160,7 +160,7 @@ export default function EmojiPicker({ value, onChange, className = '' }: EmojiPi
               <button
                 type="button"
                 onClick={handleClear}
-                className="w-full px-3 py-2 text-sm text-red-500 hover:bg-red-500/10 
+                className="w-full px-3 py-2 text-sm text-error hover:bg-error-light/10 
                   rounded-lg transition-colors"
               >
                 {t('admin.catalog.clear_emoji')}

@@ -21,8 +21,8 @@ export default function Favorites() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-text">{t('menu.favorites')}</h1>
-        <span className="text-sm text-text-muted">
+        <h1 className="text-3xl font-bold text-foreground">{t('menu.favorites')}</h1>
+        <span className="text-sm text-foreground-muted">
           {favorites.size} {t('favorites.items', { count: favorites.size })}
         </span>
       </div>
@@ -30,11 +30,11 @@ export default function Favorites() {
       {favorites.size === 0 ? (
         <div className="text-center py-16">
           <div className="max-w-md mx-auto">
-            <svg className="w-24 h-24 text-text-muted mx-auto mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-24 h-24 text-foreground-muted mx-auto mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
             </svg>
-            <h2 className="text-2xl font-semibold text-text mb-2">{t('favorites.empty.title')}</h2>
-            <p className="text-text-muted mb-6">{t('favorites.empty.description')}</p>
+            <h2 className="text-2xl font-semibold text-foreground mb-2">{t('favorites.empty.title')}</h2>
+            <p className="text-foreground-muted mb-6">{t('favorites.empty.description')}</p>
             <a
               href="/"
               className="inline-flex items-center px-6 py-3 bg-brand hover:bg-brand-dark text-white font-medium rounded-lg transition-colors"
@@ -49,7 +49,7 @@ export default function Favorites() {
           {/* In a real implementation, you'd fetch the product details or use the data from the store */}
           {Array.from(favorites).map((productId: string) => (
             <div key={productId} className="card p-4">
-              <div className="text-center text-text-muted">
+              <div className="text-center text-foreground-muted">
                 <p>{t('favorites.productId')}: {productId}</p>
                 <p className="text-sm mt-2">{t('favorites.implementationNote')}</p>
               </div>

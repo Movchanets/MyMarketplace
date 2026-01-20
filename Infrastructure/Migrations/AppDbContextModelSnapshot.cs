@@ -378,6 +378,52 @@ namespace Infrastructure.Migrations
                     b.ToTable("SearchQueries", (string)null);
                 });
 
+            modelBuilder.Entity("Domain.Entities.SkuAttributeValue", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AttributeDefinitionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("SkuId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool?>("ValueBoolean")
+                        .HasColumnType("boolean");
+
+                    b.Property<decimal?>("ValueNumber")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<string>("ValueString")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AttributeDefinitionId")
+                        .HasDatabaseName("IX_SkuAttributeValues_AttributeDefinitionId");
+
+                    b.HasIndex("SkuId")
+                        .HasDatabaseName("IX_SkuAttributeValues_SkuId");
+
+                    b.HasIndex("AttributeDefinitionId", "ValueBoolean")
+                        .HasDatabaseName("IX_SkuAttributeValues_AttributeId_ValueBoolean");
+
+                    b.HasIndex("AttributeDefinitionId", "ValueNumber")
+                        .HasDatabaseName("IX_SkuAttributeValues_AttributeId_ValueNumber");
+
+                    b.HasIndex("AttributeDefinitionId", "ValueString")
+                        .HasDatabaseName("IX_SkuAttributeValues_AttributeId_ValueString");
+
+                    b.ToTable("SkuAttributeValues", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_SkuAttributeValue_OnlyOneValueType", "(CASE WHEN \"ValueString\" IS NOT NULL THEN 1 ELSE 0 END +\n				  CASE WHEN \"ValueNumber\" IS NOT NULL THEN 1 ELSE 0 END +\n				  CASE WHEN \"ValueBoolean\" IS NOT NULL THEN 1 ELSE 0 END) = 1");
+                        });
+                });
+
             modelBuilder.Entity("Domain.Entities.SkuEntity", b =>
                 {
                     b.Property<Guid>("Id")
@@ -887,6 +933,25 @@ namespace Infrastructure.Migrations
                     b.Navigation("Tag");
                 });
 
+            modelBuilder.Entity("Domain.Entities.SkuAttributeValue", b =>
+                {
+                    b.HasOne("Domain.Entities.AttributeDefinition", "AttributeDefinition")
+                        .WithMany()
+                        .HasForeignKey("AttributeDefinitionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.SkuEntity", "Sku")
+                        .WithMany("AttributeValues")
+                        .HasForeignKey("SkuId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AttributeDefinition");
+
+                    b.Navigation("Sku");
+                });
+
             modelBuilder.Entity("Domain.Entities.SkuEntity", b =>
                 {
                     b.HasOne("Domain.Entities.Product", "Product")
@@ -1025,6 +1090,8 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Entities.SkuEntity", b =>
                 {
+                    b.Navigation("AttributeValues");
+
                     b.Navigation("Gallery");
                 });
 

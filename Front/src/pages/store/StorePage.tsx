@@ -82,11 +82,11 @@ export default function StorePage() {
     return (
       <div className="max-w-2xl mx-auto p-6 text-center">
         <div className="card p-12">
-          <svg className="w-20 h-20 mx-auto text-text-muted mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-20 h-20 mx-auto text-foreground-muted mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          <h1 className="text-2xl font-bold text-text mb-3">{t('storePage.notFound')}</h1>
-          <p className="text-text-muted mb-6">{error || t('storePage.notFoundHint')}</p>
+          <h1 className="text-2xl font-bold text-foreground mb-3">{t('storePage.notFound')}</h1>
+          <p className="text-foreground-muted mb-6">{error || t('storePage.notFoundHint')}</p>
           <Link to="/" className="btn btn-brand">
             {t('common.backToHome')}
           </Link>
@@ -110,10 +110,10 @@ export default function StorePage() {
           {/* Store Info */}
           <div className="flex-1">
             <div className="flex items-center gap-3 flex-wrap">
-              <h1 className="text-2xl md:text-3xl font-bold text-text">{store.name}</h1>
-              {store.isVerified && (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-500/10 text-green-600 dark:text-green-400 text-sm font-medium">
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <h1 className="text-2xl md:text-3xl font-bold text-foreground">{store.name}</h1>
+               {store.isVerified && (
+                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-success/10 text-success text-sm font-medium">
+                   <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
                   {t('storePage.verified')}
@@ -121,9 +121,9 @@ export default function StorePage() {
               )}
             </div>
             {store.description && (
-              <p className="text-text-muted mt-2 max-w-2xl">{store.description}</p>
+              <p className="text-foreground-muted mt-2 max-w-2xl">{store.description}</p>
             )}
-            <div className="flex items-center gap-4 mt-3 text-sm text-text-muted">
+            <div className="flex items-center gap-4 mt-3 text-sm text-foreground-muted">
               <span className="flex items-center gap-1.5">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
@@ -143,15 +143,15 @@ export default function StorePage() {
 
       {/* Products Section */}
       <div>
-        <h2 className="text-xl font-semibold text-text mb-4">{t('storePage.products')}</h2>
+        <h2 className="text-xl font-semibold text-foreground mb-4">{t('storePage.products')}</h2>
 
         {store.products.length === 0 ? (
           <div className="card p-12 text-center">
-            <svg className="w-16 h-16 mx-auto text-text-muted mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-16 h-16 mx-auto text-foreground-muted mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
             </svg>
-            <h3 className="text-lg font-semibold text-text mb-2">{t('storePage.noProducts')}</h3>
-            <p className="text-text-muted">{t('storePage.noProductsHint')}</p>
+            <h3 className="text-lg font-semibold text-foreground mb-2">{t('storePage.noProducts')}</h3>
+            <p className="text-foreground-muted">{t('storePage.noProductsHint')}</p>
           </div>
         ) : (
           <>
@@ -173,7 +173,7 @@ export default function StorePage() {
                 <button
                   onClick={() => goToPage(currentPage - 1)}
                   disabled={currentPage === 1}
-                  className="p-2 rounded-lg hover:bg-surface-card disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="p-2 rounded-lg hover:bg-surface disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -193,7 +193,7 @@ export default function StorePage() {
                         className={`min-w-[40px] h-10 rounded-lg font-medium transition-colors ${
                           page === currentPage
                             ? 'bg-brand text-white'
-                            : 'hover:bg-surface-card text-text'
+                            : 'hover:bg-surface text-foreground'
                         }`}
                       >
                         {page}
@@ -204,7 +204,7 @@ export default function StorePage() {
                     page === currentPage + 2
                   ) {
                     return (
-                      <span key={page} className="text-text-muted">
+                      <span key={page} className="text-foreground-muted">
                         ...
                       </span>
                     )
@@ -215,7 +215,7 @@ export default function StorePage() {
                 <button
                   onClick={() => goToPage(currentPage + 1)}
                   disabled={currentPage === totalPages}
-                  className="p-2 rounded-lg hover:bg-surface-card disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="p-2 rounded-lg hover:bg-surface disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />

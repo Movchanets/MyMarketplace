@@ -15,6 +15,7 @@ import {
   type AttributeDefinitionDto,
 } from '../../api/attributeDefinitionsApi'
 import AttributeSelector from '../../components/catalog/AttributeSelector'
+import { ErrorAlert } from '../../components/ui/ErrorAlert'
 
 interface AttributeField {
   key: string
@@ -338,60 +339,58 @@ export default function ProductCreate() {
         </button>
       </div>
 
-      <h1 className="text-2xl font-bold text-text mb-6">{t('product.create_title')}</h1>
+      <h1 className="text-2xl font-bold text-foreground mb-6">{t('product.create_title')}</h1>
 
       {error && (
-        <div className="mb-6 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-300 px-4 py-3 rounded">
-          {error}
-        </div>
+        <ErrorAlert className="mb-6">{error}</ErrorAlert>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Basic Info */}
         <div className="card p-6 space-y-4">
-          <h2 className="text-lg font-semibold text-text">{t('product.basic_info')}</h2>
+          <h2 className="text-lg font-semibold text-foreground">{t('product.basic_info')}</h2>
 
           <div>
-            <label className="block text-sm font-medium text-text mb-1">
-              {t('product.name')} <span className="text-red-500">*</span>
+            <label className="block text-sm font-medium text-foreground mb-1">
+              {t('product.name')} <span className="text-error">*</span>
             </label>
             <input
               type="text"
               value={name}
               onChange={e => setName(e.target.value)}
-              className={`w-full px-4 py-2 border rounded-lg bg-background text-text focus:outline-none focus:ring-2 focus:ring-brand ${
-                formErrors.name ? 'border-red-500' : 'border-border'
+              className={`w-full px-4 py-2 border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-brand ${
+                formErrors.name ? 'border-error' : 'border-border'
               }`}
               placeholder={t('product.name_placeholder')}
             />
             {formErrors.name && (
-              <p className="mt-1 text-sm text-red-500">{formErrors.name}</p>
+              <p className="mt-1 text-sm text-error">{formErrors.name}</p>
             )}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-text mb-1">
+            <label className="block text-sm font-medium text-foreground mb-1">
               {t('product.description')}
             </label>
             <textarea
               value={description}
               onChange={e => setDescription(e.target.value)}
               rows={4}
-              className={`w-full px-4 py-2 border rounded-lg bg-background text-text focus:outline-none focus:ring-2 focus:ring-brand ${
-                formErrors.description ? 'border-red-500' : 'border-border'
+              className={`w-full px-4 py-2 border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-brand ${
+                formErrors.description ? 'border-error' : 'border-border'
               }`}
               placeholder={t('product.description_placeholder')}
             />
             {formErrors.description && (
-              <p className="mt-1 text-sm text-red-500">{formErrors.description}</p>
+              <p className="mt-1 text-sm text-error">{formErrors.description}</p>
             )}
           </div>
         </div>
 
         {/* Gallery */}
         <div className="card p-6 space-y-4">
-          <h2 className="text-lg font-semibold text-text">{t('product.gallery')}</h2>
-          <p className="text-sm text-text-muted">{t('product.gallery_hint')}</p>
+          <h2 className="text-lg font-semibold text-foreground">{t('product.gallery')}</h2>
+          <p className="text-sm text-foreground-muted">{t('product.gallery_hint')}</p>
 
           <div className="flex flex-wrap gap-4">
             {galleryImages.map((img) => (
@@ -404,7 +403,7 @@ export default function ProductCreate() {
                 <button
                   type="button"
                   onClick={() => handleRemoveImage(img.id)}
-                  className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="absolute -top-2 -right-2 p-1 bg-error text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -414,10 +413,10 @@ export default function ProductCreate() {
             ))}
 
             <label className="w-24 h-24 flex flex-col items-center justify-center border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-brand transition-colors">
-              <svg className="w-8 h-8 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-8 h-8 text-foreground-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
-              <span className="text-xs text-text-muted mt-1">{t('product.add_image')}</span>
+              <span className="text-xs text-foreground-muted mt-1">{t('product.add_image')}</span>
               <input
                 type="file"
                 accept="image/*"
@@ -431,7 +430,7 @@ export default function ProductCreate() {
 
         {/* Categories */}
         <div className="card p-6 space-y-4">
-          <h2 className="text-lg font-semibold text-text">{t('product.categories')}</h2>
+          <h2 className="text-lg font-semibold text-foreground">{t('product.categories')}</h2>
 
           <div className="category-dropdown relative z-20">
             <div
@@ -440,14 +439,14 @@ export default function ProductCreate() {
                 setShowTagDropdown(false)
                 setShowCategoryDropdown(!showCategoryDropdown)
               }}
-              className="w-full px-4 py-2 border border-border rounded-lg bg-background text-text cursor-pointer flex items-center justify-between"
+              className="w-full px-4 py-2 border border-border rounded-lg bg-background text-foreground cursor-pointer flex items-center justify-between"
             >
-              <span className={selectedCategories.length === 0 ? 'text-text-muted' : ''}>
+              <span className={selectedCategories.length === 0 ? 'text-foreground-muted' : ''}>
                 {selectedCategories.length === 0
                   ? t('product.select_categories')
                   : t('product.categories_selected', { count: selectedCategories.length })}
               </span>
-              <svg className="w-5 h-5 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 text-foreground-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
               </svg>
             </div>
@@ -460,12 +459,12 @@ export default function ProductCreate() {
                     value={categorySearch}
                     onChange={e => setCategorySearch(e.target.value)}
                     placeholder={t('common.search')}
-                    className="w-full px-3 py-2 border border-border rounded-lg bg-background text-text text-sm"
+                    className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm"
                     onClick={e => e.stopPropagation()}
                   />
                 </div>
                 {filteredCategories.length === 0 ? (
-                  <div className="p-3 text-text-muted text-sm">{t('common.no_results')}</div>
+                  <div className="p-3 text-foreground-muted text-sm">{t('common.no_results')}</div>
                 ) : (
                   filteredCategories.map(cat => (
                     <div
@@ -482,7 +481,7 @@ export default function ProductCreate() {
                         onChange={() => {}}
                         className="w-4 h-4"
                       />
-                      <span className="text-text">{cat.name}</span>
+                      <span className="text-foreground">{cat.name}</span>
                     </div>
                   ))
                 )}
@@ -519,7 +518,7 @@ export default function ProductCreate() {
 
         {/* Tags */}
         <div className="card p-6 space-y-4">
-          <h2 className="text-lg font-semibold text-text">{t('product.tags')}</h2>
+          <h2 className="text-lg font-semibold text-foreground">{t('product.tags')}</h2>
 
           <div className="tag-dropdown relative z-10">
             <div
@@ -528,14 +527,14 @@ export default function ProductCreate() {
                 setShowCategoryDropdown(false)
                 setShowTagDropdown(!showTagDropdown)
               }}
-              className="w-full px-4 py-2 border border-border rounded-lg bg-background text-text cursor-pointer flex items-center justify-between"
+              className="w-full px-4 py-2 border border-border rounded-lg bg-background text-foreground cursor-pointer flex items-center justify-between"
             >
-              <span className={selectedTags.length === 0 ? 'text-text-muted' : ''}>
+              <span className={selectedTags.length === 0 ? 'text-foreground-muted' : ''}>
                 {selectedTags.length === 0
                   ? t('product.select_tags')
                   : t('product.tags_selected', { count: selectedTags.length })}
               </span>
-              <svg className="w-5 h-5 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 text-foreground-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
               </svg>
             </div>
@@ -548,12 +547,12 @@ export default function ProductCreate() {
                     value={tagSearch}
                     onChange={e => setTagSearch(e.target.value)}
                     placeholder={t('common.search')}
-                    className="w-full px-3 py-2 border border-border rounded-lg bg-background text-text text-sm"
+                    className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm"
                     onClick={e => e.stopPropagation()}
                   />
                 </div>
                 {filteredTags.length === 0 ? (
-                  <div className="p-3 text-text-muted text-sm">{t('common.no_results')}</div>
+                  <div className="p-3 text-foreground-muted text-sm">{t('common.no_results')}</div>
                 ) : (
                   filteredTags.map(tag => (
                     <div
@@ -570,7 +569,7 @@ export default function ProductCreate() {
                         onChange={() => {}}
                         className="w-4 h-4"
                       />
-                      <span className="text-text">{tag.name}</span>
+                      <span className="text-foreground">{tag.name}</span>
                     </div>
                   ))
                 )}
@@ -581,19 +580,19 @@ export default function ProductCreate() {
           {/* Selected tags chips */}
           {selectedTags.length > 0 && (
             <div className="flex flex-wrap gap-2">
-              {selectedTags.map(tagId => {
-                const tag = tags.find(t => t.id === tagId)
-                return tag ? (
-                  <span
-                    key={tagId}
-                    className="inline-flex items-center gap-1 px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-full text-sm"
-                  >
+           {selectedTags.map(tagId => {
+                 const tag = tags.find(t => t.id === tagId)
+                 return tag ? (
+                   <span
+                     key={tagId}
+                     className="inline-flex items-center gap-1 px-3 py-1 bg-success-light dark:bg-success-dark/20 text-success dark:text-success rounded-full text-sm"
+                   >
                     {tag.name}
                     <button
                       type="button"
-                      onClick={() => toggleTag(tagId)}
-                      className="hover:text-green-800 dark:hover:text-green-200"
-                    >
+                       onClick={() => toggleTag(tagId)}
+                       className="hover:text-success-dark dark:hover:text-success"
+                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                       </svg>
@@ -609,8 +608,8 @@ export default function ProductCreate() {
         <div className="card p-6 space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-semibold text-text">{t('product.sku_variants')}</h2>
-              <p className="text-sm text-text-muted">{t('product.sku_variants_hint')}</p>
+              <h2 className="text-lg font-semibold text-foreground">{t('product.sku_variants')}</h2>
+              <p className="text-sm text-foreground-muted">{t('product.sku_variants_hint')}</p>
             </div>
             <button
               type="button"
@@ -621,23 +620,23 @@ export default function ProductCreate() {
             </button>
           </div>
 
-          {formErrors.skus && (
-            <p className="text-sm text-red-500">{formErrors.skus}</p>
-          )}
+           {formErrors.skus && (
+             <p className="text-sm text-error">{formErrors.skus}</p>
+           )}
 
           <div className="space-y-6">
             {skus.map((sku, skuIndex) => (
               <div key={sku.id} className="border border-border rounded-lg p-4 space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-medium text-text">
+                  <h3 className="font-medium text-foreground">
                     {t('product.sku_variant')} #{skuIndex + 1}
                   </h3>
-                  {skus.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveSku(sku.id)}
-                      className="text-red-500 hover:text-red-700 text-sm"
-                    >
+                   {skus.length > 1 && (
+                     <button
+                       type="button"
+                       onClick={() => handleRemoveSku(sku.id)}
+                       className="text-error hover:text-error-dark text-sm"
+                     >
                       {t('common.delete')}
                     </button>
                   )}
@@ -645,7 +644,7 @@ export default function ProductCreate() {
 
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-text mb-1">
+                    <label className="block text-sm font-medium text-foreground mb-1">
                       {t('product.price')}
                     </label>
                     <input
@@ -654,13 +653,13 @@ export default function ProductCreate() {
                       min="0"
                       value={sku.price}
                       onChange={e => handleSkuChange(sku.id, 'price', e.target.value)}
-                      className="w-full px-4 py-2 border border-border rounded-lg bg-background text-text focus:outline-none focus:ring-2 focus:ring-brand"
+                      className="w-full px-4 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-brand"
                       placeholder="0.00"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-text mb-1">
+                    <label className="block text-sm font-medium text-foreground mb-1">
                       {t('product.stock_quantity')}
                     </label>
                     <input
@@ -668,7 +667,7 @@ export default function ProductCreate() {
                       min="0"
                       value={sku.stockQuantity}
                       onChange={e => handleSkuChange(sku.id, 'stockQuantity', e.target.value)}
-                      className="w-full px-4 py-2 border border-border rounded-lg bg-background text-text focus:outline-none focus:ring-2 focus:ring-brand"
+                      className="w-full px-4 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-brand"
                       placeholder="0"
                     />
                   </div>

@@ -35,10 +35,10 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="p-6 text-text dark:text-white">
-      <h1 className="text-2xl font-semibold mb-4 text-text dark:text-white">{t('menu.settings')}</h1>
+    <div className="p-6">
+      <h1 className="text-2xl font-semibold mb-4">{t('menu.settings')}</h1>
 
-      <div className="mb-6 border-b border-surface/60 dark:border-surface/30">
+      <div className="mb-6 border-b border-surface/60 dark:border-surface-card/30">
         <nav className="flex gap-2 -mb-px">
           {tabs.map((t) => (
             <button
@@ -47,7 +47,7 @@ export default function SettingsPage() {
               className={`px-4 py-2 text-sm rounded-t-md border-b-2 transition-colors ${
                 active === t.id
                   ? 'border-brand text-brand bg-surface dark:bg-surface/5'
-                  : 'border-transparent text-text-muted dark:text-text-muted/80 hover:text-text dark:hover:text-white'
+                  : 'border-transparent text-foreground-muted dark:text-foreground-muted hover:text-foreground dark:hover:text-foreground'
               }`}
               aria-current={active === t.id ? 'page' : undefined}
             >
@@ -57,11 +57,11 @@ export default function SettingsPage() {
         </nav>
       </div>
 
-      <div className="bg-white dark:bg-[#071428] p-6 rounded-md shadow-sm text-text dark:text-white">
+      <div className="bg-surface p-6 rounded-md shadow-sm">
         {active === 'profile' && (
           <section>
-            <h2 className="text-lg font-medium mb-2 text-text dark:text-white">{t('settings.profile.title')}</h2>
-            <p className="text-sm text-text-muted dark:text-text-muted/80">{t('settings.profile.description')}</p>
+            <h2 className="text-lg font-medium mb-2 text-foreground dark:text-white">{t('settings.profile.title')}</h2>
+            <p className="text-sm text-foreground-muted dark:text-foreground-muted/80">{t('settings.profile.description')}</p>
             <div className="mt-4">
               <ProfileForm />
             </div>
@@ -71,7 +71,7 @@ export default function SettingsPage() {
         {active === 'security' && (
           <section>
             <h2 className="text-lg font-medium mb-2">{t('settings.security.title')}</h2>
-            <p className="text-sm text-text-muted">{t('settings.security.description')}</p>
+            <p className="text-sm text-foreground-muted">{t('settings.security.description')}</p>
             <div className="mt-4">
               <ChangePasswordForm />
             </div>
@@ -81,14 +81,14 @@ export default function SettingsPage() {
         {active === 'notifications' && (
           <section>
             <h2 className="text-lg font-medium mb-2">{t('settings.notifications.title')}</h2>
-            <p className="text-sm text-text-muted">{t('settings.notifications.description')}</p>
+            <p className="text-sm text-foreground-muted">{t('settings.notifications.description')}</p>
           </section>
         )}
 
         {active === 'payments' && (
           <section>
             <h2 className="text-lg font-medium mb-2">{t('settings.payments.title')}</h2>
-            <p className="text-sm text-text-muted">{t('settings.payments.description')}</p>
+            <p className="text-sm text-foreground-muted">{t('settings.payments.description')}</p>
           </section>
         )}
 

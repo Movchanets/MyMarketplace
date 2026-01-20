@@ -14,6 +14,7 @@ public class CreateProductCommandHandlerTests
 	private readonly Mock<IUserRepository> _userRepository = new();
 	private readonly Mock<ICategoryRepository> _categoryRepository = new();
 	private readonly Mock<ITagRepository> _tagRepository = new();
+	private readonly Mock<IAttributeDefinitionRepository> _attributeDefinitionRepository = new();
 	private readonly Mock<IUnitOfWork> _unitOfWork = new();
 	private readonly Mock<ILogger<CreateProductCommandHandler>> _logger = new();
 
@@ -24,6 +25,7 @@ public class CreateProductCommandHandlerTests
 			_userRepository.Object,
 			_categoryRepository.Object,
 			_tagRepository.Object,
+			_attributeDefinitionRepository.Object,
 			_unitOfWork.Object,
 			_logger.Object);
 

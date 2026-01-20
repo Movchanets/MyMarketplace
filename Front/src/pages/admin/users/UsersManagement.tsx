@@ -124,8 +124,8 @@ export default function UsersManagement() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-text">{t('admin.users.title')}</h2>
-        <span className="text-text-muted">{t('admin.users.total', { count: users.length })}</span>
+        <h2 className="text-2xl font-bold text-foreground">{t('admin.users.title')}</h2>
+        <span className="text-foreground-muted">{t('admin.users.total', { count: users.length })}</span>
       </div>
 
       {error && (
@@ -137,7 +137,7 @@ export default function UsersManagement() {
 
       {/* Search */}
       <div className="relative">
-        <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-foreground-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
         <input
@@ -145,7 +145,7 @@ export default function UsersManagement() {
           placeholder={t('admin.users.search_placeholder')}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-10 pr-4 py-2 rounded-lg border border-border bg-surface text-text focus:ring-2 focus:ring-brand focus:border-transparent"
+          className="w-full pl-10 pr-4 py-2 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-brand focus:border-transparent"
         />
       </div>
 
@@ -155,12 +155,12 @@ export default function UsersManagement() {
           <table className="w-full">
             <thead className="bg-surface-alt">
               <tr>
-                <th className="px-4 py-3 text-left text-sm font-medium text-text-muted">{t('admin.users.user')}</th>
-                <th className="px-4 py-3 text-left text-sm font-medium text-text-muted">{t('admin.users.email')}</th>
-                <th className="px-4 py-3 text-left text-sm font-medium text-text-muted">{t('admin.users.roles')}</th>
-                <th className="px-4 py-3 text-left text-sm font-medium text-text-muted">{t('admin.users.status')}</th>
-                <th className="px-4 py-3 text-left text-sm font-medium text-text-muted">{t('admin.users.created')}</th>
-                <th className="px-4 py-3 text-right text-sm font-medium text-text-muted">{t('admin.users.actions')}</th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-foreground-muted">{t('admin.users.user')}</th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-foreground-muted">{t('admin.users.email')}</th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-foreground-muted">{t('admin.users.roles')}</th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-foreground-muted">{t('admin.users.status')}</th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-foreground-muted">{t('admin.users.created')}</th>
+                <th className="px-4 py-3 text-right text-sm font-medium text-foreground-muted">{t('admin.users.actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -180,14 +180,14 @@ export default function UsersManagement() {
                         </div>
                       )}
                       <div>
-                        <div className="font-medium text-text">{user.name} {user.surname}</div>
-                        <div className="text-sm text-text-muted">@{user.username}</div>
+                        <div className="font-medium text-foreground">{user.name} {user.surname}</div>
+                        <div className="text-sm text-foreground-muted">@{user.username}</div>
                       </div>
                     </div>
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
-                      <span className="text-text">{user.email}</span>
+                      <span className="text-foreground">{user.email}</span>
                       {user.isEmailConfirmed && (
                         <span className="text-green-500 text-xs">✓</span>
                       )}
@@ -225,14 +225,14 @@ export default function UsersManagement() {
                       </span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-sm text-text-muted">
+                  <td className="px-4 py-3 text-sm text-foreground-muted">
                     {new Date(user.createdAt).toLocaleDateString()}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-2">
                       <button
                         onClick={() => handleOpenRoleModal(user)}
-                        className="p-2 text-text-muted hover:text-brand hover:bg-brand/10 rounded-lg transition-colors"
+                        className="p-2 text-foreground-muted hover:text-brand hover:bg-brand/10 rounded-lg transition-colors"
                         title={t('admin.users.assign_roles')}
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -272,12 +272,12 @@ export default function UsersManagement() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-surface rounded-xl shadow-xl max-w-md w-full">
             <div className="flex items-center justify-between p-4 border-b border-border">
-              <h3 className="text-lg font-semibold text-text">
+              <h3 className="text-lg font-semibold text-foreground">
                 {t('admin.users.assign_roles_to', { name: selectedUser.username })}
               </h3>
               <button 
                 onClick={() => setShowRoleModal(false)}
-                className="text-text-muted hover:text-text"
+                className="text-foreground-muted hover:text-foreground"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -302,11 +302,11 @@ export default function UsersManagement() {
                     className="w-4 h-4 text-brand rounded focus:ring-brand"
                   />
                   <div className="flex-1">
-                    <div className="font-medium text-text">{role.name}</div>
+                    <div className="font-medium text-foreground">{role.name}</div>
                     {role.description && (
-                      <div className="text-sm text-text-muted">{role.description}</div>
+                      <div className="text-sm text-foreground-muted">{role.description}</div>
                     )}
-                    <div className="text-xs text-text-muted mt-1">
+                    <div className="text-xs text-foreground-muted mt-1">
                       {t('admin.users.permissions_count', { count: role.permissions.length })}
                     </div>
                   </div>
@@ -317,7 +317,7 @@ export default function UsersManagement() {
             <div className="flex justify-end gap-3 p-4 border-t border-border">
               <button
                 onClick={() => setShowRoleModal(false)}
-                className="px-4 py-2 text-text-muted hover:text-text"
+                className="px-4 py-2 text-foreground-muted hover:text-foreground"
               >
                 {t('common.cancel')}
               </button>

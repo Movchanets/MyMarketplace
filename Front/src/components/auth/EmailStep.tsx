@@ -31,15 +31,15 @@ export function EmailStep({ onNext, onForgotPassword, onGoogleLogin, isLoading }
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-text">{t('auth.email_step_heading')}</h2>
-        <p className="mt-2 text-sm text-text-muted">{t('auth.enter_email')}</p>
+        <h2 className="text-2xl font-bold text-foreground">{t('auth.email_step_heading')}</h2>
+        <p className="mt-2 text-sm text-foreground-muted">{t('auth.enter_email')}</p>
       </div>
 
       {/* Google Login */}
       <button
         type="button"
         onClick={onGoogleLogin}
-        className="flex w-full items-center justify-center gap-3 rounded-lg border border-text/20 bg-surface-card px-4 py-3 text-text transition-colors hover:bg-text/5"
+        className="flex w-full items-center justify-center gap-3 rounded-lg border border-foreground/20 bg-surface px-4 py-3 text-foreground transition-colors hover:bg-foreground/5"
       >
         <svg className="h-5 w-5" viewBox="0 0 24 24">
           <path
@@ -64,16 +64,16 @@ export function EmailStep({ onNext, onForgotPassword, onGoogleLogin, isLoading }
 
       <div className="relative">
         <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-text/10"></div>
+          <div className="w-full border-t border-foreground/10"></div>
         </div>
         <div className="relative flex justify-center text-sm">
-          <span className="bg-surface px-2 text-text-muted">{t('auth.or_via_email')}</span>
+          <span className="bg-surface px-2 text-foreground-muted">{t('auth.or_via_email')}</span>
         </div>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div>
-          <label htmlFor="email" className="mb-1 block text-sm text-text-muted">
+          <label htmlFor="email" className="mb-1 block text-sm text-foreground-muted">
             Email
           </label>
           <input
@@ -82,7 +82,7 @@ export function EmailStep({ onNext, onForgotPassword, onGoogleLogin, isLoading }
             type="email"
             placeholder="your@email.com"
             autoComplete="email"
-            className="w-full rounded-lg border border-text/20 bg-transparent px-4 py-3 text-text outline-none transition-colors focus:border-brand"
+            className="w-full rounded-lg border border-foreground/20 bg-transparent px-4 py-3 text-foreground outline-none transition-colors focus:border-brand"
           />
           {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email.message}</p>}
         </div>

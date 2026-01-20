@@ -233,7 +233,7 @@ export default function AttributeDefinitionsManagement() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-text">{t('admin.attributes.title')}</h2>
+        <h2 className="text-2xl font-bold text-foreground">{t('admin.attributes.title')}</h2>
         <button
           onClick={() => {
             resetForm()
@@ -254,7 +254,7 @@ export default function AttributeDefinitionsManagement() {
       {/* Create/Edit Form */}
       {showCreateForm && (
         <div className="card p-6">
-          <h3 className="text-lg font-semibold text-text mb-4">
+          <h3 className="text-lg font-semibold text-foreground mb-4">
             {editingId ? t('admin.attributes.edit') : t('admin.attributes.add')}
           </h3>
           <form onSubmit={editingId ? handleUpdate : handleCreate} className="space-y-4">
@@ -262,7 +262,7 @@ export default function AttributeDefinitionsManagement() {
               {/* Code - only for create */}
               {!editingId && (
                 <div>
-                  <label className="block text-sm font-medium text-text mb-1">
+                  <label className="block text-sm font-medium text-foreground mb-1">
                     {t('admin.attributes.code')} *
                   </label>
                   <input
@@ -274,19 +274,19 @@ export default function AttributeDefinitionsManagement() {
                       if (formErrors.code) setFormErrors({ ...formErrors, code: undefined })
                     }}
                     placeholder="e.g. color, size, weight"
-                    className={`w-full px-3 py-2 rounded-lg border bg-surface text-text 
+                    className={`w-full px-3 py-2 rounded-lg border bg-surface text-foreground 
                       focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent
                       ${formErrors.code ? 'border-red-500' : 'border-gray-600'}`}
                     maxLength={50}
                   />
                   {formErrors.code && <p className="mt-1 text-sm text-red-500">{formErrors.code}</p>}
-                  <p className="mt-1 text-xs text-text-muted">{t('admin.attributes.code_hint')}</p>
+                  <p className="mt-1 text-xs text-foreground-muted">{t('admin.attributes.code_hint')}</p>
                 </div>
               )}
 
               {/* Name */}
               <div>
-                <label className="block text-sm font-medium text-text mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   {t('admin.attributes.name')} *
                 </label>
                 <input
@@ -297,7 +297,7 @@ export default function AttributeDefinitionsManagement() {
                     if (formErrors.name) setFormErrors({ ...formErrors, name: undefined })
                   }}
                   placeholder="e.g. Color, Size, Weight"
-                  className={`w-full px-3 py-2 rounded-lg border bg-surface text-text 
+                  className={`w-full px-3 py-2 rounded-lg border bg-surface text-foreground 
                     focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent
                     ${formErrors.name ? 'border-red-500' : 'border-gray-600'}`}
                   maxLength={200}
@@ -307,7 +307,7 @@ export default function AttributeDefinitionsManagement() {
 
               {/* Data Type */}
               <div>
-                <label className="block text-sm font-medium text-text mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   {t('admin.attributes.data_type')} *
                 </label>
                 <select
@@ -315,9 +315,9 @@ export default function AttributeDefinitionsManagement() {
                   onChange={(e) =>
                     setFormData({ ...formData, dataType: e.target.value as AttributeDataType })
                   }
-                  className="w-full px-3 py-2 rounded-lg border border-gray-600 bg-surface text-text 
+                  className="w-full px-3 py-2 rounded-lg border border-gray-600 bg-surface text-foreground 
                     focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent
-                    [&>option]:bg-surface [&>option]:text-text"
+                    [&>option]:bg-surface [&>option]:text-foreground"
                 >
                   {DATA_TYPES.map((type) => (
                     <option key={type} value={type}>
@@ -329,7 +329,7 @@ export default function AttributeDefinitionsManagement() {
 
               {/* Unit */}
               <div>
-                <label className="block text-sm font-medium text-text mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   {t('admin.attributes.unit')}
                 </label>
                 <input
@@ -337,7 +337,7 @@ export default function AttributeDefinitionsManagement() {
                   value={formData.unit || ''}
                   onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
                   placeholder="e.g. kg, cm, GB"
-                  className="w-full px-3 py-2 rounded-lg border border-gray-600 bg-surface text-text 
+                  className="w-full px-3 py-2 rounded-lg border border-gray-600 bg-surface text-foreground 
                     focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent"
                   maxLength={20}
                 />
@@ -345,7 +345,7 @@ export default function AttributeDefinitionsManagement() {
 
               {/* Display Order */}
               <div>
-                <label className="block text-sm font-medium text-text mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   {t('admin.attributes.display_order')}
                 </label>
                 <input
@@ -354,7 +354,7 @@ export default function AttributeDefinitionsManagement() {
                   onChange={(e) =>
                     setFormData({ ...formData, displayOrder: parseInt(e.target.value) || 0 })
                   }
-                  className="w-full px-3 py-2 rounded-lg border border-gray-600 bg-surface text-text 
+                  className="w-full px-3 py-2 rounded-lg border border-gray-600 bg-surface text-foreground 
                     focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent"
                   min={0}
                 />
@@ -369,7 +369,7 @@ export default function AttributeDefinitionsManagement() {
                     onChange={(e) => setFormData({ ...formData, isRequired: e.target.checked })}
                     className="w-4 h-4 rounded border-gray-600 text-brand focus:ring-brand"
                   />
-                  <span className="text-sm text-text">{t('admin.attributes.is_required')}</span>
+                  <span className="text-sm text-foreground">{t('admin.attributes.is_required')}</span>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
@@ -378,20 +378,20 @@ export default function AttributeDefinitionsManagement() {
                     onChange={(e) => setFormData({ ...formData, isVariant: e.target.checked })}
                     className="w-4 h-4 rounded border-gray-600 text-brand focus:ring-brand"
                   />
-                  <span className="text-sm text-text">{t('admin.attributes.is_variant')}</span>
+                  <span className="text-sm text-foreground">{t('admin.attributes.is_variant')}</span>
                 </label>
               </div>
             </div>
 
             {/* Description */}
             <div>
-              <label className="block text-sm font-medium text-text mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 {t('admin.attributes.description')}
               </label>
               <textarea
                 value={formData.description || ''}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="w-full px-3 py-2 rounded-lg border border-gray-600 bg-surface text-text 
+                className="w-full px-3 py-2 rounded-lg border border-gray-600 bg-surface text-foreground 
                   focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent resize-y"
                 rows={2}
                 maxLength={500}
@@ -400,18 +400,18 @@ export default function AttributeDefinitionsManagement() {
 
             {/* Allowed Values */}
             <div>
-              <label className="block text-sm font-medium text-text mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 {t('admin.attributes.allowed_values')}
               </label>
               <textarea
                 value={allowedValuesText}
                 onChange={(e) => setAllowedValuesText(e.target.value)}
                 placeholder={t('admin.attributes.allowed_values_hint')}
-                className="w-full px-3 py-2 rounded-lg border border-gray-600 bg-surface text-text 
+                className="w-full px-3 py-2 rounded-lg border border-gray-600 bg-surface text-foreground 
                   focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent resize-y font-mono text-sm"
                 rows={4}
               />
-              <p className="mt-1 text-xs text-text-muted">
+              <p className="mt-1 text-xs text-foreground-muted">
                 {t('admin.attributes.allowed_values_description')}
               </p>
             </div>
@@ -434,22 +434,22 @@ export default function AttributeDefinitionsManagement() {
           <table className="min-w-full divide-y divide-border">
             <thead className="bg-surface-secondary">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-foreground-muted uppercase tracking-wider">
                   {t('admin.attributes.code')}
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-foreground-muted uppercase tracking-wider">
                   {t('admin.attributes.name')}
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-foreground-muted uppercase tracking-wider">
                   {t('admin.attributes.data_type')}
                 </th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-text-muted uppercase tracking-wider">
+                <th className="px-4 py-3 text-center text-xs font-medium text-foreground-muted uppercase tracking-wider">
                   {t('admin.attributes.flags')}
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-foreground-muted uppercase tracking-wider">
                   {t('admin.attributes.allowed_values')}
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-text-muted uppercase tracking-wider">
+                <th className="px-4 py-3 text-right text-xs font-medium text-foreground-muted uppercase tracking-wider">
                   {t('admin.catalog.actions')}
                 </th>
               </tr>
@@ -457,7 +457,7 @@ export default function AttributeDefinitionsManagement() {
             <tbody className="bg-surface divide-y divide-border">
               {paginatedAttributes.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-4 text-center text-text-muted">
+                  <td colSpan={6} className="px-4 py-4 text-center text-foreground-muted">
                     {t('admin.attributes.no_attributes')}
                   </td>
                 </tr>
@@ -465,14 +465,14 @@ export default function AttributeDefinitionsManagement() {
                 paginatedAttributes.map((attr) => (
                   <tr key={attr.id} className="hover:bg-surface-secondary/50 transition-colors">
                     <td className="px-4 py-4 whitespace-nowrap">
-                      <code className="px-2 py-1 rounded bg-surface-secondary text-text font-mono text-sm">
+                      <code className="px-2 py-1 rounded bg-surface-secondary text-foreground font-mono text-sm">
                         {attr.code}
                       </code>
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-text font-medium">
+                    <td className="px-4 py-4 whitespace-nowrap text-foreground font-medium">
                       {attr.name}
                       {attr.unit && (
-                        <span className="ml-1 text-text-muted text-sm">({attr.unit})</span>
+                        <span className="ml-1 text-foreground-muted text-sm">({attr.unit})</span>
                       )}
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap">
@@ -510,14 +510,14 @@ export default function AttributeDefinitionsManagement() {
                         )}
                       </div>
                     </td>
-                    <td className="px-4 py-4 text-text-muted text-sm max-w-[200px]">
+                    <td className="px-4 py-4 text-foreground-muted text-sm max-w-[200px]">
                       {attr.allowedValues && attr.allowedValues.length > 0 ? (
                         <span className="truncate block" title={attr.allowedValues.join(', ')}>
                           {attr.allowedValues.slice(0, 3).join(', ')}
                           {attr.allowedValues.length > 3 && ` +${attr.allowedValues.length - 3}`}
                         </span>
                       ) : (
-                        <span className="text-text-muted italic">{t('admin.attributes.any')}</span>
+                        <span className="text-foreground-muted italic">{t('admin.attributes.any')}</span>
                       )}
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-right text-sm">
@@ -544,7 +544,7 @@ export default function AttributeDefinitionsManagement() {
         {/* Pagination */}
         {totalPages > 1 && (
           <div className="flex items-center justify-between px-4 py-4 border-t border-border bg-surface-secondary/30">
-            <div className="text-sm text-text-muted">
+            <div className="text-sm text-foreground-muted">
               {t('admin.catalog.showing')} {(currentPage - 1) * ITEMS_PER_PAGE + 1}-
               {Math.min(currentPage * ITEMS_PER_PAGE, attributes.length)} {t('admin.catalog.of')}{' '}
               {attributes.length}
@@ -553,7 +553,7 @@ export default function AttributeDefinitionsManagement() {
               <button
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
-                className="px-3 py-1 rounded border border-border text-text-muted hover:bg-surface-secondary 
+                className="px-3 py-1 rounded border border-border text-foreground-muted hover:bg-surface-secondary 
                   disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {t('admin.catalog.prev')}
@@ -565,7 +565,7 @@ export default function AttributeDefinitionsManagement() {
                   className={`px-3 py-1 rounded border transition-colors ${
                     currentPage === page
                       ? 'bg-brand text-white border-brand'
-                      : 'border-border text-text-muted hover:bg-surface-secondary'
+                      : 'border-border text-foreground-muted hover:bg-surface-secondary'
                   }`}
                 >
                   {page}
@@ -574,7 +574,7 @@ export default function AttributeDefinitionsManagement() {
               <button
                 onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
-                className="px-3 py-1 rounded border border-border text-text-muted hover:bg-surface-secondary 
+                className="px-3 py-1 rounded border border-border text-foreground-muted hover:bg-surface-secondary 
                   disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {t('admin.catalog.next')}

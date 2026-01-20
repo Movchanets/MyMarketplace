@@ -98,7 +98,7 @@ export default function AttributeSelector({
           onChange={(e) => handleValueChange(index, e.target.value)}
           placeholder={t('sku.attribute_value')}
           disabled={disabled}
-          className="flex-1 px-3 py-2 border border-border rounded-lg bg-background text-text text-sm 
+          className="flex-1 px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm 
             focus:outline-none focus:ring-2 focus:ring-brand disabled:opacity-50"
         />
       )
@@ -111,9 +111,9 @@ export default function AttributeSelector({
           value={attr.value}
           onChange={(e) => handleValueChange(index, e.target.value)}
           disabled={disabled}
-          className="flex-1 px-3 py-2 border border-border rounded-lg bg-background text-text text-sm 
+          className="flex-1 px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm 
             focus:outline-none focus:ring-2 focus:ring-brand disabled:opacity-50
-            [&>option]:bg-surface [&>option]:text-text"
+            [&>option]:bg-surface [&>option]:text-foreground"
         >
           <option value="">{t('attribute_selector.select_value')}</option>
           {definition.allowedValues.map((val) => (
@@ -133,9 +133,9 @@ export default function AttributeSelector({
             value={attr.value}
             onChange={(e) => handleValueChange(index, e.target.value)}
             disabled={disabled}
-            className="flex-1 px-3 py-2 border border-border rounded-lg bg-background text-text text-sm 
+            className="flex-1 px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm 
               focus:outline-none focus:ring-2 focus:ring-brand disabled:opacity-50
-              [&>option]:bg-surface [&>option]:text-text"
+              [&>option]:bg-surface [&>option]:text-foreground"
           >
             <option value="">{t('attribute_selector.select_value')}</option>
             <option value="true">{t('common.yes')}</option>
@@ -153,11 +153,11 @@ export default function AttributeSelector({
               onChange={(e) => handleValueChange(index, e.target.value)}
               placeholder="0"
               disabled={disabled}
-              className="flex-1 px-3 py-2 border border-border rounded-lg bg-background text-text text-sm 
+              className="flex-1 px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm 
                 focus:outline-none focus:ring-2 focus:ring-brand disabled:opacity-50"
             />
             {definition.unit && (
-              <span className="text-text-muted text-sm px-2">{definition.unit}</span>
+              <span className="text-foreground-muted text-sm px-2">{definition.unit}</span>
             )}
           </div>
         )
@@ -170,7 +170,7 @@ export default function AttributeSelector({
             onChange={(e) => handleValueChange(index, e.target.value)}
             placeholder={definition.unit ? `${t('sku.attribute_value')} (${definition.unit})` : t('sku.attribute_value')}
             disabled={disabled}
-            className="flex-1 px-3 py-2 border border-border rounded-lg bg-background text-text text-sm 
+            className="flex-1 px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm 
               focus:outline-none focus:ring-2 focus:ring-brand disabled:opacity-50"
           />
         )
@@ -180,7 +180,7 @@ export default function AttributeSelector({
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <label className="text-sm font-medium text-text">
+        <label className="text-sm font-medium text-foreground">
           {showVariantOnly ? t('attribute_selector.variant_attributes') : t('sku.attributes')}
         </label>
         <button
@@ -198,11 +198,11 @@ export default function AttributeSelector({
       </div>
 
       {showVariantOnly && (
-        <p className="text-xs text-text-muted">{t('attribute_selector.variant_hint')}</p>
+        <p className="text-xs text-foreground-muted">{t('attribute_selector.variant_hint')}</p>
       )}
 
       {attributes.length === 0 ? (
-        <p className="text-text-muted text-sm italic">{t('sku.no_attributes')}</p>
+        <p className="text-foreground-muted text-sm italic">{t('sku.no_attributes')}</p>
       ) : (
         <div className="space-y-2" ref={dropdownRef}>
           {attributes.map((attr, index) => {
@@ -222,11 +222,11 @@ export default function AttributeSelector({
                       }
                     }}
                     disabled={disabled}
-                    className={`w-full px-3 py-2 border rounded-lg bg-background text-left text-sm 
-                      focus:outline-none focus:ring-2 focus:ring-brand disabled:opacity-50
-                      ${attr.key ? 'text-text' : 'text-text-muted'}
-                      ${definition?.isRequired ? 'border-amber-500' : 'border-border'}
-                      ${definition?.isVariant ? 'border-l-4 border-l-brand' : ''}`}
+                   className={`w-full px-3 py-2 border rounded-lg bg-background text-left text-sm 
+                       focus:outline-none focus:ring-2 focus:ring-brand disabled:opacity-50
+                       ${attr.key ? 'text-foreground' : 'text-foreground-muted'}
+                       ${definition?.isRequired ? 'border-warning' : 'border-border'}
+                       ${definition?.isVariant ? 'border-l-4 border-l-brand' : ''}`}
                   >
                     <span className="flex items-center justify-between">
                       <span>
@@ -244,7 +244,7 @@ export default function AttributeSelector({
                         )}
                       </span>
                       <svg
-                        className="w-4 h-4 text-text-muted"
+                        className="w-4 h-4 text-foreground-muted"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -267,12 +267,12 @@ export default function AttributeSelector({
                           value={keySearch}
                           onChange={(e) => setKeySearch(e.target.value)}
                           placeholder={t('common.search')}
-                          className="w-full px-3 py-2 border border-border rounded-lg bg-surface text-text text-sm"
+                          className="w-full px-3 py-2 border border-border rounded-lg bg-surface text-foreground text-sm"
                           autoFocus
                         />
                       </div>
                       {unusedAttrs.length === 0 ? (
-                        <div className="p-3 text-text-muted text-sm">{t('common.no_results')}</div>
+                        <div className="p-3 text-foreground-muted text-sm">{t('common.no_results')}</div>
                       ) : (
                         unusedAttrs.map((def) => (
                           <button
@@ -282,20 +282,20 @@ export default function AttributeSelector({
                             className="w-full px-4 py-2 hover:bg-surface-secondary text-left flex items-center justify-between group"
                           >
                             <div>
-                              <span className="text-text">{def.name}</span>
-                              <span className="ml-2 text-xs text-text-muted">({def.code})</span>
+                              <span className="text-foreground">{def.name}</span>
+                              <span className="ml-2 text-xs text-foreground-muted">({def.code})</span>
                               {def.description && (
-                                <p className="text-xs text-text-muted truncate max-w-[200px]">
+                                <p className="text-xs text-foreground-muted truncate max-w-[200px]">
                                   {def.description}
                                 </p>
                               )}
                             </div>
                             <div className="flex gap-1">
-                              {def.isRequired && (
-                                <span className="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-500 text-xs">
-                                  R
-                                </span>
-                              )}
+                               {def.isRequired && (
+                                 <span className="px-1.5 py-0.5 rounded bg-warning/20 text-warning text-xs">
+                                   R
+                                 </span>
+                               )}
                               {def.isVariant && (
                                 <span className="px-1.5 py-0.5 rounded bg-brand/20 text-brand text-xs">
                                   V
@@ -315,9 +315,9 @@ export default function AttributeSelector({
                 {/* Remove Button */}
                 <button
                   type="button"
-                  onClick={() => handleRemoveAttribute(index)}
-                  disabled={disabled}
-                  className="p-2 text-red-500 hover:text-red-700 transition-colors disabled:opacity-50"
+                   onClick={() => handleRemoveAttribute(index)}
+                   disabled={disabled}
+                   className="p-2 text-error hover:text-error-dark transition-colors disabled:opacity-50"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
@@ -335,16 +335,16 @@ export default function AttributeSelector({
       )}
 
       {/* Legend */}
-      <div className="flex gap-4 text-xs text-text-muted mt-2">
-        <span className="flex items-center gap-1">
-          <span className="w-2 h-2 rounded bg-brand"></span>
-          {t('attribute_selector.variant_marker')}
-        </span>
-        <span className="flex items-center gap-1">
-          <span className="w-2 h-2 rounded bg-amber-500"></span>
-          {t('attribute_selector.required_marker')}
-        </span>
-      </div>
+       <div className="flex gap-4 text-xs text-foreground-muted mt-2">
+         <span className="flex items-center gap-1">
+           <span className="w-2 h-2 rounded bg-brand"></span>
+           {t('attribute_selector.variant_marker')}
+         </span>
+         <span className="flex items-center gap-1">
+           <span className="w-2 h-2 rounded bg-warning"></span>
+           {t('attribute_selector.required_marker')}
+         </span>
+       </div>
     </div>
   )
 }

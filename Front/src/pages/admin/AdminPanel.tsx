@@ -22,8 +22,8 @@ export default function AdminPanel() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-text">{t('admin.title')}</h1>
-        <p className="text-text-muted mt-2">{t('admin.welcome', { name: user?.firstName || user?.name })}</p>
+        <h1 className="text-3xl font-bold text-foreground">{t('admin.title')}</h1>
+        <p className="text-foreground-muted mt-2">{t('admin.welcome', { name: user?.firstName || user?.name })}</p>
       </div>
 
       {/* Navigation Tabs */}
@@ -40,7 +40,7 @@ export default function AdminPanel() {
                 className={`px-4 py-2 -mb-px text-sm font-medium border-b-2 transition-colors ${
                   isActive
                     ? 'border-brand text-brand'
-                    : 'border-transparent text-text-muted hover:text-text hover:border-border'
+                    : 'border-transparent text-foreground-muted hover:text-foreground hover:border-border'
                 }`}
               >
                 {item.label}
@@ -56,34 +56,34 @@ export default function AdminPanel() {
           {/* Dashboard Cards */}
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             <Link to="/admin/categories" className="card p-6 hover:shadow-md transition-shadow">
-              <h3 className="text-lg font-semibold text-text mb-2">{t('admin.cards.categories')}</h3>
-              <p className="text-text-muted text-sm">{t('admin.cards.categories_desc')}</p>
+              <h3 className="text-lg font-semibold text-foreground mb-2">{t('admin.cards.categories')}</h3>
+              <p className="text-foreground-muted text-sm">{t('admin.cards.categories_desc')}</p>
             </Link>
             <Link to="/admin/tags" className="card p-6 hover:shadow-md transition-shadow">
-              <h3 className="text-lg font-semibold text-text mb-2">{t('admin.cards.tags')}</h3>
-              <p className="text-text-muted text-sm">{t('admin.cards.tags_desc')}</p>
+              <h3 className="text-lg font-semibold text-foreground mb-2">{t('admin.cards.tags')}</h3>
+              <p className="text-foreground-muted text-sm">{t('admin.cards.tags_desc')}</p>
             </Link>
             <Link to="/admin/stores" className="card p-6 hover:shadow-md transition-shadow">
-              <h3 className="text-lg font-semibold text-text mb-2">{t('admin.cards.stores')}</h3>
-              <p className="text-text-muted text-sm">{t('admin.cards.stores_desc')}</p>
+              <h3 className="text-lg font-semibold text-foreground mb-2">{t('admin.cards.stores')}</h3>
+              <p className="text-foreground-muted text-sm">{t('admin.cards.stores_desc')}</p>
             </Link>
             <div className="card p-6">
-              <h3 className="text-lg font-semibold text-text mb-2">{t('admin.cards.orders')}</h3>
-              <p className="text-text-muted text-sm">{t('admin.cards.orders_desc')}</p>
+              <h3 className="text-lg font-semibold text-foreground mb-2">{t('admin.cards.orders')}</h3>
+              <p className="text-foreground-muted text-sm">{t('admin.cards.orders_desc')}</p>
             </div>
             <Link to="/admin/users" className="card p-6 hover:shadow-md transition-shadow">
-              <h3 className="text-lg font-semibold text-text mb-2">{t('admin.cards.users')}</h3>
-              <p className="text-text-muted text-sm">{t('admin.cards.users_desc')}</p>
+              <h3 className="text-lg font-semibold text-foreground mb-2">{t('admin.cards.users')}</h3>
+              <p className="text-foreground-muted text-sm">{t('admin.cards.users_desc')}</p>
             </Link>
             <Link to="/admin/roles" className="card p-6 hover:shadow-md transition-shadow">
-              <h3 className="text-lg font-semibold text-text mb-2">{t('admin.cards.roles')}</h3>
-              <p className="text-text-muted text-sm">{t('admin.cards.roles_desc')}</p>
+              <h3 className="text-lg font-semibold text-foreground mb-2">{t('admin.cards.roles')}</h3>
+              <p className="text-foreground-muted text-sm">{t('admin.cards.roles_desc')}</p>
             </Link>
           </div>
 
           {/* Roles & Permissions */}
           <div className="card p-6">
-            <h3 className="text-lg font-semibold text-text mb-4">{t('admin.your_roles')}</h3>
+            <h3 className="text-lg font-semibold text-foreground mb-4">{t('admin.your_roles')}</h3>
             <div className="flex flex-wrap gap-2">
               {user?.roles && user.roles.length > 0 ? (
                 user.roles.map((role, idx) => (
@@ -95,13 +95,13 @@ export default function AdminPanel() {
                   </span>
                 ))
               ) : (
-                <span className="text-text-muted text-sm">{t('admin.no_roles')}</span>
+                <span className="text-foreground-muted text-sm">{t('admin.no_roles')}</span>
               )}
             </div>
           </div>
 
           <div className="card p-6">
-            <h3 className="text-lg font-semibold text-text mb-4">{t('admin.your_permissions')}</h3>
+            <h3 className="text-lg font-semibold text-foreground mb-4">{t('admin.your_permissions')}</h3>
             <div className="flex flex-wrap gap-2">
               {user?.permissions && user.permissions.length > 0 ? (
                 user.permissions.map((permission, idx) => (
@@ -113,7 +113,7 @@ export default function AdminPanel() {
                   </span>
                 ))
               ) : (
-                <span className="text-text-muted text-sm">{t('admin.no_permissions')}</span>
+                <span className="text-foreground-muted text-sm">{t('admin.no_permissions')}</span>
               )}
             </div>
           </div>

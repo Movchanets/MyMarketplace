@@ -65,7 +65,7 @@ export function CatalogMenu({ onClose }: CatalogMenuProps) {
 
   if (isLoading) {
     return (
-      <div className="absolute left-0 top-full z-50 mt-2 w-[700px] rounded-lg border border-text/10 bg-surface-card p-6 shadow-xl">
+      <div className="absolute left-0 top-full z-50 mt-2 w-[700px] rounded-lg border border-foreground/10 bg-surface p-6 shadow-xl">
         <div className="flex items-center justify-center">
           <span className="h-6 w-6 animate-spin rounded-full border-2 border-brand border-t-transparent" />
         </div>
@@ -75,16 +75,16 @@ export function CatalogMenu({ onClose }: CatalogMenuProps) {
 
   if (topCategories.length === 0) {
     return (
-      <div className="absolute left-0 top-full z-50 mt-2 rounded-lg border border-text/10 bg-surface-card p-6 shadow-xl">
-        <p className="text-sm text-text-muted">{t('catalog.no_categories')}</p>
+      <div className="absolute left-0 top-full z-50 mt-2 rounded-lg border border-foreground/10 bg-surface p-6 shadow-xl">
+        <p className="text-sm text-foreground-muted">{t('catalog.no_categories')}</p>
       </div>
     )
   }
 
   return (
-    <div className="absolute left-0 top-full z-50 mt-2 flex w-[700px] rounded-lg border border-text/10 bg-surface-card shadow-xl">
+    <div className="absolute left-0 top-full z-50 mt-2 flex w-[700px] rounded-lg border border-foreground/10 bg-surface shadow-xl">
       {/* Left column: Top-level categories */}
-      <div className="w-64 border-r border-text/10 py-2">
+      <div className="w-64 border-r border-foreground/10 py-2">
         <ul>
           {topCategories.map((category) => (
             <li key={category.id}>
@@ -95,7 +95,7 @@ export function CatalogMenu({ onClose }: CatalogMenuProps) {
                 className={`flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${
                   hoveredCategoryId === category.id
                     ? 'bg-brand/10 text-brand'
-                    : 'text-text hover:bg-surface'
+                    : 'text-foreground hover:bg-surface'
                 }`}
               >
                 {category.emoji && (
@@ -125,11 +125,11 @@ export function CatalogMenu({ onClose }: CatalogMenuProps) {
         {hoveredCategory && (
           <>
             {/* Category header */}
-            <div className="mb-4 border-b border-text/10 pb-3">
+            <div className="mb-4 border-b border-foreground/10 pb-3">
               <Link
                 to={`/category/${hoveredCategory.slug}`}
                 onClick={onClose}
-                className="flex items-center gap-2 text-lg font-semibold text-text hover:text-brand"
+                className="flex items-center gap-2 text-lg font-semibold text-foreground hover:text-brand"
               >
                 {hoveredCategory.emoji && (
                   <span>{hoveredCategory.emoji}</span>
@@ -137,7 +137,7 @@ export function CatalogMenu({ onClose }: CatalogMenuProps) {
                 {hoveredCategory.name}
               </Link>
               {hoveredCategory.description && (
-                <p className="mt-1 text-xs text-text-muted">{hoveredCategory.description}</p>
+                <p className="mt-1 text-xs text-foreground-muted">{hoveredCategory.description}</p>
               )}
             </div>
 
@@ -153,7 +153,7 @@ export function CatalogMenu({ onClose }: CatalogMenuProps) {
                     key={sub.id}
                     to={`/category/${sub.slug}`}
                     onClick={onClose}
-                    className="rounded px-2 py-1.5 text-sm text-text-muted transition-colors hover:bg-surface hover:text-text"
+                    className="rounded px-2 py-1.5 text-sm text-foreground-muted transition-colors hover:bg-surface hover:text-foreground"
                   >
                     {sub.emoji && <span className="mr-2">{sub.emoji}</span>}
                     {sub.name}
@@ -161,11 +161,11 @@ export function CatalogMenu({ onClose }: CatalogMenuProps) {
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-text-muted">{t('catalog.no_subcategories')}</p>
+              <p className="text-sm text-foreground-muted">{t('catalog.no_subcategories')}</p>
             )}
 
             {/* View all link */}
-            <div className="mt-4 border-t border-text/10 pt-3">
+            <div className="mt-4 border-t border-foreground/10 pt-3">
               <Link
                 to={`/category/${hoveredCategory.slug}`}
                 onClick={onClose}

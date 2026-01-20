@@ -12,6 +12,7 @@ public sealed class AddSkuToProductCommandHandler : IRequestHandler<AddSkuToProd
 	private readonly IProductRepository _productRepository;
 	private readonly ISkuRepository _skuRepository;
 	private readonly IUserRepository _userRepository;
+	private readonly IAttributeDefinitionRepository _attributeDefinitionRepository;
 	private readonly IUnitOfWork _unitOfWork;
 	private readonly ILogger<AddSkuToProductCommandHandler> _logger;
 
@@ -19,12 +20,14 @@ public sealed class AddSkuToProductCommandHandler : IRequestHandler<AddSkuToProd
 		IProductRepository productRepository,
 		ISkuRepository skuRepository,
 		IUserRepository userRepository,
+		IAttributeDefinitionRepository attributeDefinitionRepository,
 		IUnitOfWork unitOfWork,
 		ILogger<AddSkuToProductCommandHandler> logger)
 	{
 		_productRepository = productRepository;
 		_skuRepository = skuRepository;
 		_userRepository = userRepository;
+		_attributeDefinitionRepository = attributeDefinitionRepository;
 		_unitOfWork = unitOfWork;
 		_logger = logger;
 	}
@@ -56,11 +59,19 @@ public sealed class AddSkuToProductCommandHandler : IRequestHandler<AddSkuToProd
 				return new ServiceResponse<string>(false, "Store is suspended");
 			}
 
-			var sku = SkuEntity.Create(product.Id, request.Price, request.StockQuantity, request.Attributes);
-			_skuRepository.Add(sku);
+		var sku = SkuEntity.Create(product.Id, request.Price, request.StockQuantity, request.Attributes);
+		
+		// Convert JSONB attributes to typed attributes
+		if (request.Attributes != null && request.Attributes.Count > 0)
+		{
+			var attributeDefinitions = await _attributeDefinitionRepository.GetAllAsync();
+			sku.SetTypedAttributes(request.Attributes, attributeDefinitions);
+		}
+		
+		_skuRepository.Add(sku);
 
-			await _unitOfWork.SaveChangesAsync(cancellationToken);
-			return new ServiceResponse<string>(true, "SKU added successfully", sku.SkuCode);
+		await _unitOfWork.SaveChangesAsync(cancellationToken);
+		return new ServiceResponse<string>(true, "SKU added successfully", sku.SkuCode);
 		}
 		catch (Exception ex)
 		{

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { productsApi, type ProductSummaryDto } from '../../api/catalogApi'
+import { ErrorAlert } from '../../components/ui/ErrorAlert'
 
 const ITEMS_PER_PAGE = 8
 
@@ -104,9 +105,9 @@ export default function MyProducts() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-text">{t('myProducts.title')}</h1>
+          <h1 className="text-2xl font-bold text-foreground">{t('myProducts.title')}</h1>
           {products.length > 0 && (
-            <p className="text-sm text-text-muted mt-1">
+            <p className="text-sm text-foreground-muted mt-1">
               {t('myProducts.totalCount', { count: products.length })}
             </p>
           )}
@@ -122,22 +123,21 @@ export default function MyProducts() {
         </button>
       </div>
 
-      {/* Error */}
-      {error && (
-        <div className="bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-300 px-4 py-3 rounded">
-          {error}
-          <button onClick={() => setError(null)} className="float-right font-bold">&times;</button>
-        </div>
-      )}
+       {/* Error */}
+       {error && (
+         <ErrorAlert onClose={() => setError(null)}>
+           {error}
+         </ErrorAlert>
+       )}
 
       {/* Products Grid */}
       {products.length === 0 ? (
         <div className="card p-12 text-center">
-          <svg className="w-16 h-16 mx-auto text-text-muted mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-16 h-16 mx-auto text-foreground-muted mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
           </svg>
-          <h2 className="text-xl font-semibold text-text mb-2">{t('myProducts.empty')}</h2>
-          <p className="text-text-muted mb-6">{t('myProducts.emptyHint')}</p>
+          <h2 className="text-xl font-semibold text-foreground mb-2">{t('myProducts.empty')}</h2>
+          <p className="text-foreground-muted mb-6">{t('myProducts.emptyHint')}</p>
           <button
             onClick={() => navigate('/cabinet/products/create')}
             className="btn btn-brand"
@@ -166,24 +166,24 @@ export default function MyProducts() {
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900">
-                      <svg className="w-16 h-16 text-text-muted opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-16 h-16 text-foreground-muted opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                       </svg>
                     </div>
                   )}
 
-                  {/* Stock Status Badge */}
-                  <div className="absolute top-3 left-3">
-                    {product.inStock ? (
-                      <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-green-500 text-white shadow-sm">
-                        {t('myProducts.inStock')}
-                      </span>
-                    ) : (
-                      <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-red-500 text-white shadow-sm">
-                        {t('myProducts.outOfStock')}
-                      </span>
-                    )}
-                  </div>
+                   {/* Stock Status Badge */}
+                   <div className="absolute top-3 left-3">
+                     {product.inStock ? (
+                       <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-success text-white shadow-sm">
+                         {t('myProducts.inStock')}
+                       </span>
+                     ) : (
+                       <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-error text-white shadow-sm">
+                         {t('myProducts.outOfStock')}
+                       </span>
+                     )}
+                   </div>
 
                   {/* Price Badge */}
                   <div className="absolute bottom-3 right-3">
@@ -196,11 +196,11 @@ export default function MyProducts() {
                 {/* Product Info */}
                 <div className="p-4 flex-1 flex flex-col gap-3">
                   <div>
-                    <h3 className="font-semibold text-text line-clamp-2 leading-tight" title={product.name}>
+                    <h3 className="font-semibold text-foreground line-clamp-2 leading-tight" title={product.name}>
                       {product.name}
                     </h3>
                     {product.categories.length > 0 && (
-                      <p className="text-sm text-text-muted mt-1">
+                      <p className="text-sm text-foreground-muted mt-1">
                         {product.categories[0].name}
                       </p>
                     )}
@@ -218,7 +218,7 @@ export default function MyProducts() {
                         </span>
                       ))}
                       {product.tags.length > 3 && (
-                        <span className="px-2 py-0.5 text-xs text-text-muted">
+                        <span className="px-2 py-0.5 text-xs text-foreground-muted">
                           +{product.tags.length - 3}
                         </span>
                       )}
@@ -227,11 +227,11 @@ export default function MyProducts() {
 
                   {/* Action Buttons */}
                   <div className="mt-auto pt-3 flex flex-col gap-2 border-t border-border">
-                    {/* View Product Button */}
-                    <button
-                      onClick={() => handleViewProduct(product.slug)}
-                      className="w-full flex items-center justify-center gap-2 px-3 py-2.5 text-sm font-medium rounded-lg bg-blue-500/10 hover:bg-blue-500/20 transition-colors text-blue-600 dark:text-blue-400"
-                    >
+                     {/* View Product Button */}
+                     <button
+                       onClick={() => handleViewProduct(product.slug)}
+                       className="w-full flex items-center justify-center gap-2 px-3 py-2.5 text-sm font-medium rounded-lg bg-info/10 hover:bg-info/20 transition-colors text-info"
+                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
@@ -242,11 +242,11 @@ export default function MyProducts() {
                     {/* Active Toggle */}
                     <button
                       onClick={() => handleToggleActive(product.id, product.isActive)}
-                      className={`w-full flex items-center justify-center gap-2 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors ${
-                        product.isActive 
-                          ? 'bg-green-500/10 hover:bg-green-500/20 text-green-600 dark:text-green-400'
-                          : 'bg-gray-500/10 hover:bg-gray-500/20 text-gray-600 dark:text-gray-400'
-                      }`}
+                       className={`w-full flex items-center justify-center gap-2 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors ${
+                         product.isActive 
+                           ? 'bg-success/10 hover:bg-success/20 text-success'
+                           : 'bg-foreground/10 hover:bg-foreground/20 text-foreground'
+                       }`}
                     >
                       {product.isActive ? (
                         <>
@@ -277,22 +277,22 @@ export default function MyProducts() {
                       {t('common.edit')}
                     </button>
 
-                    {/* SKU Management Button */}
-                    <button
-                      onClick={() => navigate(`/cabinet/products/${product.id}/skus`)}
-                      className="w-full flex items-center justify-center gap-2 px-3 py-2.5 text-sm font-medium rounded-lg bg-purple-500/10 hover:bg-purple-500/20 transition-colors text-purple-600 dark:text-purple-400"
-                    >
+                     {/* SKU Management Button */}
+                     <button
+                       onClick={() => navigate(`/cabinet/products/${product.id}/skus`)}
+                       className="w-full flex items-center justify-center gap-2 px-3 py-2.5 text-sm font-medium rounded-lg bg-info/10 hover:bg-info/20 transition-colors text-info"
+                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                       </svg>
                       {t('myProducts.manageVariants')}
                     </button>
 
-                    {/* Delete Button */}
-                    <button
-                      onClick={() => setDeleteId(product.id)}
-                      className="w-full flex items-center justify-center gap-2 px-3 py-2.5 text-sm font-medium rounded-lg bg-red-500/10 hover:bg-red-500/20 transition-colors text-red-600 dark:text-red-400"
-                    >
+                     {/* Delete Button */}
+                     <button
+                       onClick={() => setDeleteId(product.id)}
+                       className="w-full flex items-center justify-center gap-2 px-3 py-2.5 text-sm font-medium rounded-lg bg-error/10 hover:bg-error/20 transition-colors text-error"
+                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                       </svg>
@@ -333,7 +333,7 @@ export default function MyProducts() {
 
                   if (showEllipsisBefore || showEllipsisAfter) {
                     return (
-                      <span key={page} className="px-2 text-text-muted">
+                      <span key={page} className="px-2 text-foreground-muted">
                         …
                       </span>
                     )
@@ -348,7 +348,7 @@ export default function MyProducts() {
                       className={`min-w-[40px] h-10 rounded-lg font-medium transition-colors ${
                         currentPage === page
                           ? 'bg-brand text-white'
-                          : 'hover:bg-background-secondary text-text'
+                          : 'hover:bg-background-secondary text-foreground'
                       }`}
                     >
                       {page}
@@ -373,7 +373,7 @@ export default function MyProducts() {
 
           {/* Page Info */}
           {totalPages > 1 && (
-            <p className="text-center text-sm text-text-muted">
+            <p className="text-center text-sm text-foreground-muted">
               {t('pagination.pageInfo', { current: currentPage, total: totalPages })}
             </p>
           )}
@@ -383,16 +383,16 @@ export default function MyProducts() {
       {/* Delete Confirmation Modal */}
       {deleteId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="card p-6 max-w-md mx-4 shadow-2xl">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="p-3 rounded-full bg-red-100 dark:bg-red-900/30">
-                <svg className="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+           <div className="card p-6 max-w-md mx-4 shadow-2xl">
+             <div className="flex items-center gap-4 mb-4">
+               <div className="p-3 rounded-full bg-error-light dark:bg-error-dark/20">
+                 <svg className="w-6 h-6 text-error dark:text-error" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
               </div>
               <div>
-                <h2 className="text-xl font-bold text-text">{t('myProducts.deleteConfirm.title')}</h2>
-                <p className="text-text-muted text-sm">{t('myProducts.deleteConfirm.message')}</p>
+                <h2 className="text-xl font-bold text-foreground">{t('myProducts.deleteConfirm.title')}</h2>
+                <p className="text-foreground-muted text-sm">{t('myProducts.deleteConfirm.message')}</p>
               </div>
             </div>
             <div className="flex gap-3 justify-end mt-6">
@@ -403,10 +403,10 @@ export default function MyProducts() {
               >
                 {t('common.cancel')}
               </button>
-              <button
-                onClick={() => handleDelete(deleteId)}
-                className="px-4 py-2.5 rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={deleting}
+               <button
+                 onClick={() => handleDelete(deleteId)}
+                 className="px-4 py-2.5 rounded-lg bg-error hover:bg-error-dark text-white font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                 disabled={deleting}
               >
                 {deleting ? (
                   <span className="flex items-center gap-2">

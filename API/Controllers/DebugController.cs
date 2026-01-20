@@ -1,12 +1,16 @@
+using Bogus;
+using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System.Threading.Tasks;
 using Application.Interfaces;
 using Domain.Entities;
 using Infrastructure;
 using Infrastructure.Entities.Identity;
+using Infrastructure.Initializer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Hosting;
 
 namespace API.Controllers;
 
@@ -16,17 +20,28 @@ public class DebugController : ControllerBase
 {
 	private readonly UserManager<ApplicationUser> _userManager;
 	private readonly IUserClaimsPrincipalFactory<ApplicationUser> _claimsFactory;
+	private readonly RoleManager<Infrastructure.Entities.Identity.RoleEntity> _roleManager;
 	private readonly IImageService _imageService;
 	private readonly IFileStorage _fileStorage;
 	private readonly AppDbContext _dbContext;
+	private readonly IHostEnvironment _hostEnvironment;
 
-	public DebugController(UserManager<ApplicationUser> userManager, IUserClaimsPrincipalFactory<ApplicationUser> claimsFactory, IImageService imageService, IFileStorage fileStorage, AppDbContext dbContext)
+	public DebugController(
+		UserManager<ApplicationUser> userManager,
+		IUserClaimsPrincipalFactory<ApplicationUser> claimsFactory,
+		RoleManager<Infrastructure.Entities.Identity.RoleEntity> roleManager,
+		IImageService imageService,
+		IFileStorage fileStorage,
+		AppDbContext dbContext,
+		IHostEnvironment hostEnvironment)
 	{
 		_userManager = userManager;
 		_claimsFactory = claimsFactory;
+		_roleManager = roleManager;
 		_imageService = imageService;
 		_fileStorage = fileStorage;
 		_dbContext = dbContext;
+		_hostEnvironment = hostEnvironment;
 	}
 
 	// GET: /api/debug/user-claims?email=admin@example.com
@@ -106,4 +121,5 @@ public class DebugController : ControllerBase
             return StatusCode(500, new { Error = ex.Message, StackTrace = ex.StackTrace });
         }
     }
+
 }

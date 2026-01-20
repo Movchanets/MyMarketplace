@@ -20,6 +20,28 @@ public interface IProductRepository
 	/// </summary>
 	Task<IEnumerable<Product>> SearchAsync(string query, int limit = 20);
 
+	/// <summary>
+	/// Gets all active products in a category with SKUs loaded.
+	/// Used for analyzing available filter options from actual product data.
+	/// </summary>
+	Task<IEnumerable<Product>> GetActiveByCategoryIdWithSkusAsync(Guid categoryId);
+
+	/// <summary>
+	/// Filters products based on category, tags, price, stock, and JSONB attributes.
+	/// Returns paginated results with sorting.
+	/// </summary>
+	Task<(IEnumerable<Product> Products, int TotalCount)> FilterAsync(
+		Guid? categoryId,
+		List<Guid>? tagIds,
+		decimal? minPrice,
+		decimal? maxPrice,
+		bool? inStock,
+		Dictionary<string, object>? attributeFilters,
+		string sort,
+		int page,
+		int pageSize
+	);
+
 	void Add(Product product);
 	void Update(Product product);
 	void Delete(Product product);

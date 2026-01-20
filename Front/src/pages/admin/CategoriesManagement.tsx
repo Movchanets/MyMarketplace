@@ -171,7 +171,7 @@ export default function CategoriesManagement() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-text">{t('admin.catalog.categories')}</h2>
+        <h2 className="text-2xl font-bold text-foreground">{t('admin.catalog.categories')}</h2>
         <button
           onClick={() => { resetForm(); setShowCreateForm(true) }}
           className="inline-flex items-center px-4 py-2.5 text-sm font-semibold text-white bg-brand hover:bg-brand-dark rounded-lg transition-colors duration-200 shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 focus:ring-offset-surface"
@@ -192,12 +192,12 @@ export default function CategoriesManagement() {
       {/* Create/Edit Form */}
       {showCreateForm && (
         <div className="card p-6">
-          <h3 className="text-lg font-semibold text-text mb-4">
+          <h3 className="text-lg font-semibold text-foreground mb-4">
             {editingId ? t('admin.catalog.edit_category') : t('admin.catalog.add_category')}
           </h3>
           <form onSubmit={editingId ? handleUpdate : handleCreate} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-text mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 {t('admin.catalog.name')} *
               </label>
               <input
@@ -207,7 +207,7 @@ export default function CategoriesManagement() {
                   setFormData({ ...formData, name: e.target.value })
                   if (formErrors.name) setFormErrors({ ...formErrors, name: undefined })
                 }}
-                className={`w-full px-3 py-2 rounded-lg border bg-surface text-text 
+                className={`w-full px-3 py-2 rounded-lg border bg-surface text-foreground 
                   focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent
                   ${formErrors.name ? 'border-red-500' : 'border-gray-600'}`}
                 maxLength={200}
@@ -215,10 +215,10 @@ export default function CategoriesManagement() {
               {formErrors.name && (
                 <p className="mt-1 text-sm text-red-500">{formErrors.name}</p>
               )}
-              <p className="mt-1 text-xs text-text-muted">{formData.name.length}/200</p>
+              <p className="mt-1 text-xs text-foreground-muted">{formData.name.length}/200</p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-text mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 {t('admin.catalog.description')}
               </label>
               <textarea
@@ -227,7 +227,7 @@ export default function CategoriesManagement() {
                   setFormData({ ...formData, description: e.target.value || null })
                   if (formErrors.description) setFormErrors({ ...formErrors, description: undefined })
                 }}
-                className={`w-full px-3 py-2 rounded-lg border bg-surface text-text 
+                className={`w-full px-3 py-2 rounded-lg border bg-surface text-foreground 
                   focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent resize-y
                   ${formErrors.description ? 'border-red-500' : 'border-gray-600'}`}
                 rows={3}
@@ -236,18 +236,18 @@ export default function CategoriesManagement() {
               {formErrors.description && (
                 <p className="mt-1 text-sm text-red-500">{formErrors.description}</p>
               )}
-              <p className="mt-1 text-xs text-text-muted">{(formData.description || '').length}/2000</p>
+              <p className="mt-1 text-xs text-foreground-muted">{(formData.description || '').length}/2000</p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-text mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 {t('admin.catalog.parent_category')}
               </label>
               <select
                 value={formData.parentCategoryId || ''}
                 onChange={(e) => setFormData({ ...formData, parentCategoryId: e.target.value || null })}
-                className="w-full px-3 py-2 rounded-lg border border-gray-600 bg-surface text-text 
+                className="w-full px-3 py-2 rounded-lg border border-gray-600 bg-surface text-foreground 
                   focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent
-                  [&>option]:bg-surface [&>option]:text-text"
+                  [&>option]:bg-surface [&>option]:text-foreground"
               >
                 <option value="">{t('admin.catalog.no_parent')}</option>
                 {categories
@@ -280,22 +280,22 @@ export default function CategoriesManagement() {
         <table className="min-w-full divide-y divide-border">
           <thead className="bg-surface-secondary">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-foreground-muted uppercase tracking-wider">
                 {t('admin.catalog.emoji')}
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-foreground-muted uppercase tracking-wider">
                 {t('admin.catalog.name')}
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-foreground-muted uppercase tracking-wider">
                 {t('admin.catalog.slug')}
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-foreground-muted uppercase tracking-wider">
                 {t('admin.catalog.parent_category')}
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-foreground-muted uppercase tracking-wider">
                 {t('admin.catalog.description')}
               </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-text-muted uppercase tracking-wider">
+              <th className="px-6 py-3 text-right text-xs font-medium text-foreground-muted uppercase tracking-wider">
                 {t('admin.catalog.actions')}
               </th>
             </tr>
@@ -303,7 +303,7 @@ export default function CategoriesManagement() {
           <tbody className="bg-surface divide-y divide-border">
             {paginatedCategories.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-6 py-4 text-center text-text-muted">
+                <td colSpan={6} className="px-6 py-4 text-center text-foreground-muted">
                   {t('admin.catalog.no_categories')}
                 </td>
               </tr>
@@ -314,25 +314,25 @@ export default function CategoriesManagement() {
                     {category.emoji ? (
                       <span className="text-2xl">{category.emoji}</span>
                     ) : (
-                      <span className="text-text-muted text-sm">-</span>
+                      <span className="text-foreground-muted text-sm">-</span>
                     )}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-text font-medium">
+                  <td className="px-6 py-4 whitespace-nowrap text-foreground font-medium">
                     {category.name}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-text-muted text-sm">
+                  <td className="px-6 py-4 whitespace-nowrap text-foreground-muted text-sm">
                     {category.slug}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-text-muted text-sm">
+                  <td className="px-6 py-4 whitespace-nowrap text-foreground-muted text-sm">
                     {category.parentCategoryId ? (
                       <span className="px-2 py-1 rounded-full bg-brand/10 text-brand text-xs font-medium">
                         {getParentName(category.parentCategoryId)}
                       </span>
                     ) : (
-                      <span className="text-text-muted">-</span>
+                      <span className="text-foreground-muted">-</span>
                     )}
                   </td>
-                  <td className="px-6 py-4 text-text-muted text-sm max-w-xs truncate">
+                  <td className="px-6 py-4 text-foreground-muted text-sm max-w-xs truncate">
                     {category.description || '-'}
                   </td>
                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
@@ -366,7 +366,7 @@ export default function CategoriesManagement() {
         {/* Pagination */}
         {totalPages > 1 && (
           <div className="flex items-center justify-between px-6 py-4 border-t border-border bg-surface-secondary/30">
-            <div className="text-sm text-text-muted">
+            <div className="text-sm text-foreground-muted">
               {t('admin.catalog.showing')} {(currentPage - 1) * ITEMS_PER_PAGE + 1}-
               {Math.min(currentPage * ITEMS_PER_PAGE, categories.length)} {t('admin.catalog.of')} {categories.length}
             </div>
@@ -374,7 +374,7 @@ export default function CategoriesManagement() {
               <button
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
-                className="px-3 py-1 rounded border border-border text-text-muted hover:bg-surface-secondary 
+                className="px-3 py-1 rounded border border-border text-foreground-muted hover:bg-surface-secondary 
                   disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {t('admin.catalog.prev')}
@@ -386,7 +386,7 @@ export default function CategoriesManagement() {
                   className={`px-3 py-1 rounded border transition-colors ${
                     currentPage === page
                       ? 'bg-brand text-white border-brand'
-                      : 'border-border text-text-muted hover:bg-surface-secondary'
+                      : 'border-border text-foreground-muted hover:bg-surface-secondary'
                   }`}
                 >
                   {page}
@@ -395,7 +395,7 @@ export default function CategoriesManagement() {
               <button
                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
-                className="px-3 py-1 rounded border border-border text-text-muted hover:bg-surface-secondary 
+                className="px-3 py-1 rounded border border-border text-foreground-muted hover:bg-surface-secondary 
                   disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {t('admin.catalog.next')}

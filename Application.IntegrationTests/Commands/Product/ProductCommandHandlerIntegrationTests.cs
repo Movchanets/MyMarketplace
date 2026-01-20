@@ -63,6 +63,7 @@ public class ProductCommandHandlerIntegrationTests : TestBase
 		var userRepo = new UserRepository(DbContext);
 		var categoryRepo = new CategoryRepository(DbContext);
 		var tagRepo = new TagRepository(DbContext);
+		var attributeDefRepo = new AttributeDefinitionRepository(DbContext);
 		var uow = new UnitOfWork(DbContext);
 		var handler = new CreateProductCommandHandler(
 			productRepo,
@@ -70,6 +71,7 @@ public class ProductCommandHandlerIntegrationTests : TestBase
 			userRepo,
 			categoryRepo,
 			tagRepo,
+			attributeDefRepo,
 			uow,
 			NullLogger<CreateProductCommandHandler>.Instance);
 
@@ -122,6 +124,7 @@ public class ProductCommandHandlerIntegrationTests : TestBase
 		var userRepo = new UserRepository(DbContext);
 		var categoryRepo = new CategoryRepository(DbContext);
 		var tagRepo = new TagRepository(DbContext);
+		var attributeDefRepo = new AttributeDefinitionRepository(DbContext);
 		var uow = new UnitOfWork(DbContext);
 		var handler = new CreateProductCommandHandler(
 			productRepo,
@@ -129,6 +132,7 @@ public class ProductCommandHandlerIntegrationTests : TestBase
 			userRepo,
 			categoryRepo,
 			tagRepo,
+			attributeDefRepo,
 			uow,
 			NullLogger<CreateProductCommandHandler>.Instance);
 
@@ -158,6 +162,7 @@ public class ProductCommandHandlerIntegrationTests : TestBase
 		var userRepo = new UserRepository(DbContext);
 		var categoryRepo = new CategoryRepository(DbContext);
 		var tagRepo = new TagRepository(DbContext);
+		var attributeDefRepo = new AttributeDefinitionRepository(DbContext);
 		var uow = new UnitOfWork(DbContext);
 
 		var createHandler = new CreateProductCommandHandler(
@@ -166,6 +171,7 @@ public class ProductCommandHandlerIntegrationTests : TestBase
 			userRepo,
 			categoryRepo,
 			tagRepo,
+			attributeDefRepo,
 			uow,
 			NullLogger<CreateProductCommandHandler>.Instance);
 
