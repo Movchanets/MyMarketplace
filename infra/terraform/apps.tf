@@ -80,6 +80,14 @@ resource "azurerm_container_app" "api" {
         value = var.smtp_password
       }
       env {
+        name  = "GoogleAuth__ClientId"
+        value = var.google_client_id
+      }
+      env {
+        name  = "GoogleAuth__ClientSecret"
+        value = var.google_client_secret
+      }
+      env {
         name  = "Turnstile__Secret"
         value = var.turnstile_secret
       }

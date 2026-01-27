@@ -76,4 +76,47 @@ public class SmtpEmailService : IEmailService
             throw;
         }
     }
+
+    public async Task SendTemporaryPasswordEmailAsync(string toEmail, string temporaryPassword)
+    {
+        var host = _configuration["SmtpSettings:Host"];
+        var port = int.TryParse(_configuration["SmtpSettings:Port"], out var p) ? p : 25;
+        var user = _configuration["SmtpSettings:Username"];
+        var pass = _configuration["SmtpSettings:Password"];
+        var from = _configuration["SmtpSettings:From"] ?? user ?? "noreply@example.com";
+        var enableSsl = !bool.TryParse(_configuration["SmtpSettings:EnableSsl"], out var ssl) || ssl;
+
+        var body = $"Ваш тимчасовий пароль для входу: {temporaryPassword}\n\nБудь ласка, змініть його після першого входу.";
+        var fromName = _configuration["SmtpSettings:FromName"] ?? from;
+        var fromAddress = new MailAddress(from, fromName);
+
+        using var message = new MailMessage();
+        message.From = fromAddress;
+        message.To.Add(toEmail);
+        message.Subject = "Тимчасовий пароль";
+        message.Body = body;
+        message.IsBodyHtml = false;
+
+        using var client = new SmtpClient(host, port)
+        {
+            EnableSsl = enableSsl,
+        };
+
+        if (!string.IsNullOrEmpty(user) && !string.IsNullOrEmpty(pass))
+        {
+            client.Credentials = new NetworkCredential(user, pass);
+        }
+
+        try
+        {
+            _logger.LogInformation("Sending temporary password email to {Email}", toEmail);
+            await client.SendMailAsync(message);
+            _logger.LogInformation("Temporary password email sent to {Email}", toEmail);
+        }
+        catch (System.Exception ex)
+        {
+            _logger.LogError(ex, "Failed to send temporary password email to {Email}", toEmail);
+            throw;
+        }
+    }
 }

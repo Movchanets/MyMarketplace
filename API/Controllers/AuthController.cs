@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Application.Commands.User.AuthenticateUser;
 using Application.Commands.User.ForgotPassword;
+using Application.Commands.User.GoogleLogin;
 using Application.Commands.User.RefreshTokenCommand;
 using Application.Commands.User.RegisterUser;
 using Application.Commands.User.ResetPassword;
@@ -75,6 +76,30 @@ public class AuthController : ControllerBase
 		catch (UnauthorizedAccessException)
 		{
 			return Unauthorized();
+		}
+	}
+
+	[AllowAnonymous]
+	[HttpPost("google-login")]
+	public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginRequest request)
+	{
+		_logger.LogInformation("Google login attempt");
+
+		try
+		{
+			var tokens = await _mediator.Send(new GoogleLoginCommand(request));
+			_logger.LogInformation("Google login successful");
+			return Ok(tokens);
+		}
+		catch (UnauthorizedAccessException ex)
+		{
+			_logger.LogWarning(ex, "Failed Google login attempt");
+			return Unauthorized(new { Message = "Invalid Google token" });
+		}
+		catch (InvalidOperationException ex)
+		{
+			_logger.LogError(ex, "Google login error");
+			return StatusCode(500, new { Message = "Google authentication failed" });
 		}
 	}
 
@@ -173,5 +198,5 @@ public class AuthController : ControllerBase
 			return BadRequest(new { Message = "Failed to reset password.", Errors = new[] { ex.Message } });
 		}
 	}
-	
+
 }

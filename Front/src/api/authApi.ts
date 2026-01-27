@@ -41,6 +41,11 @@ export interface ResetPasswordRequest {
   newPassword: string
 }
 
+export interface GoogleLoginRequest {
+  idToken: string
+  turnstileToken?: string
+}
+
 export const authApi = {
   // Перевірка чи існує email в базі
   checkEmail: async (email: string, turnstileToken?: string): Promise<CheckEmailResponse> => {
@@ -104,10 +109,21 @@ export const authApi = {
     return response.data
   },
 
-  // Google OAuth (заглушка)
-  googleLogin: async (token: string): Promise<AuthResponse> => {
-    const response = await axiosClient.post<AuthResponse>('/auth/google', { token })
-    return response.data
+  // Google OAuth login
+  googleLogin: async (data: GoogleLoginRequest): Promise<TokenResponse> => {
+    const response = await axiosClient.post<TokenResponse>('/auth/google-login', data)
+    const tokens: TokenResponse = response.data
+    const access = tokens.accessToken || ''
+    const refresh = tokens.refreshToken || ''
+
+    if (access) {
+      localStorage.setItem('accessToken', access)
+    }
+    if (refresh) {
+      localStorage.setItem('refreshToken', refresh)
+    }
+
+    return { accessToken: access, refreshToken: refresh }
   },
 
   // Refresh access/refresh tokens using stored tokens

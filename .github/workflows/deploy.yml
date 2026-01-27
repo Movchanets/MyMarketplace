@@ -101,6 +101,8 @@ jobs:
                 "Storage__Azure__CdnUrl=${{ secrets.AZURE_CDN_URL }}" \
                 "SmtpSettings__Username=${{ secrets.SMTP_USERNAME }}" \
                 "SmtpSettings__Password=${{ secrets.SMTP_PASSWORD }}" \
+                "GoogleAuth__ClientId=${{ secrets.GOOGLE_CLIENT_ID }}" \
+                "GoogleAuth__ClientSecret=${{ secrets.GOOGLE_CLIENT_SECRET }}" \
                 "Turnstile__Secret=${{ secrets.TURNSTILE_SECRET }}" \
                 "AllowedCorsOrigins=${{ secrets.ALLOWED_CORS_ORIGINS }}" \
                 "Redis__Enabled=${{ secrets.REDIS_ENABLED }}" \
@@ -135,6 +137,8 @@ jobs:
               "Storage__Azure__CdnUrl=${{ secrets.AZURE_CDN_URL }}" \
               "SmtpSettings__Username=${{ secrets.SMTP_USERNAME }}" \
               "SmtpSettings__Password=${{ secrets.SMTP_PASSWORD }}" \
+              "GoogleAuth__ClientId=${{ secrets.GOOGLE_CLIENT_ID }}" \
+              "GoogleAuth__ClientSecret=${{ secrets.GOOGLE_CLIENT_SECRET }}" \
               "Turnstile__Secret=${{ secrets.TURNSTILE_SECRET }}" \
               "AllowedCorsOrigins=${{ secrets.ALLOWED_CORS_ORIGINS }}" \
               "Redis__Enabled=${{ secrets.REDIS_ENABLED }}" \
@@ -190,6 +194,7 @@ jobs:
         env:
           VITE_API_URL: ${{secrets.VITE_API_URL }}
           VITE_TURNSTILE_SITEKEY: ${{ secrets.VITE_TURNSTILE_SITEKEY }}
+          VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
         run: |
           echo "Node version:" $(node -v)
           echo "VITE_API_URL=${VITE_API_URL}"
