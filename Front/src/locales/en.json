@@ -152,6 +152,7 @@
     "forgot_password": "Forgot password?",
     "sign_in_with_google": "Sign in with Google",
     "or_via_email": "or via email",
+    "or": "or",
     "invalid_password": "Invalid password",
     "register_error": "Registration failed",
     "google_error": "Google sign-in failed",

@@ -101,6 +101,20 @@ variable "smtp_password" {
   sensitive   = true
 }
 
+variable "google_client_id" {
+  type        = string
+  description = "Google OAuth Client ID"
+  sensitive   = true
+  default     = ""
+}
+
+variable "google_client_secret" {
+  type        = string
+  description = "Google OAuth Client Secret"
+  sensitive   = true
+  default     = ""
+}
+
 variable "turnstile_secret" {
   type        = string
   description = "Cloudflare Turnstile secret key"

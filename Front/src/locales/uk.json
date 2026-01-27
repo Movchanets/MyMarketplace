@@ -151,8 +151,8 @@
     "loading": "Завантаження...",
     "forgot_password": "Забули пароль?",
     "sign_in_with_google": "Увійти через Google",
-    "or_via_email": "або через email"
-    ,
+    "or_via_email": "або через email",
+    "or": "або",
     "invalid_password": "Невірний пароль",
     "register_error": "Помилка реєстрації",
     "google_error": "Помилка входу через Google",

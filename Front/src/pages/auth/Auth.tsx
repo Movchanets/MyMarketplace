@@ -5,6 +5,7 @@ import { EmailStep } from '../../components/auth/EmailStep'
 import { LoginStep } from '../../components/auth/LoginStep'
 import { RegisterStep } from '../../components/auth/RegisterStep'
 import { ForgotPasswordStep } from '../../components/auth/ForgotPasswordStep'
+import { GoogleLoginButton } from '../../components/auth/GoogleLoginButton'
 import { authApi } from '../../api/authApi'
 import TurnstileWidget from '../../components/ui/TurnstileWidget'
 import { useAuthStore } from '../../store/authStore'
@@ -66,13 +67,26 @@ export default function Auth() {
     }
   }
 
-  const handleGoogleLogin = async () => {
+  const handleGoogleLogin = async (idToken: string) => {
     setError(null)
+    setIsLoading(true)
     try {
-      alert(t('auth.google_oauth_notice'))
-    } catch {
+      const result = await authApi.googleLogin({ 
+        idToken, 
+        turnstileToken: turnstileToken ?? undefined 
+      })
+      setAuth(result.accessToken, result.refreshToken || '')
+      navigate('/')
+    } catch (err) {
+      console.error('Google login error:', err)
       setError(t('auth.google_error'))
+    } finally {
+      setIsLoading(false)
     }
+  }
+
+  const handleGoogleError = (error: string) => {
+    setError(error)
   }
 
 
@@ -104,12 +118,31 @@ export default function Auth() {
         )}
 
         {step === 'email' && (
-          <EmailStep
-            onNext={handleEmailNext}
-            onForgotPassword={() => setStep('forgot')}
-            onGoogleLogin={handleGoogleLogin}
-            isLoading={isLoading}
-          />
+          <>
+            <EmailStep
+              onNext={handleEmailNext}
+              onForgotPassword={() => setStep('forgot')}
+              isLoading={isLoading}
+            />
+            
+            <div className="mt-4">
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-foreground/10"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="bg-surface px-2 text-foreground-muted">{t('auth.or')}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4">
+              <GoogleLoginButton 
+                onSuccess={handleGoogleLogin}
+                onError={handleGoogleError}
+              />
+            </div>
+          </>
         )}
 
         {step === 'login' && (
