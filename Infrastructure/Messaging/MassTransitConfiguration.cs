@@ -20,8 +20,10 @@ public static class MassTransitConfiguration
 		this IServiceCollection services,
 		IConfiguration configuration)
 	{
-		var connectionString = configuration.GetConnectionString("DefaultConnection")
-			?? throw new InvalidOperationException("DefaultConnection connection string is required");
+		// Use NeonConnection in production (same as EF Core), DefaultConnection in development
+		var connectionString = configuration.GetConnectionString("NeonConnection")
+			?? configuration.GetConnectionString("DefaultConnection")
+			?? throw new InvalidOperationException("NeonConnection or DefaultConnection connection string is required");
 
 		// Configure SQL Transport options according to documentation
 		services.AddOptions<SqlTransportOptions>().Configure(options =>

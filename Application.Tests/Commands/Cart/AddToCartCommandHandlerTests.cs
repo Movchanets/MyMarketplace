@@ -36,16 +36,16 @@ public class AddToCartCommandHandlerTests
 				var cartItems = new List<CartItemDto>
 				{
 					new CartItemDto(
-						Guid.NewGuid(), 
-						pid, 
-						"Test Product", 
-						null, 
-						sid, 
-						"SKU001", 
-						null, 
-						qty, 
-						10.00m, 
-						qty * 10.00m, 
+						Guid.NewGuid(),
+						pid,
+						"Test Product",
+						null,
+						sid,
+						"SKU001",
+						null,
+						qty,
+						10.00m,
+						qty * 10.00m,
 						DateTime.UtcNow)
 				};
 				var dto = new CartDto(Guid.NewGuid(), Guid.NewGuid(), cartItems, qty, qty * 10.00m);
@@ -250,16 +250,16 @@ public class AddToCartCommandHandlerTests
 				var cartItems = new List<CartItemDto>
 				{
 					new CartItemDto(
-						Guid.NewGuid(), 
-						product.Id, 
-						"Test Product", 
-						null, 
-						sku.Id, 
-						"SKU001", 
-						null, 
+						Guid.NewGuid(),
+						product.Id,
+						"Test Product",
+						null,
+						sku.Id,
+						"SKU001",
+						null,
 						5, // 2 existing + 3 new = 5
-						10.00m, 
-						50.00m, 
+						10.00m,
+						50.00m,
 						DateTime.UtcNow)
 				};
 				var dto = new CartDto(Guid.NewGuid(), Guid.NewGuid(), cartItems, 5, 50.00m);
