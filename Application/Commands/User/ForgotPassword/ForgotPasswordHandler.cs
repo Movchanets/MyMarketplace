@@ -8,7 +8,7 @@ namespace Application.Commands.User.ForgotPassword;
 public sealed class ForgotPasswordHandler(
 	IUserService identity,
 	IMemoryCache memoryCache,
-	IEmailQueue emailQueue)
+	IEmailService emailService)
 	: IRequestHandler<ForgotPasswordCommand>
 {
 	public async Task Handle(ForgotPasswordCommand request, CancellationToken cancellationToken)
@@ -38,8 +38,7 @@ public sealed class ForgotPasswordHandler(
 
 		var callbackUrl = $"{request.Origin}/reset-password?email={System.Net.WebUtility.UrlEncode(request.Email)}&token={System.Net.WebUtility.UrlEncode(token)}";
 
-		await emailQueue.EnqueueEmailAsync(request.Email, callbackUrl);
-
-
+		// Send password reset email via IEmailService (which now uses MassTransit SQL Transport internally)
+		await emailService.SendPasswordResetEmailAsync(request.Email, callbackUrl);
 	}
 }
