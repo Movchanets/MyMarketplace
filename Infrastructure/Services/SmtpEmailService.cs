@@ -1,32 +1,35 @@
+using System.IO;
 using System.Net;
 using System.Net.Mail;
+using Application.Contracts.Email;
 using Application.Interfaces;
+using Infrastructure.Messaging.Contracts;
+using MassTransit;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using static Application.Interfaces.IEmailService;
 
 namespace Infrastructure.Services;
 
+/// <summary>
+/// Email service that publishes messages to MassTransit SQL Transport.
+/// Messages are processed by SendEmailConsumer which sends emails via SMTP.
+/// </summary>
 public class SmtpEmailService : IEmailService
 {
+    private readonly IBus _bus;
     private readonly IConfiguration _configuration;
     private readonly ILogger<SmtpEmailService> _logger;
 
-    public SmtpEmailService(IConfiguration configuration, ILogger<SmtpEmailService> logger)
+    public SmtpEmailService(IBus bus, IConfiguration configuration, ILogger<SmtpEmailService> logger)
     {
+        _bus = bus;
         _configuration = configuration;
         _logger = logger;
     }
 
     public async Task SendPasswordResetEmailAsync(string toEmail, string callbackUrl)
     {
-        // Read settings via indexer to avoid requiring the configuration binder package
-        var host = _configuration["SmtpSettings:Host"];
-        var port = int.TryParse(_configuration["SmtpSettings:Port"], out var p) ? p : 25;
-        var user = _configuration["SmtpSettings:Username"];
-        var pass = _configuration["SmtpSettings:Password"];
-        var from = _configuration["SmtpSettings:From"] ?? user ?? "noreply@example.com";
-        var enableSsl = !bool.TryParse(_configuration["SmtpSettings:EnableSsl"], out var ssl) || ssl;
-
         // Try to load HTML template if configured, otherwise use plaintext
         var templatePath = _configuration["SmtpSettings:TemplatePath"];
         string body;
@@ -43,80 +46,76 @@ public class SmtpEmailService : IEmailService
             body = $"Please use the following link to reset your password:\n\n{callbackUrl}\n\nIf you didn't request this, ignore this email.";
         }
 
-        var fromName = _configuration["SmtpSettings:FromName"] ?? from;
-        var fromAddress = new MailAddress(from, fromName);
+        var from = _configuration["SmtpSettings:From"] ?? _configuration["SmtpSettings:Username"] ?? "noreply@example.com";
 
-        using var message = new MailMessage();
-        message.From = fromAddress;
-        message.To.Add(toEmail);
-        message.Subject = "Password reset";
-        message.Body = body;
-        message.IsBodyHtml = isHtml;
-
-        using var client = new SmtpClient(host, port)
+        // Publish to MassTransit SQL Transport for reliable delivery
+        var command = new SendEmailCommand
         {
-            EnableSsl = enableSsl,
+            To = toEmail,
+            Subject = "Password reset",
+            Body = body,
+            IsHtml = isHtml,
+            From = from,
+            CorrelationId = Guid.NewGuid().ToString()
         };
 
-        if (!string.IsNullOrEmpty(user) && !string.IsNullOrEmpty(pass))
-        {
-            client.Credentials = new NetworkCredential(user, pass);
-        }
-
-        try
-        {
-            _logger.LogInformation("Sending password reset email to {Email} via SMTP host {Host}", toEmail, host);
-            await client.SendMailAsync(message);
-            _logger.LogInformation("Password reset email sent to {Email}", toEmail);
-        }
-        catch (System.Exception ex)
-        {
-            // Log without exposing sensitive token content
-            _logger.LogError(ex, "Failed to send password reset email to {Email}", toEmail);
-            throw;
-        }
+        _logger.LogInformation("Publishing password reset email to {Email} via MassTransit SQL Transport", toEmail);
+        await _bus.Publish(command);
+        _logger.LogInformation("Password reset email published to {Email}", toEmail);
     }
 
     public async Task SendTemporaryPasswordEmailAsync(string toEmail, string temporaryPassword)
     {
-        var host = _configuration["SmtpSettings:Host"];
-        var port = int.TryParse(_configuration["SmtpSettings:Port"], out var p) ? p : 25;
-        var user = _configuration["SmtpSettings:Username"];
-        var pass = _configuration["SmtpSettings:Password"];
-        var from = _configuration["SmtpSettings:From"] ?? user ?? "noreply@example.com";
-        var enableSsl = !bool.TryParse(_configuration["SmtpSettings:EnableSsl"], out var ssl) || ssl;
-
+        var from = _configuration["SmtpSettings:From"] ?? _configuration["SmtpSettings:Username"] ?? "noreply@example.com";
         var body = $"Ваш тимчасовий пароль для входу: {temporaryPassword}\n\nБудь ласка, змініть його після першого входу.";
-        var fromName = _configuration["SmtpSettings:FromName"] ?? from;
-        var fromAddress = new MailAddress(from, fromName);
 
-        using var message = new MailMessage();
-        message.From = fromAddress;
-        message.To.Add(toEmail);
-        message.Subject = "Тимчасовий пароль";
-        message.Body = body;
-        message.IsBodyHtml = false;
-
-        using var client = new SmtpClient(host, port)
+        // Publish to MassTransit SQL Transport for reliable delivery
+        var command = new SendEmailCommand
         {
-            EnableSsl = enableSsl,
+            To = toEmail,
+            Subject = "Тимчасовий пароль",
+            Body = body,
+            IsHtml = false,
+            From = from,
+            CorrelationId = Guid.NewGuid().ToString()
         };
 
-        if (!string.IsNullOrEmpty(user) && !string.IsNullOrEmpty(pass))
+        _logger.LogInformation("Publishing temporary password email to {Email} via MassTransit SQL Transport", toEmail);
+        await _bus.Publish(command);
+        _logger.LogInformation("Temporary password email published to {Email}", toEmail);
+    }
+
+    public async Task SendEmailAsync(string to, string subject, string body, bool isHtml = true, string? from = null, List<string>? cc = null,
+        List<string>? bcc = null, List<EmailAttachmentDto>? attachments = null)
+    {
+        var defaultFrom = _configuration["SmtpSettings:From"] ?? _configuration["SmtpSettings:Username"] ?? "noreply@example.com";
+        
+        // Convert attachments to MassTransit format
+        List<IEmailAttachment>? mtAttachments = null;
+        if (attachments != null)
         {
-            client.Credentials = new NetworkCredential(user, pass);
+            mtAttachments = attachments.Select(a => (IEmailAttachment)new EmailAttachment(
+                a.FileName, 
+                a.Content, 
+                a.ContentType)).ToList();
         }
 
-        try
+        // Publish to MassTransit SQL Transport for reliable delivery
+        var command = new SendEmailCommand
         {
-            _logger.LogInformation("Sending temporary password email to {Email}", toEmail);
-            await client.SendMailAsync(message);
-            _logger.LogInformation("Temporary password email sent to {Email}", toEmail);
-        }
-        catch (System.Exception ex)
-        {
-            _logger.LogError(ex, "Failed to send temporary password email to {Email}", toEmail);
-            throw;
-        }
+            To = to,
+            Subject = subject,
+            Body = body,
+            IsHtml = isHtml,
+            From = from ?? defaultFrom,
+            Cc = cc,
+            Bcc = bcc,
+            Attachments = mtAttachments,
+            CorrelationId = Guid.NewGuid().ToString()
+        };
+
+        _logger.LogInformation("Publishing email to {Email} with subject: {Subject} via MassTransit SQL Transport", to, subject);
+        await _bus.Publish(command);
+        _logger.LogInformation("Email published to {Email}", to);
     }
 }
