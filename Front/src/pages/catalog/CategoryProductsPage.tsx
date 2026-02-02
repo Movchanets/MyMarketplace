@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import {
   categoriesApi,
   productsApi,
@@ -16,6 +16,7 @@ import { DynamicAttributeFilters } from '../../components/catalog/DynamicAttribu
 export const CategoryProductsPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const [, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   const [category, setCategory] = useState<CategoryDto | null>(null);
   const [availableFilters, setAvailableFilters] = useState<CategoryAvailableFiltersDto | null>(null);
@@ -260,7 +261,35 @@ export const CategoryProductsPage: React.FC = () => {
           {products.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {products.map((product) => (
-                <ProductCard key={product.id} product={product} />
+                <ProductCard 
+                  key={product.id} 
+                  product={product} 
+                  onClick={(productSlug) => navigate(`/product/${productSlug}`)}
+                  onAddToCart={async (productId) => {
+                    // Fetch product details to get the default SKU
+                    try {
+                      const result = await productsApi.getById(productId)
+                      if (result.isSuccess && result.payload) {
+                        const productDetails = result.payload
+                        // Use the first SKU as default
+                        const defaultSku = productDetails.skus[0]
+                        if (defaultSku) {
+                          const { useCartStore } = await import('../../store/cartStore')
+                          const { addToCart } = useCartStore.getState()
+                          const added = await addToCart(productId, defaultSku.id, 1)
+                          if (added) {
+                            console.log('Added to cart successfully')
+                          } else {
+                            const { lastError } = useCartStore.getState()
+                            console.error('Failed to add to cart:', lastError || 'Unknown error')
+                          }
+                        }
+                      }
+                    } catch (error) {
+                      console.error('Failed to add to cart:', error)
+                    }
+                  }}
+                />
               ))}
             </div>
            ) : (

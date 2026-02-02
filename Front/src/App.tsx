@@ -1,5 +1,6 @@
 import { Routes, Route } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Layout } from './components/layout/Layout'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { ThemeProvider } from './contexts/ThemeContext'
@@ -27,7 +28,19 @@ import MyProducts from './pages/store/MyProducts'
 import StorePage from './pages/store/StorePage'
 import ProductPage from './pages/product/ProductPage'
 import { CategoryProductsPage } from './pages/catalog/CategoryProductsPage'
+import Cart from './pages/cart/Cart'
+import Checkout from './pages/checkout/Checkout'
+import Orders from './pages/orders/Orders'
 import NotFound from './pages/NotFound'
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      retry: 1,
+    },
+  },
+})
 // no top-level Fragment needed here
 
 export default function App() {
@@ -42,9 +55,12 @@ export default function App() {
           <Route path="store/:slug" element={<StorePage />} />
           <Route path="category/:slug" element={<CategoryProductsPage />} />
           <Route path="product/:productSlug" element={<ProductPage />} />
-          <Route path="product/:productSlug/:skuCode" element={<ProductPage />} />
-          <Route path="auth" element={<Auth />} />
-          <Route path="reset-password" element={<ResetPassword />} />
+            <Route path="product/:productSlug/:skuCode" element={<ProductPage />} />
+            <Route path="cart" element={<Cart />} />
+            <Route path="checkout" element={<Checkout />} />
+            <Route path="orders" element={<Orders />} />
+            <Route path="auth" element={<Auth />} />
+            <Route path="reset-password" element={<ResetPassword />} />
 
           {/* Protected routes - require authentication */}
           <Route
@@ -94,5 +110,14 @@ export default function App() {
         </Route>
       </Routes>
     </ThemeProvider>
+  )
+}
+
+// Wrap the app with QueryClientProvider
+export function AppWithProviders() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <App />
+    </QueryClientProvider>
   )
 }
