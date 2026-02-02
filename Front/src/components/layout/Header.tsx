@@ -56,6 +56,18 @@ export function Header() {
             {/* Theme Toggle */}
             <ThemeToggle />
 
+            {/* Cart - always visible */}
+            <Link
+              to="/cart"
+              className="relative group inline-flex flex-col items-center no-underline px-1 py-0.5 rounded-md hover:bg-surface"
+              aria-label={t('header.cart')}
+            >
+              <span className="h-9 w-9 inline-flex items-center justify-center text-lg text-foreground-muted group-hover:text-foreground">&#128722;</span>
+              <span className="mt-1 text-xs text-foreground-muted hidden sm:block transition-colors duration-150 group-hover:text-foreground group-hover:font-medium">
+                {t('header.cart')}
+              </span>
+            </Link>
+
             {isAuthenticated ? (
               <div className="flex items-center gap-3">
                 <span className="hidden text-sm text-foreground xl:block">{t('greeting', { name: user?.firstName || '' })}</span>
@@ -105,17 +117,6 @@ export function Header() {
                     </Link>
                   </>
                 )}
-
-                <Link
-                  to="/cart"
-                  className="relative group inline-flex flex-col items-center no-underline px-1 py-0.5 rounded-md hover:bg-surface"
-                  aria-label={t('header.cart')}
-                >
-                  <span className="h-9 w-9 inline-flex items-center justify-center text-lg text-foreground-muted group-hover:text-foreground">&#128722;</span>
-                  <span className="mt-1 text-xs text-foreground-muted hidden sm:block transition-colors duration-150 group-hover:text-foreground group-hover:font-medium">
-                    {t('header.cart')}
-                  </span>
-                </Link>
 
                 <SidenavMenu isOpen={isSidenavOpen} onClose={() => setIsSidenavOpen(false)} user={user as User | null} />
               </div>

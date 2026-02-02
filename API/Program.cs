@@ -7,6 +7,7 @@ using Infrastructure.Entities.Identity;
 using Domain.Interfaces.Repositories;
 using Infrastructure;
 using Infrastructure.Initializer;
+using Infrastructure.Messaging;
 using Infrastructure.Repositories;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -96,6 +97,8 @@ try
     builder.Services.AddScoped<IAttributeDefinitionRepository, AttributeDefinitionRepository>();
     builder.Services.AddScoped<ISearchQueryRepository, SearchQueryRepository>();
     builder.Services.AddScoped<IProductFavoriteRepository, ProductFavoriteRepository>();
+    builder.Services.AddScoped<ICartRepository, CartRepository>();
+    builder.Services.AddScoped<IOrderRepository, OrderRepository>();
     builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
     builder.Services.AddIdentity<ApplicationUser, RoleEntity>(options =>
@@ -158,12 +161,22 @@ try
     builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
     builder.Services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
     // Email sender (SMTP) - reads SmtpSettings from configuration
-    // Registered as singleton so hosted background service can consume it safely.
+    // Now using MassTransit SQL Transport instead of custom background queue
     builder.Services.AddSingleton<Application.Interfaces.IEmailService, SmtpEmailService>();
-    // Background email queue and hosted service
-    builder.Services.AddSingleton<BackgroundEmailQueue>();
-    builder.Services.AddSingleton<IEmailQueue>(sp => sp.GetRequiredService<BackgroundEmailQueue>());
-    builder.Services.AddHostedService<EmailSenderBackgroundService>();
+    
+    // MassTransit with PostgreSQL SQL Transport for reliable message delivery
+    // Replaces custom BackgroundEmailQueue + EmailSenderBackgroundService
+    // NOTE: Disabled in Testing environment to avoid circular dependencies in integration tests
+    if (!builder.Environment.IsEnvironment("Testing"))
+    {
+        builder.Services.AddMassTransitWithPostgresSqlTransport(builder.Configuration);
+        builder.Services.AddMassTransitBusHostedService();
+    }
+    
+    // NOTE: Legacy background email service - disabled in favor of MassTransit SQL Transport
+    // builder.Services.AddSingleton<BackgroundEmailQueue>();
+    // builder.Services.AddSingleton<IEmailQueue>(sp => sp.GetRequiredService<BackgroundEmailQueue>());
+    // builder.Services.AddHostedService<EmailSenderBackgroundService>();
     // Cloudflare Turnstile service
     builder.Services.AddHttpClient<Application.Interfaces.ITurnstileService, Infrastructure.Services.TurnstileService>();
     // Action filter which validates incoming Turnstile tokens when present

@@ -138,6 +138,19 @@ axiosClient.interceptors.request.use(async (config) => {
     console.warn("Token refresh failed", err);
   }
 
+  // Log outgoing requests (avoid logging Authorization header)
+  try {
+    const { method, url, params, data } = config as any
+    console.log('HTTP Request', {
+      method,
+      url: `${BASE_URL}${url}`,
+      params,
+      data
+    })
+  } catch (e) {
+    console.warn('Failed to log request', e)
+  }
+
   const token = localStorage.getItem("accessToken");
   if (token) {
     config.headers = AxiosHeaders.from(config.headers);
@@ -148,9 +161,35 @@ axiosClient.interceptors.request.use(async (config) => {
 
 // Response interceptor to handle 401 errors
 axiosClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    try {
+      const { method, url } = response.config || {}
+      console.log('HTTP Response', {
+        method,
+        url: url,
+        status: response.status,
+        data: response.data
+      })
+    } catch (e) {
+      console.warn('Failed to log response', e)
+    }
+    return response
+  },
   async (error) => {
     const originalRequest = error.config;
+
+    // Global error logging
+    try {
+      console.error('HTTP Error', {
+        method: originalRequest?.method,
+        url: originalRequest?.url || error.config?.url,
+        status: error.response?.status,
+        message: error.message,
+        responseData: error.response?.data
+      })
+    } catch (e) {
+      console.warn('Failed to log HTTP error', e)
+    }
 
     // If error is 401 and we haven't retried yet
     if (error.response?.status === 401 && !originalRequest._retry) {

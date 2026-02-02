@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using Domain.Enums;
 using Domain.Helpers;
 
 namespace Domain.Entities;
@@ -18,7 +19,23 @@ public class SkuEntity : BaseEntity<Guid>
 
 	public decimal Price { get; private set; }
 	public int StockQuantity { get; private set; }
-	
+
+	/// <summary>
+	/// Quantity reserved for pending checkouts (not yet deducted from StockQuantity)
+	/// </summary>
+	public int ReservedQuantity { get; private set; }
+
+	/// <summary>
+	/// Available quantity for purchase (StockQuantity - ReservedQuantity)
+	/// </summary>
+	public int AvailableQuantity => StockQuantity - ReservedQuantity;
+
+	/// <summary>
+	/// Active stock reservations for this SKU
+	/// </summary>
+	private readonly List<StockReservation> _reservations = new();
+	public virtual IReadOnlyCollection<StockReservation> Reservations => _reservations.AsReadOnly();
+
 	/// <summary>
 	/// JSONB storage for rare/non-filterable attributes (backward compatibility).
 	/// Use AttributeValues collection for filterable attributes.
@@ -112,6 +129,178 @@ public class SkuEntity : BaseEntity<Guid>
 		MarkAsUpdated();
 	}
 
+	/// <summary>
+	/// Deducts stock quantity (for order processing)
+	/// </summary>
+	public void DeductStock(int quantity)
+	{
+		if (quantity <= 0)
+		{
+			throw new ArgumentOutOfRangeException(nameof(quantity), "Quantity must be greater than zero");
+		}
+
+		if (StockQuantity < quantity)
+		{
+			throw new InvalidOperationException($"Insufficient stock. Available: {StockQuantity}, Requested: {quantity}");
+		}
+
+		StockQuantity -= quantity;
+		MarkAsUpdated();
+	}
+
+	/// <summary>
+	/// Restores stock quantity (for order cancellation)
+	/// </summary>
+	public void RestoreStock(int quantity)
+	{
+		if (quantity <= 0)
+		{
+			throw new ArgumentOutOfRangeException(nameof(quantity), "Quantity must be greater than zero");
+		}
+
+		StockQuantity += quantity;
+		MarkAsUpdated();
+	}
+
+	/// <summary>
+	/// Reserves stock quantity for checkout (prevents overselling)
+	/// </summary>
+	public StockReservation ReserveStock(
+		int quantity,
+		Guid? cartId = null,
+		string? sessionId = null,
+		string? ipAddress = null,
+		string? userAgent = null,
+		int ttlMinutes = StockReservation.DefaultTtlMinutes)
+	{
+		if (quantity <= 0)
+		{
+			throw new ArgumentOutOfRangeException(nameof(quantity), "Quantity must be greater than zero");
+		}
+
+		if (AvailableQuantity < quantity)
+		{
+			throw new InvalidOperationException(
+				$"Insufficient available stock. Available: {AvailableQuantity}, Requested: {quantity}. " +
+				$"Stock: {StockQuantity}, Reserved: {ReservedQuantity}");
+		}
+
+		var reservation = new StockReservation(
+			Id,
+			quantity,
+			cartId,
+			sessionId,
+			ipAddress,
+			userAgent,
+			ttlMinutes);
+
+		ReservedQuantity += quantity;
+		_reservations.Add(reservation);
+		MarkAsUpdated();
+
+		return reservation;
+	}
+
+	/// <summary>
+	/// Releases a reservation and returns stock to available pool
+	/// </summary>
+	public void ReleaseReservation(StockReservation reservation)
+	{
+		if (reservation == null)
+		{
+			throw new ArgumentNullException(nameof(reservation));
+		}
+
+		if (reservation.SkuId != Id)
+		{
+			throw new InvalidOperationException("Reservation does not belong to this SKU");
+		}
+
+		if (!reservation.Status.IsHoldingStock())
+		{
+			throw new InvalidOperationException($"Cannot release reservation with status {reservation.Status}");
+		}
+
+		ReservedQuantity -= reservation.Quantity;
+		if (ReservedQuantity < 0)
+		{
+			ReservedQuantity = 0; // Safety check
+		}
+
+		reservation.Cancel("Released by system");
+		MarkAsUpdated();
+	}
+
+	/// <summary>
+	/// Converts a reservation to actual stock deduction (when order is confirmed)
+	/// </summary>
+	public void ConvertReservationToDeduction(StockReservation reservation, Guid orderId)
+	{
+		if (reservation == null)
+		{
+			throw new ArgumentNullException(nameof(reservation));
+		}
+
+		if (reservation.SkuId != Id)
+		{
+			throw new InvalidOperationException("Reservation does not belong to this SKU");
+		}
+
+		if (orderId == Guid.Empty)
+		{
+			throw new ArgumentException("Order ID cannot be empty", nameof(orderId));
+		}
+
+		if (!reservation.Status.CanConvert())
+		{
+			throw new InvalidOperationException($"Cannot convert reservation with status {reservation.Status}");
+		}
+
+		// Deduct from actual stock
+		if (StockQuantity < reservation.Quantity)
+		{
+			throw new InvalidOperationException(
+				$"Insufficient stock to convert reservation. Stock: {StockQuantity}, Reserved: {reservation.Quantity}");
+		}
+
+		StockQuantity -= reservation.Quantity;
+		ReservedQuantity -= reservation.Quantity;
+		if (ReservedQuantity < 0)
+		{
+			ReservedQuantity = 0;
+		}
+
+		reservation.ConvertToOrder(orderId);
+		MarkAsUpdated();
+	}
+
+	/// <summary>
+	/// Gets total quantity reserved by active reservations
+	/// </summary>
+	public int GetTotalReservedQuantity()
+	{
+		return _reservations
+			.Where(r => r.Status.IsHoldingStock())
+			.Sum(r => r.Quantity);
+	}
+
+	/// <summary>
+	/// Gets active reservations for a specific cart
+	/// </summary>
+	public IEnumerable<StockReservation> GetActiveReservationsForCart(Guid cartId)
+	{
+		return _reservations
+			.Where(r => r.Status.IsHoldingStock() && r.CartId == cartId);
+	}
+
+	/// <summary>
+	/// Validates if the requested quantity can be reserved
+	/// </summary>
+	public bool CanReserve(int quantity)
+	{
+		return quantity > 0 && AvailableQuantity >= quantity;
+	}
+
 	public void SetAttribute<T>(string key, T value)
 	{
 		if (string.IsNullOrWhiteSpace(key))
@@ -190,7 +379,7 @@ public class SkuEntity : BaseEntity<Guid>
 
 		// Combine values into slug
 		var baseSlug = string.Join("-", slugParts);
-		
+
 		// Truncate if too long (keep room for hash suffix: -XXXXXX = 7 chars)
 		const int maxBaseLength = 25; // Leave 7 chars for hash
 		if (baseSlug.Length > maxBaseLength)
@@ -369,7 +558,7 @@ public class SkuEntity : BaseEntity<Guid>
 	public void SetTypedAttribute(Guid attributeDefinitionId, object? value)
 	{
 		var existing = _attributeValues.FirstOrDefault(av => av.AttributeDefinitionId == attributeDefinitionId);
-		
+
 		if (existing != null)
 		{
 			existing.Update(value);
@@ -379,7 +568,7 @@ public class SkuEntity : BaseEntity<Guid>
 			var newAttr = SkuAttributeValue.Create(Id, attributeDefinitionId, value);
 			_attributeValues.Add(newAttr);
 		}
-		
+
 		MarkAsUpdated();
 	}
 
@@ -418,7 +607,7 @@ public class SkuEntity : BaseEntity<Guid>
 	/// </summary>
 	public object? GetTypedAttributeByCode(string code)
 	{
-		var attr = _attributeValues.FirstOrDefault(av => 
+		var attr = _attributeValues.FirstOrDefault(av =>
 			av.AttributeDefinition.Code.Equals(code, StringComparison.OrdinalIgnoreCase));
 		return attr?.GetValue();
 	}

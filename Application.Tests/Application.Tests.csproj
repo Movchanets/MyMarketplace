@@ -20,6 +20,12 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    
+    <!-- MassTransit Testing (v8 - free, v9 requires license) -->
+    <PackageReference Include="MassTransit.TestFramework" Version="8.5.7" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.2" />
+    <PackageReference Include="Testcontainers.PostgreSql" Version="4.10.0" />
+    <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" Version="9.0.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -29,6 +35,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Application\Application.csproj" />
     <ProjectReference Include="..\API\API.csproj" />
+    <ProjectReference Include="..\Infrastructure\Infrastructure.csproj" />
     <PackageReference Include="AutoMapper" Version="16.0.0" />
   </ItemGroup>
 

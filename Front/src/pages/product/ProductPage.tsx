@@ -182,10 +182,24 @@ export default function ProductPage() {
     })
   }
 
-  const handleAddToCart = () => {
-    if (!selectedSku) return
-    // TODO: Implement cart functionality
-    console.log('Add to cart:', selectedSku.id, 'quantity:', quantity)
+  const handleAddToCart = async () => {
+    if (!product || !selectedSku) return
+    
+    const { useCartStore } = await import('../../store/cartStore')
+    const { addToCart } = useCartStore.getState()
+    
+    try {
+      const added = await addToCart(product.id, selectedSku.id, quantity)
+      if (added) {
+        // Show success feedback (could be a toast notification)
+        console.log('Added to cart successfully')
+      } else {
+        const { lastError } = useCartStore.getState()
+        console.error('Failed to add to cart:', lastError || 'Unknown error')
+      }
+    } catch (error) {
+      console.error('Failed to add to cart (unexpected):', error)
+    }
   }
 
   const handleBuyNow = () => {

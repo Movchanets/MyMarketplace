@@ -61,9 +61,31 @@ export default function StorePage() {
     navigate(`/product/${productSlug}`)
   }
 
-  const handleAddToCart = (productId: string) => {
-    // TODO: Implement cart functionality
-    console.log('Add to cart:', productId)
+  const handleAddToCart = async (productId: string) => {
+    // Fetch product details to get the default SKU
+    try {
+      const { productsApi } = await import('../../api/catalogApi')
+      const { useCartStore } = await import('../../store/cartStore')
+      
+      const result = await productsApi.getById(productId)
+      if (result.isSuccess && result.payload) {
+        const product = result.payload
+        // Use the first SKU as default
+        const defaultSku = product.skus[0]
+        if (defaultSku) {
+          const { addToCart } = useCartStore.getState()
+          const added = await addToCart(productId, defaultSku.id, 1)
+          if (added) {
+            console.log('Added to cart successfully')
+          } else {
+            const { lastError } = useCartStore.getState()
+            console.error('Failed to add to cart:', lastError || 'Unknown error')
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Failed to add to cart:', error)
+    }
   }
 
 

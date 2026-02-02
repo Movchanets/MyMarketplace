@@ -32,14 +32,75 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
     public DbSet<SkuGallery> SkuGalleries { get; set; }
     public DbSet<Store> Stores { get; set; }
     public DbSet<ProductCategory> ProductCategories { get; set; }
- 	public DbSet<AttributeDefinition> AttributeDefinitions { get; set; }
- 	public DbSet<SearchQuery> SearchQueries { get; set; }
- 	public DbSet<ProductFavorite> ProductFavorites { get; set; }
+    public DbSet<AttributeDefinition> AttributeDefinitions { get; set; }
+    public DbSet<SearchQuery> SearchQueries { get; set; }
+    public DbSet<ProductFavorite> ProductFavorites { get; set; }
+
+    // Cart and Order entities
+    public DbSet<Cart> Carts { get; set; }
+    public DbSet<CartItem> CartItems { get; set; }
+    public DbSet<Order> Orders { get; set; }
+    public DbSet<OrderItem> OrderItems { get; set; }
+
+    // Stock reservation entities
+    public DbSet<StockReservation> StockReservations { get; set; }
+
+    // MassTransit EF Core Outbox/Inbox entities (for transactional message delivery)
+    public DbSet<MassTransit.EntityFrameworkCoreIntegration.InboxState> InboxStates { get; set; }
+    public DbSet<MassTransit.EntityFrameworkCoreIntegration.OutboxState> OutboxStates { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
+
+        // Ensure pgcrypto extension is available for gen_random_bytes function
+        // This is required for RowVersion default values on Cart and Order entities
+        builder.HasPostgresExtension("pgcrypto");
+
+        // Apply configurations from assembly first
         builder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
+
+        // Configure OutboxMessage entity (after assembly configurations to avoid conflicts)
+        builder.Entity<OutboxMessage>(entity =>
+        {
+            entity.ToTable("OutboxMessages");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.EventType).IsRequired().HasMaxLength(255);
+            entity.Property(e => e.Payload).IsRequired();
+            entity.Property(e => e.CorrelationId).HasMaxLength(255);
+            entity.Property(e => e.AggregateId).HasMaxLength(255);
+            entity.Property(e => e.AggregateType).HasMaxLength(100);
+            entity.Property(e => e.Status).IsRequired();
+            entity.Property(e => e.RetryCount).IsRequired().HasDefaultValue(0);
+            entity.Property(e => e.CreatedAt).IsRequired();
+            entity.Property(e => e.ScheduledFor);
+            entity.Property(e => e.ProcessedAt);
+            entity.Property(e => e.ErrorMessage);
+            entity.HasIndex(e => e.Status);
+            entity.HasIndex(e => e.ScheduledFor);
+            entity.HasIndex(e => e.CorrelationId);
+        });
+
+        // Configure MassTransit EF Core Inbox/Outbox entities
+        builder.Entity<MassTransit.EntityFrameworkCoreIntegration.InboxState>(entity =>
+        {
+            entity.ToTable("InboxState");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.MessageId).IsRequired();
+            entity.Property(e => e.ConsumerId).IsRequired();
+            entity.Property(e => e.LockId).IsRequired();
+            entity.Property(e => e.RowVersion).IsRowVersion();
+            entity.HasIndex(e => new { e.MessageId, e.ConsumerId }).IsUnique();
+            entity.HasIndex(e => e.Received);
+        });
+
+        builder.Entity<MassTransit.EntityFrameworkCoreIntegration.OutboxState>(entity =>
+        {
+            entity.ToTable("OutboxState");
+            entity.HasKey(e => e.OutboxId);
+            entity.Property(e => e.RowVersion).IsRowVersion();
+            entity.HasIndex(e => e.Created);
+        });
         // Налаштування Domain User
         builder.Entity<User>(user =>
          {
@@ -110,5 +171,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
 
             role.Property(r => r.Description).HasMaxLength(500);
         });
+
+        // Cart, CartItem, Order, OrderItem, StockReservation configurations
+        // are applied via IEntityTypeConfiguration classes in Configuration folder
     }
 }

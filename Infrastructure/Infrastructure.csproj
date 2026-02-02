@@ -9,6 +9,7 @@
     <ItemGroup>
         <PackageReference Include="AWSSDK.S3" Version="4.0.17.2" />
         <PackageReference Include="Azure.Storage.Blobs" Version="12.27.0" />
+        <PackageReference Include="MassTransit.SqlTransport.PostgreSQL" Version="8.5.7" />
 
         <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.2" />
         <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.2" />
@@ -24,6 +25,10 @@
         <PackageReference Include="SixLabors.ImageSharp" Version="3.1.12" />
         <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.15.0" />
         <PackageReference Include="Bogus" Version="35.6.5" />
+        
+        <!-- MassTransit with PostgreSQL Transport (v8 - free, v9 requires license) -->
+        <PackageReference Include="MassTransit" Version="8.5.7" />
+        <PackageReference Include="MassTransit.EntityFrameworkCore" Version="8.5.7" />
     </ItemGroup>
 
     <ItemGroup>
