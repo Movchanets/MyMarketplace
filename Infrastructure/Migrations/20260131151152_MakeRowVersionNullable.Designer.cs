@@ -4,6 +4,7 @@ using System.Text.Json;
 using Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260131151152_MakeRowVersionNullable")]
+    partial class MakeRowVersionNullable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -101,6 +104,11 @@ namespace Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("bytea");
+
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -108,8 +116,6 @@ namespace Infrastructure.Migrations
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("CreatedAt");
 
                     b.HasIndex("UserId")
                         .IsUnique();
@@ -151,9 +157,6 @@ namespace Infrastructure.Migrations
                     b.HasIndex("ProductId");
 
                     b.HasIndex("SkuId");
-
-                    b.HasIndex("CartId", "SkuId")
-                        .IsUnique();
 
                     b.ToTable("CartItems", (string)null);
                 });
@@ -242,8 +245,7 @@ namespace Infrastructure.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<string>("CancellationReason")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
+                        .HasColumnType("text");
 
                     b.Property<DateTime?>("CancelledAt")
                         .HasColumnType("timestamp with time zone");
@@ -252,52 +254,48 @@ namespace Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("CustomerNotes")
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
+                        .HasColumnType("text");
 
                     b.Property<DateTime?>("DeliveredAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("DeliveryMethod")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("text");
 
                     b.Property<decimal>("DiscountAmount")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("numeric(18,2)");
+                        .HasColumnType("numeric");
 
                     b.Property<string>("IdempotencyKey")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("text");
 
                     b.Property<string>("OrderNumber")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
+                        .HasColumnType("text");
 
                     b.Property<string>("PaymentMethod")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("text");
 
                     b.Property<int>("PaymentStatus")
                         .HasColumnType("integer");
 
                     b.Property<string>("PromoCode")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
+                        .HasColumnType("text");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("bytea");
 
                     b.Property<DateTime?>("ShippedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("ShippingCarrier")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("text");
 
                     b.Property<decimal>("ShippingCost")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("numeric(18,2)");
+                        .HasColumnType("numeric");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
@@ -307,8 +305,7 @@ namespace Infrastructure.Migrations
                         .HasColumnType("numeric(18,2)");
 
                     b.Property<string>("TrackingNumber")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("text");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -316,32 +313,11 @@ namespace Infrastructure.Migrations
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
-                    b.Property<uint>("xmin")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("xid")
-                        .HasColumnName("xmin");
-
                     b.HasKey("Id");
-
-                    b.HasIndex("CreatedAt");
-
-                    b.HasIndex("IdempotencyKey")
-                        .IsUnique()
-                        .HasFilter("\"IdempotencyKey\" IS NOT NULL");
-
-                    b.HasIndex("OrderNumber")
-                        .IsUnique();
-
-                    b.HasIndex("PaymentStatus");
 
                     b.HasIndex("Status");
 
                     b.HasIndex("UserId");
-
-                    b.HasIndex("UserId", "CreatedAt");
-
-                    b.HasIndex("UserId", "Status");
 
                     b.ToTable("Orders", (string)null);
                 });
@@ -358,6 +334,9 @@ namespace Infrastructure.Migrations
                     b.Property<Guid>("OrderId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("OrderId1")
+                        .HasColumnType("uuid");
+
                     b.Property<decimal>("PriceAtPurchase")
                         .HasPrecision(18, 2)
                         .HasColumnType("numeric(18,2)");
@@ -366,8 +345,7 @@ namespace Infrastructure.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<string>("ProductImageUrlSnapshot")
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
+                        .HasColumnType("text");
 
                     b.Property<string>("ProductNameSnapshot")
                         .IsRequired()
@@ -382,8 +360,7 @@ namespace Infrastructure.Migrations
 
                     b.Property<string>("SkuCodeSnapshot")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("text");
 
                     b.Property<Guid>("SkuId")
                         .HasColumnType("uuid");
@@ -394,6 +371,8 @@ namespace Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("OrderId");
+
+                    b.HasIndex("OrderId1");
 
                     b.HasIndex("ProductId");
 
@@ -852,8 +831,6 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("Status");
 
-                    b.HasIndex("Status", "ExpiresAt");
-
                     b.ToTable("StockReservations", (string)null);
                 });
 
@@ -1302,13 +1279,13 @@ namespace Infrastructure.Migrations
                     b.HasOne("Domain.Entities.Product", "Product")
                         .WithMany()
                         .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Domain.Entities.SkuEntity", "Sku")
                         .WithMany()
                         .HasForeignKey("SkuId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Cart");
@@ -1344,60 +1321,50 @@ namespace Infrastructure.Migrations
                             b1.Property<string>("AddressLine1")
                                 .IsRequired()
                                 .HasMaxLength(200)
-                                .HasColumnType("character varying(200)")
-                                .HasColumnName("ShippingAddressLine1");
+                                .HasColumnType("character varying(200)");
 
                             b1.Property<string>("AddressLine2")
                                 .HasMaxLength(200)
-                                .HasColumnType("character varying(200)")
-                                .HasColumnName("ShippingAddressLine2");
+                                .HasColumnType("character varying(200)");
 
                             b1.Property<string>("City")
                                 .IsRequired()
                                 .HasMaxLength(100)
-                                .HasColumnType("character varying(100)")
-                                .HasColumnName("ShippingCity");
+                                .HasColumnType("character varying(100)");
 
                             b1.Property<string>("Country")
                                 .IsRequired()
                                 .HasMaxLength(100)
-                                .HasColumnType("character varying(100)")
-                                .HasColumnName("ShippingCountry");
+                                .HasColumnType("character varying(100)");
 
                             b1.Property<string>("Email")
                                 .IsRequired()
                                 .HasMaxLength(100)
-                                .HasColumnType("character varying(100)")
-                                .HasColumnName("ShippingEmail");
+                                .HasColumnType("character varying(100)");
 
                             b1.Property<string>("FirstName")
                                 .IsRequired()
                                 .HasMaxLength(100)
-                                .HasColumnType("character varying(100)")
-                                .HasColumnName("ShippingFirstName");
+                                .HasColumnType("character varying(100)");
 
                             b1.Property<string>("LastName")
                                 .IsRequired()
                                 .HasMaxLength(100)
-                                .HasColumnType("character varying(100)")
-                                .HasColumnName("ShippingLastName");
+                                .HasColumnType("character varying(100)");
 
                             b1.Property<string>("PhoneNumber")
                                 .IsRequired()
                                 .HasMaxLength(20)
-                                .HasColumnType("character varying(20)")
-                                .HasColumnName("ShippingPhoneNumber");
+                                .HasColumnType("character varying(20)");
 
                             b1.Property<string>("PostalCode")
                                 .IsRequired()
                                 .HasMaxLength(20)
-                                .HasColumnType("character varying(20)")
-                                .HasColumnName("ShippingPostalCode");
+                                .HasColumnType("character varying(20)");
 
                             b1.Property<string>("State")
                                 .HasMaxLength(100)
-                                .HasColumnType("character varying(100)")
-                                .HasColumnName("ShippingState");
+                                .HasColumnType("character varying(100)");
 
                             b1.HasKey("OrderId");
 
@@ -1415,22 +1382,26 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Entities.OrderItem", b =>
                 {
-                    b.HasOne("Domain.Entities.Order", "Order")
+                    b.HasOne("Domain.Entities.Order", null)
                         .WithMany("Items")
                         .HasForeignKey("OrderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Domain.Entities.Order", "Order")
+                        .WithMany()
+                        .HasForeignKey("OrderId1");
+
                     b.HasOne("Domain.Entities.Product", "Product")
                         .WithMany()
                         .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.SetNull)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Domain.Entities.SkuEntity", "Sku")
                         .WithMany()
                         .HasForeignKey("SkuId")
-                        .OnDelete(DeleteBehavior.SetNull)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Order");
