@@ -8,8 +8,10 @@ using Domain.Interfaces.Repositories;
 using Infrastructure;
 using Infrastructure.Initializer;
 using Infrastructure.Messaging;
+using Application.Contracts.Email;
 using Infrastructure.Repositories;
 using Infrastructure.Services;
+using Infrastructure.BackgroundJobs;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -171,6 +173,9 @@ try
     {
         builder.Services.AddMassTransitWithPostgresSqlTransport(builder.Configuration);
         builder.Services.AddMassTransitBusHostedService();
+
+        // Register MassTransit-based email notification service
+        builder.Services.AddScoped<IEmailNotificationService, MassTransitEmailService>();
     }
     
     // NOTE: Legacy background email service - disabled in favor of MassTransit SQL Transport
@@ -199,6 +204,14 @@ try
     });
     // Image service
     builder.Services.AddScoped<IImageService, ImageSharpService>();
+
+    // Stock reservation cleanup service (cleanup job not scheduled in Testing)
+    builder.Services.AddScoped<IStockReservationCleanupService, StockReservationCleanupService>();
+    if (!builder.Environment.IsEnvironment("Testing"))
+    {
+        builder.Services.AddHostedService<StockReservationCleanupHostedService>();
+    }
+
     // Передаємо builder.Environment у метод розширення
     builder.Services.AddFileStorage(builder.Configuration, builder.Environment);
     if (builder.Environment.IsDevelopment())

@@ -1,0 +1,10 @@
+Type,SymbolKind,FilePath,DefinitionLine,ExternalUsagesCount,ExternalUsageFiles,RegisteredInDI,DIRegistrationLocation,Notes
+MassTransitEmailService,Class,Infrastructure/Messaging/MassTransitEmailService.cs,11,0,,Yes,API/Program.cs,MassTransit-based email service now registered in DI (IEmailNotificationService -> MassTransitEmailService).
+IEmailNotificationService,Interface,Application/Contracts/Email/IEmailNotificationService.cs,7,0,,Yes,API/Program.cs,Interface implemented by MassTransitEmailService and now registered in DI.
+BackgroundEmailQueue,Class,Infrastructure/Services/BackgroundEmailQueue.cs,6,1,Infrastructure/Services/EmailSenderBackgroundService.cs,No,Program.cs (commented),Legacy background queue; registration is commented out in Program.cs.
+EmailSenderBackgroundService,Class,Infrastructure/Services/EmailSenderBackgroundService.cs,7,0,,No,Program.cs (commented),Legacy background hosted service; not registered in DI.
+IEmailQueue,Interface,Application/Interfaces/IEmailQueue.cs,2,1,Infrastructure/Services/BackgroundEmailQueue.cs,No,,Only implemented by BackgroundEmailQueue (legacy queue model).
+IStockReservationCleanupService,Interface,Application/Interfaces/IStockReservationCleanupService.cs,5,1,Infrastructure/BackgroundJobs/StockReservationCleanupJob.cs,Yes,API/Program.cs,Interface implemented by StockReservationCleanupService and registered in DI.
+StockReservationCleanupService,Class,Infrastructure/Services/StockReservationCleanupService.cs,12,0,,Yes,API/Program.cs,Implementation now registered in DI as IStockReservationCleanupService.
+StockReservationCleanupHostedService,Class,Infrastructure/BackgroundJobs/StockReservationCleanupJob.cs,68,0,,Yes,API/Program.cs,Hosted service registered in DI and scheduled (disabled in Testing environment).
+StockReservationCleanupJob,Class,Infrastructure/BackgroundJobs/StockReservationCleanupJob.cs,11,0,,No,,Job class present but not referenced by any scheduler or DI.
