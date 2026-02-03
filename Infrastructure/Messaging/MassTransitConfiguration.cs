@@ -20,10 +20,15 @@ public static class MassTransitConfiguration
 		this IServiceCollection services,
 		IConfiguration configuration)
 	{
-		// Use NeonConnection in production (same as EF Core), DefaultConnection in development
-		var connectionString = configuration.GetConnectionString("NeonConnection")
-			?? configuration.GetConnectionString("DefaultConnection")
-			?? throw new InvalidOperationException("NeonConnection or DefaultConnection connection string is required");
+		// If running in Development prefer DefaultConnection, otherwise prefer NeonConnection
+		var env = configuration["ASPNETCORE_ENVIRONMENT"] ?? "Production";
+		var connectionString = env == "Development"
+			? configuration.GetConnectionString("DefaultConnection")
+				?? configuration.GetConnectionString("NeonConnection")
+				?? throw new InvalidOperationException("DefaultConnection or NeonConnection connection string is required")
+			: configuration.GetConnectionString("NeonConnection")
+				?? configuration.GetConnectionString("DefaultConnection")
+				?? throw new InvalidOperationException("NeonConnection or DefaultConnection connection string is required");
 
 		// Configure SQL Transport options according to documentation
 		services.AddOptions<SqlTransportOptions>().Configure(options =>
