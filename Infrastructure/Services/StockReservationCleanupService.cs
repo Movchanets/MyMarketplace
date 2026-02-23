@@ -7,7 +7,8 @@ using Microsoft.Extensions.Logging;
 namespace Infrastructure.Services;
 
 /// <summary>
-/// Service for cleaning up expired stock reservations
+/// Service for cleaning up expired stock reservations.
+/// All domain operations are called on tracked entities within transactions.
 /// </summary>
 public class StockReservationCleanupService : IStockReservationCleanupService
 {
@@ -33,8 +34,9 @@ public class StockReservationCleanupService : IStockReservationCleanupService
 	{
 		_logger.LogInformation("Starting cleanup of expired stock reservations with batch size {BatchSize}", batchSize);
 
-		var expiredReservations = await _reservationRepository.GetExpiredReservationsAsync(cancellationToken);
-		var reservationsToProcess = expiredReservations.Take(batchSize).ToList();
+		// Get tracked entities directly for update
+		var expiredReservations = await _reservationRepository.GetExpiredReservationsTrackedAsync(batchSize, cancellationToken);
+		var reservationsToProcess = expiredReservations.ToList();
 
 		if (!reservationsToProcess.Any())
 		{
@@ -44,19 +46,41 @@ public class StockReservationCleanupService : IStockReservationCleanupService
 
 		int releasedCount = 0;
 
-		foreach (var reservation in reservationsToProcess)
+		await _unitOfWork.ExecuteInTransactionAsync(async ct =>
 		{
-			try
+			foreach (var reservation in reservationsToProcess)
 			{
-				await ReleaseReservationInternalAsync(reservation, "Expired", cancellationToken);
-				releasedCount++;
+				try
+				{
+					var sku = await _skuRepository.GetByIdAsync(reservation.SkuId);
+					if (sku == null)
+					{
+						_logger.LogWarning("SKU {SkuId} not found for reservation {ReservationId}",
+							reservation.SkuId, reservation.Id);
+						// Mark as expired even if SKU is missing
+						reservation.MarkAsExpired();
+						continue;
+					}
+
+					// Use domain method on SKU which handles both entities
+					sku.ReleaseReservation(reservation);
+					// Note: No need to call Update() - entity is tracked and EF Core detects changes automatically
+
+					_logger.LogDebug(
+						"Released expired reservation {ReservationId} for SKU {SkuCode}. Quantity: {Quantity}",
+						reservation.Id, sku.SkuCode, reservation.Quantity);
+
+					releasedCount++;
+				}
+				catch (Exception ex)
+				{
+					_logger.LogError(ex, "Error releasing expired reservation {ReservationId} for SKU {SkuId}",
+						reservation.Id, reservation.SkuId);
+				}
 			}
-			catch (Exception ex)
-			{
-				_logger.LogError(ex, "Error releasing expired reservation {ReservationId} for SKU {SkuId}",
-					reservation.Id, reservation.SkuId);
-			}
-		}
+
+			return true;
+		}, cancellationToken);
 
 		_logger.LogInformation("Released {ReleasedCount} expired reservations out of {TotalCount}",
 			releasedCount, reservationsToProcess.Count);
@@ -69,7 +93,8 @@ public class StockReservationCleanupService : IStockReservationCleanupService
 	{
 		_logger.LogInformation("Releasing reservation {ReservationId}", reservationId);
 
-		var reservation = await _reservationRepository.GetByIdAsync(reservationId, cancellationToken);
+		// Use tracked entity for updates
+		var reservation = await _reservationRepository.GetByIdTrackedAsync(reservationId, cancellationToken);
 		if (reservation == null)
 		{
 			_logger.LogWarning("Reservation {ReservationId} not found", reservationId);
@@ -83,8 +108,28 @@ public class StockReservationCleanupService : IStockReservationCleanupService
 			return false;
 		}
 
-		await ReleaseReservationInternalAsync(reservation, "Manual release", cancellationToken);
-		return true;
+		return await _unitOfWork.ExecuteInTransactionAsync(async ct =>
+		{
+			var sku = await _skuRepository.GetByIdAsync(reservation.SkuId);
+			if (sku == null)
+			{
+				_logger.LogWarning("SKU {SkuId} not found for reservation {ReservationId}",
+					reservation.SkuId, reservationId);
+				reservation.MarkAsExpired();
+				await _unitOfWork.SaveChangesAsync(ct);
+				return false;
+			}
+
+			// Domain method handles both reservation status and SKU reserved quantity
+			sku.ReleaseReservation(reservation);
+			// Note: No need to call Update() - entity is tracked and EF Core detects changes automatically
+
+			_logger.LogInformation(
+				"Released reservation {ReservationId} for SKU {SkuCode}. Quantity: {Quantity}",
+				reservation.Id, sku.SkuCode, reservation.Quantity);
+
+			return true;
+		}, cancellationToken);
 	}
 
 	/// <inheritdoc />
@@ -92,23 +137,45 @@ public class StockReservationCleanupService : IStockReservationCleanupService
 	{
 		_logger.LogInformation("Releasing reservations for cart {CartId}", cartId);
 
-		var reservations = await _reservationRepository.GetByCartIdAsync(cartId, cancellationToken);
-		var activeReservations = reservations.Where(r => r.Status.IsHoldingStock()).ToList();
+		// Get tracked active reservations for this cart
+		var activeReservations = (await _reservationRepository.GetActiveByCartIdTrackedAsync(cartId, cancellationToken)).ToList();
+
+		if (!activeReservations.Any())
+		{
+			_logger.LogInformation("No active reservations found for cart {CartId}", cartId);
+			return 0;
+		}
 
 		int releasedCount = 0;
-		foreach (var reservation in activeReservations)
+
+		await _unitOfWork.ExecuteInTransactionAsync(async ct =>
 		{
-			try
+			foreach (var reservation in activeReservations)
 			{
-				await ReleaseReservationInternalAsync(reservation, reason ?? "Cart cleared", cancellationToken);
-				releasedCount++;
+				try
+				{
+					var sku = await _skuRepository.GetByIdAsync(reservation.SkuId);
+					if (sku == null)
+					{
+						_logger.LogWarning("SKU {SkuId} not found for reservation {ReservationId}",
+							reservation.SkuId, reservation.Id);
+						reservation.Cancel(reason ?? "SKU not found");
+						continue;
+					}
+
+					sku.ReleaseReservation(reservation);
+					// Note: No need to call Update() - entity is tracked and EF Core detects changes automatically
+					releasedCount++;
+				}
+				catch (Exception ex)
+				{
+					_logger.LogError(ex, "Error releasing reservation {ReservationId} for cart {CartId}",
+						reservation.Id, cartId);
+				}
 			}
-			catch (Exception ex)
-			{
-				_logger.LogError(ex, "Error releasing reservation {ReservationId} for cart {CartId}",
-					reservation.Id, cartId);
-			}
-		}
+
+			return true;
+		}, cancellationToken);
 
 		_logger.LogInformation("Released {ReleasedCount} reservations for cart {CartId}", releasedCount, cartId);
 		return releasedCount;
@@ -120,7 +187,8 @@ public class StockReservationCleanupService : IStockReservationCleanupService
 		_logger.LogInformation("Extending reservation {ReservationId} by {AdditionalMinutes} minutes",
 			reservationId, additionalMinutes);
 
-		var reservation = await _reservationRepository.GetByIdAsync(reservationId, cancellationToken);
+		// Use tracked entity for updates
+		var reservation = await _reservationRepository.GetByIdTrackedAsync(reservationId, cancellationToken);
 		if (reservation == null)
 		{
 			_logger.LogWarning("Reservation {ReservationId} not found", reservationId);
@@ -134,8 +202,8 @@ public class StockReservationCleanupService : IStockReservationCleanupService
 			return false;
 		}
 
+		// Call domain method on tracked entity
 		reservation.ExtendExpiry(additionalMinutes);
-		_reservationRepository.Update(reservation);
 		await _unitOfWork.SaveChangesAsync(cancellationToken);
 
 		_logger.LogInformation("Extended reservation {ReservationId}, new expiry: {ExpiresAt}",
@@ -149,28 +217,26 @@ public class StockReservationCleanupService : IStockReservationCleanupService
 	{
 		_logger.LogDebug("Generating reservation statistics");
 
-		// This is a simplified implementation. In production, consider caching these statistics
-		// or using raw SQL for better performance with large datasets.
+		var (activeItems, totalActive) = await _reservationRepository.GetActiveReservationsAsync(1, 10000, cancellationToken);
+		var activeReservations = activeItems.ToList();
 
-		var allReservations = await GetAllReservationsAsync(cancellationToken);
-		var activeReservations = allReservations.Where(r => r.Status.IsHoldingStock()).ToList();
-		var expiredReservations = allReservations.Where(r => r.Status == ReservationStatus.Active && r.IsExpired()).ToList();
+		var expiredPending = (await _reservationRepository.GetExpiredReservationsAsync(cancellationToken)).Count();
 
 		var expiringSoon = activeReservations
 			.Where(r => r.GetTimeRemaining() <= TimeSpan.FromHours(1))
-			.ToList();
-
-		var reservationsByStatus = allReservations
-			.GroupBy(r => r.Status.ToString())
-			.ToDictionary(g => g.Key, g => g.Count());
+			.Count();
 
 		var statistics = new ReservationStatistics
 		{
-			TotalActiveReservations = activeReservations.Count,
+			TotalActiveReservations = totalActive,
 			TotalReservedQuantity = activeReservations.Sum(r => r.Quantity),
-			ExpiringWithinHour = expiringSoon.Count,
-			ExpiredPendingCleanup = expiredReservations.Count,
-			ReservationsByStatus = reservationsByStatus,
+			ExpiringWithinHour = expiringSoon,
+			ExpiredPendingCleanup = expiredPending,
+			ReservationsByStatus = new Dictionary<string, int>
+			{
+				[ReservationStatus.Active.ToString()] = totalActive,
+				[ReservationStatus.Expired.ToString()] = expiredPending
+			},
 			GeneratedAt = DateTime.UtcNow
 		};
 
@@ -178,56 +244,5 @@ public class StockReservationCleanupService : IStockReservationCleanupService
 			statistics.TotalActiveReservations, statistics.ExpiringWithinHour);
 
 		return statistics;
-	}
-
-	private async Task ReleaseReservationInternalAsync(StockReservation reservation, string reason, CancellationToken cancellationToken)
-	{
-		var sku = await _skuRepository.GetByIdAsync(reservation.SkuId);
-		if (sku == null)
-		{
-			_logger.LogWarning("SKU {SkuId} not found for reservation {ReservationId}",
-				reservation.SkuId, reservation.Id);
-			// Still mark reservation as expired to prevent it from being processed again
-			reservation.MarkAsExpired();
-			_reservationRepository.Update(reservation);
-			await _unitOfWork.SaveChangesAsync(cancellationToken);
-			return;
-		}
-
-		sku.ReleaseReservation(reservation);
-		_skuRepository.Update(sku);
-		_reservationRepository.Update(reservation);
-
-		await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-		_logger.LogInformation(
-			"Released reservation {ReservationId} for SKU {SkuCode}. Quantity: {Quantity}, Reason: {Reason}",
-			reservation.Id, sku.SkuCode, reservation.Quantity, reason);
-	}
-
-	private async Task<IEnumerable<StockReservation>> GetAllReservationsAsync(CancellationToken cancellationToken)
-	{
-		// This is a placeholder - in production, you might want to add a method to the repository
-		// to get all reservations or use a more efficient query
-		var pageNumber = 1;
-		var pageSize = 1000;
-		var allReservations = new List<StockReservation>();
-
-		while (true)
-		{
-			var (items, totalCount) = await _reservationRepository.GetActiveReservationsAsync(
-				pageNumber, pageSize, cancellationToken);
-
-			allReservations.AddRange(items);
-
-			if (items.Count() < pageSize || allReservations.Count >= totalCount)
-			{
-				break;
-			}
-
-			pageNumber++;
-		}
-
-		return allReservations;
 	}
 }

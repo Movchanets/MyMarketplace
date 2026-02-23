@@ -26,6 +26,15 @@ public class StockReservationRepository : IStockReservationRepository
 			.FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
 	}
 
+	/// <summary>
+	/// Gets a tracked reservation instance for update scenarios
+	/// </summary>
+	public async Task<StockReservation?> GetByIdTrackedAsync(Guid id, CancellationToken cancellationToken = default)
+	{
+		return await _context.StockReservations
+			.FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
+	}
+
 	/// <inheritdoc />
 	public async Task<IEnumerable<StockReservation>> GetActiveBySkuIdAsync(Guid skuId, CancellationToken cancellationToken = default)
 	{
@@ -40,6 +49,17 @@ public class StockReservationRepository : IStockReservationRepository
 	{
 		return await _context.StockReservations
 			.AsNoTracking()
+			.Where(r => r.CartId == cartId)
+			.OrderByDescending(r => r.CreatedAt)
+			.ToListAsync(cancellationToken);
+	}
+
+	/// <summary>
+	/// Gets tracked reservations for a cart (for update scenarios)
+	/// </summary>
+	public async Task<IEnumerable<StockReservation>> GetByCartIdTrackedAsync(Guid cartId, CancellationToken cancellationToken = default)
+	{
+		return await _context.StockReservations
 			.Where(r => r.CartId == cartId)
 			.OrderByDescending(r => r.CreatedAt)
 			.ToListAsync(cancellationToken);
@@ -60,8 +80,22 @@ public class StockReservationRepository : IStockReservationRepository
 	{
 		var now = DateTime.UtcNow;
 		return await _context.StockReservations
+			.AsNoTracking()
 			.Where(r => r.Status == ReservationStatus.Active && r.ExpiresAt < now)
 			.OrderBy(r => r.ExpiresAt)
+			.ToListAsync(cancellationToken);
+	}
+
+	/// <summary>
+	/// Gets tracked expired reservations for cleanup (update scenarios)
+	/// </summary>
+	public async Task<IEnumerable<StockReservation>> GetExpiredReservationsTrackedAsync(int limit = 100, CancellationToken cancellationToken = default)
+	{
+		var now = DateTime.UtcNow;
+		return await _context.StockReservations
+			.Where(r => r.Status == ReservationStatus.Active && r.ExpiresAt < now)
+			.OrderBy(r => r.ExpiresAt)
+			.Take(limit)
 			.ToListAsync(cancellationToken);
 	}
 
@@ -133,37 +167,11 @@ public class StockReservationRepository : IStockReservationRepository
 	}
 
 	/// <inheritdoc />
-	public async Task<int> CancelReservationsForCartAsync(Guid cartId, string? reason = null, CancellationToken cancellationToken = default)
+	public async Task<IEnumerable<StockReservation>> GetActiveByCartIdTrackedAsync(Guid cartId, CancellationToken cancellationToken = default)
 	{
-		var reservations = await _context.StockReservations
+		return await _context.StockReservations
 			.Where(r => r.CartId == cartId && r.Status == ReservationStatus.Active)
 			.ToListAsync(cancellationToken);
-
-		foreach (var reservation in reservations)
-		{
-			reservation.Cancel(reason ?? "Cart cleared");
-		}
-
-		return reservations.Count;
 	}
 
-	/// <inheritdoc />
-	public async Task<bool> ConvertReservationsToOrderAsync(Guid cartId, Guid orderId, CancellationToken cancellationToken = default)
-	{
-		var reservations = await _context.StockReservations
-			.Where(r => r.CartId == cartId && r.Status == ReservationStatus.Active)
-			.ToListAsync(cancellationToken);
-
-		if (!reservations.Any())
-		{
-			return false;
-		}
-
-		foreach (var reservation in reservations)
-		{
-			reservation.ConvertToOrder(orderId);
-		}
-
-		return true;
-	}
 }

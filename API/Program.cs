@@ -101,6 +101,7 @@ try
     builder.Services.AddScoped<IProductFavoriteRepository, ProductFavoriteRepository>();
     builder.Services.AddScoped<ICartRepository, CartRepository>();
     builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+    builder.Services.AddScoped<IStockReservationRepository, StockReservationRepository>();
     builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
     builder.Services.AddIdentity<ApplicationUser, RoleEntity>(options =>
@@ -165,7 +166,7 @@ try
     // Email sender (SMTP) - reads SmtpSettings from configuration
     // Now using MassTransit SQL Transport instead of custom background queue
     builder.Services.AddSingleton<Application.Interfaces.IEmailService, SmtpEmailService>();
-    
+
     // MassTransit with PostgreSQL SQL Transport for reliable message delivery
     // Replaces custom BackgroundEmailQueue + EmailSenderBackgroundService
     // NOTE: Disabled in Testing environment to avoid circular dependencies in integration tests
@@ -177,7 +178,7 @@ try
         // Register MassTransit-based email notification service
         builder.Services.AddScoped<IEmailNotificationService, MassTransitEmailService>();
     }
-    
+
     // NOTE: Legacy background email service - disabled in favor of MassTransit SQL Transport
     // builder.Services.AddSingleton<BackgroundEmailQueue>();
     // builder.Services.AddSingleton<IEmailQueue>(sp => sp.GetRequiredService<BackgroundEmailQueue>());

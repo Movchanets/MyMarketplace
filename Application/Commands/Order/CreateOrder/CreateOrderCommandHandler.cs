@@ -5,6 +5,7 @@ using Domain.Enums;
 using Domain.Interfaces.Repositories;
 using MediatR;
 using Microsoft.Extensions.Logging;
+using System.Data;
 using System.Text.Json;
 
 namespace Application.Commands.Order.CreateOrder;
@@ -15,6 +16,7 @@ public sealed class CreateOrderCommandHandler : IRequestHandler<CreateOrderComma
 	private readonly ICartRepository _cartRepository;
 	private readonly ISkuRepository _skuRepository;
 	private readonly IUserRepository _userRepository;
+	private readonly IStockReservationRepository _stockReservationRepository;
 	private readonly IUnitOfWork _unitOfWork;
 	private readonly ILogger<CreateOrderCommandHandler> _logger;
 
@@ -23,6 +25,7 @@ public sealed class CreateOrderCommandHandler : IRequestHandler<CreateOrderComma
 		ICartRepository cartRepository,
 		ISkuRepository skuRepository,
 		IUserRepository userRepository,
+		IStockReservationRepository stockReservationRepository,
 		IUnitOfWork unitOfWork,
 		ILogger<CreateOrderCommandHandler> logger)
 	{
@@ -30,6 +33,7 @@ public sealed class CreateOrderCommandHandler : IRequestHandler<CreateOrderComma
 		_cartRepository = cartRepository;
 		_skuRepository = skuRepository;
 		_userRepository = userRepository;
+		_stockReservationRepository = stockReservationRepository;
 		_unitOfWork = unitOfWork;
 		_logger = logger;
 	}
@@ -51,7 +55,9 @@ public sealed class CreateOrderCommandHandler : IRequestHandler<CreateOrderComma
 			}
 		}
 
-		await using var transaction = await _unitOfWork.BeginTransactionAsync(cancellationToken);
+		// Use RepeatableRead to prevent race conditions on stock deduction between validation and commit.
+		// Under default ReadCommitted, concurrent orders could both pass validation and oversell.
+		await using var transaction = await _unitOfWork.BeginTransactionAsync(IsolationLevel.RepeatableRead, cancellationToken);
 
 		try
 		{
@@ -63,28 +69,53 @@ public sealed class CreateOrderCommandHandler : IRequestHandler<CreateOrderComma
 				return new ServiceResponse<OrderDto>(false, "User not found", null);
 			}
 
-			// Get cart
-			var cart = await _cartRepository.GetByUserIdAsync(domainUser.Id, cancellationToken);
+			// FIX: Load cart WITH Product and SKU navigation properties to avoid null references.
+			// Previously used GetByUserIdAsync which only loaded CartItems without Product/SKU,
+			// causing silent item skips when cartItem.Product was null.
+			var cart = await _cartRepository.GetByUserIdWithProductsAsync(domainUser.Id, cancellationToken);
 			if (cart is null || !cart.Items.Any())
 			{
 				_logger.LogWarning("Cart is empty for user {UserId}", request.UserId);
 				return new ServiceResponse<OrderDto>(false, "Cart is empty", null);
 			}
 
-			// Validate inventory for all items
+			// Pre-fetch all SKUs and active cart reservations in a single pass.
+			var skuMap = new Dictionary<Guid, SkuEntity>();
+			var activeCartReservations = (await _stockReservationRepository
+				.GetActiveByCartIdTrackedAsync(cart.Id, cancellationToken)).ToList();
+
 			foreach (var cartItem in cart.Items)
 			{
 				var sku = await _skuRepository.GetByIdAsync(cartItem.SkuId);
 				if (sku is null)
 				{
-					return new ServiceResponse<OrderDto>(false, $"Product variant not found for item in cart", null);
+					return new ServiceResponse<OrderDto>(false,
+						$"Product variant not found for item in cart (SKU ID: {cartItem.SkuId})", null);
 				}
 
-				if (sku.StockQuantity < cartItem.Quantity)
+				if (cartItem.Product is null)
+				{
+					_logger.LogError("Product {ProductId} not loaded for cart item {CartItemId}. " +
+						"This indicates a data integrity issue.", cartItem.ProductId, cartItem.Id);
+					return new ServiceResponse<OrderDto>(false,
+						$"Product not found for cart item (Product ID: {cartItem.ProductId})", null);
+				}
+
+				// Calculate how much is already reserved for this SKU by this cart
+				var skuReservations = activeCartReservations
+					.Where(r => r.SkuId == cartItem.SkuId)
+					.ToList();
+				var reservedForThisSku = skuReservations.Sum(r => r.Quantity);
+
+				// The unreserved portion must be available from the unreserved stock pool
+				var unreservedNeeded = cartItem.Quantity - reservedForThisSku;
+				if (unreservedNeeded > 0 && sku.AvailableQuantity < unreservedNeeded)
 				{
 					return new ServiceResponse<OrderDto>(false,
-						$"Insufficient stock for '{sku.SkuCode}'. Only {sku.StockQuantity} items available.", null);
+						$"Insufficient stock for '{sku.SkuCode}'. Available: {sku.AvailableQuantity + reservedForThisSku}, Requested: {cartItem.Quantity}.", null);
 				}
+
+				skuMap[cartItem.SkuId] = sku;
 			}
 
 			// Create order
@@ -101,19 +132,41 @@ public sealed class CreateOrderCommandHandler : IRequestHandler<CreateOrderComma
 				order.SetCustomerNotes(request.CustomerNotes);
 			}
 
-			// Create order items from cart items
+			// Create order items — use existing reservations when possible, deduct remainder directly
 			foreach (var cartItem in cart.Items)
 			{
-				var sku = await _skuRepository.GetByIdAsync(cartItem.SkuId);
-				var product = cartItem.Product;
+				var sku = skuMap[cartItem.SkuId];
+				var product = cartItem.Product!; // Already validated above
 
-				if (sku is null || product is null)
+				// Find active reservations for this SKU from this cart
+				var skuReservations = activeCartReservations
+					.Where(r => r.SkuId == cartItem.SkuId)
+					.ToList();
+
+				var quantityFromReservations = 0;
+
+				// Convert existing reservations to order deductions
+				foreach (var reservation in skuReservations)
 				{
-					continue; // Skip invalid items
+					sku.ConvertReservationToDeduction(reservation, order.Id);
+					quantityFromReservations += reservation.Quantity;
+
+					_logger.LogDebug(
+						"Converted reservation {ReservationId} for SKU {SkuCode}, quantity: {Qty}",
+						reservation.Id, sku.SkuCode, reservation.Quantity);
 				}
 
-				// Deduct inventory
-				sku.DeductStock(cartItem.Quantity);
+				// Deduct any remaining quantity not covered by reservations
+				var remainingQuantity = cartItem.Quantity - quantityFromReservations;
+				if (remainingQuantity > 0)
+				{
+					sku.DeductStock(remainingQuantity);
+
+					_logger.LogDebug(
+						"Direct stock deduction for SKU {SkuCode}, quantity: {Qty} (no reservation)",
+						sku.SkuCode, remainingQuantity);
+				}
+
 				_skuRepository.Update(sku);
 
 				// Create order item with historical data
@@ -150,8 +203,8 @@ public sealed class CreateOrderCommandHandler : IRequestHandler<CreateOrderComma
 			await _unitOfWork.SaveChangesAsync(cancellationToken);
 			await transaction.CommitAsync(cancellationToken);
 
-			_logger.LogInformation("Order {OrderNumber} created successfully for user {UserId}",
-				order.OrderNumber, request.UserId);
+			_logger.LogInformation("Order {OrderNumber} created successfully for user {UserId} with {ItemCount} items",
+				order.OrderNumber, request.UserId, order.Items.Count);
 
 			var orderDto = MapToOrderDto(order);
 			return new ServiceResponse<OrderDto>(true, $"Order {order.OrderNumber} created successfully", orderDto);

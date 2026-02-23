@@ -34,7 +34,7 @@ export default function Checkout() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
-  const { cart, getTotalPrice, loadCart, clearCart } = useCartStore()
+  const { cart, getTotalPrice, loadCart } = useCartStore()
 
   const [currentStep, setCurrentStep] = useState<CheckoutStep>('shipping')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -126,7 +126,11 @@ export default function Checkout() {
       const order = unwrapServiceResponse(response)
       setOrderNumber(order.orderNumber)
       setOrderComplete(true)
-      clearCart()
+      // FIX: Don't call clearCart() — backend already clears the cart atomically
+      // during order creation. Calling it again would make a redundant DELETE /api/cart
+      // that may fail on an already-empty cart.
+      // Instead, just reset local cart state:
+      useCartStore.setState({ cart: null })
     } catch (err) {
       setError(err instanceof Error ? err.message : t('checkout.errors.submit', 'Failed to create order'))
     } finally {
@@ -373,7 +377,7 @@ export default function Checkout() {
                       </div>
                     </div>
                     <span className="font-semibold text-gray-900">
-                      {method.price === 0 ? t('checkout.free', 'Free') : `$${method.price.toFixed(2)}`}
+                      {method.price === 0 ? t('checkout.free', 'Free') : `₴${method.price.toFixed(2)}`}
                     </span>
                   </label>
                 ))}
@@ -479,7 +483,7 @@ export default function Checkout() {
                         <span className="text-sm font-medium">{item.quantity}x</span>
                         <span className="text-sm">{item.productName}</span>
                       </div>
-                      <span className="text-sm font-medium">${item.subtotal.toFixed(2)}</span>
+                      <span className="text-sm font-medium">₴{item.subtotal.toFixed(2)}</span>
                     </div>
                   ))}
                 </div>
@@ -541,18 +545,18 @@ export default function Checkout() {
             <div className="space-y-2 mb-4">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">{t('checkout.subtotal', 'Subtotal')}</span>
-                <span className="font-medium">${subtotal.toFixed(2)}</span>
+                <span className="font-medium">₴{subtotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">{t('checkout.shipping', 'Shipping')}</span>
                 <span className="font-medium">
-                  {deliveryPrice === 0 ? t('checkout.free', 'Free') : `$${deliveryPrice.toFixed(2)}`}
+                  {deliveryPrice === 0 ? t('checkout.free', 'Free') : `₴${deliveryPrice.toFixed(2)}`}
                 </span>
               </div>
               <div className="border-t border-gray-200 pt-2 mt-2">
                 <div className="flex justify-between">
                   <span className="text-lg font-semibold text-gray-900">{t('checkout.total', 'Total')}</span>
-                  <span className="text-xl font-bold text-gray-900">${total.toFixed(2)}</span>
+                  <span className="text-xl font-bold text-gray-900">₴{total.toFixed(2)}</span>
                 </div>
               </div>
             </div>

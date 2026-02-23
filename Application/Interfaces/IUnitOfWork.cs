@@ -1,3 +1,4 @@
+using System.Data;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -18,6 +19,11 @@ public interface IUnitOfWork
 	/// Begins a new database transaction
 	/// </summary>
 	Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default);
+
+	/// <summary>
+	/// Begins a new database transaction with the specified isolation level
+	/// </summary>
+	Task<IDbContextTransaction> BeginTransactionAsync(IsolationLevel isolationLevel, CancellationToken cancellationToken = default);
 
 	/// <summary>
 	/// Executes an action within a transaction with automatic commit/rollback

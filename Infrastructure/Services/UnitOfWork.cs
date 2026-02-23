@@ -1,6 +1,8 @@
+using System.Data;
 using System.Threading;
 using System.Threading.Tasks;
 using Application.Interfaces;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
 
@@ -26,6 +28,11 @@ public class UnitOfWork : IUnitOfWork
 	public Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default)
 	{
 		return _db.Database.BeginTransactionAsync(cancellationToken);
+	}
+
+	public Task<IDbContextTransaction> BeginTransactionAsync(IsolationLevel isolationLevel, CancellationToken cancellationToken = default)
+	{
+		return _db.Database.BeginTransactionAsync(isolationLevel, cancellationToken);
 	}
 
 	public async Task<TResult> ExecuteInTransactionAsync<TResult>(
