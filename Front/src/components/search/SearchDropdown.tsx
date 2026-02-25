@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { useSearchStore } from '../../store/searchStore'
-import type { PopularQueryDto } from '../../api/searchApi'
+import { usePopularQueries } from '../../hooks/queries/useSearch'
 
 interface SearchDropdownProps {
   onSelect: (query: string) => void
@@ -9,7 +9,8 @@ interface SearchDropdownProps {
 
 export function SearchDropdown({ onSelect, onClose }: SearchDropdownProps) {
   const { t } = useTranslation()
-  const { history, popularQueries, removeFromHistory, clearHistory } = useSearchStore()
+  const { history, removeFromHistory, clearHistory } = useSearchStore()
+  const { data: popularQueries = [] } = usePopularQueries()
 
   const handleSelect = (query: string) => {
     onSelect(query)
@@ -40,7 +41,7 @@ export function SearchDropdown({ onSelect, onClose }: SearchDropdownProps) {
             {t('search.popular')}
           </p>
           <div className="flex flex-wrap gap-2">
-            {popularQueries.map((item: PopularQueryDto) => (
+            {popularQueries.map((item) => (
               <button
                 key={item.query}
                 type="button"

@@ -1,4 +1,4 @@
-import axiosClient from './axiousClient'
+import axiosClient from './axiosClient'
 import type { User } from '../store/authStore'
 
 export interface CheckEmailResponse {

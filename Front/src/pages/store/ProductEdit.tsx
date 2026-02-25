@@ -1,16 +1,14 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
-  categoriesApi,
-  tagsApi,
-  productsApi,
-  type CategoryDto,
-  type TagDto,
   type UpdateProductRequest,
   type ProductDetailsDto,
   type MediaImageDto
 } from '../../api/catalogApi'
+import { useCategories } from '../../hooks/queries/useCategories'
+import { useAdminTags } from '../../hooks/queries/useAdminCatalog'
+import { useProductById, useSetProductBaseImage, useUpdateProduct } from '../../hooks/queries/useProducts'
 
 import { ErrorAlert } from '../../components/ui/ErrorAlert'
 import { InfoAlert } from '../../components/ui/InfoAlert'
@@ -32,11 +30,15 @@ export default function ProductEdit() {
   const navigate = useNavigate()
   const { productId } = useParams<{ productId: string }>()
 
-  // Data loading state
-  const [categories, setCategories] = useState<CategoryDto[]>([])
-  const [tags, setTags] = useState<TagDto[]>([])
+  const categoriesQuery = useCategories()
+  const tagsQuery = useAdminTags()
+  const productQuery = useProductById(productId)
+  const updateProductMutation = useUpdateProduct()
+  const setProductBaseImageMutation = useSetProductBaseImage()
+  const categories = categoriesQuery.data ?? []
+  const tags = tagsQuery.data ?? []
   const [product, setProduct] = useState<ProductDetailsDto | null>(null)
-  const [loading, setLoading] = useState(true)
+  const loading = categoriesQuery.isLoading || tagsQuery.isLoading || productQuery.isLoading
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [formErrors, setFormErrors] = useState<FormErrors>({})
@@ -66,48 +68,30 @@ export default function ProductEdit() {
     }
   }, [newImages])
 
-  const fetchData = useCallback(async () => {
-    if (!productId) return
-    
-    setLoading(true)
-    setError(null)
-    try {
-      const [categoriesRes, tagsRes, productRes] = await Promise.all([
-        categoriesApi.getAll(),
-        tagsApi.getAll(),
-        productsApi.getById(productId)
-      ])
+  useEffect(() => {
+    const p = productQuery.data
+    if (!p) return
 
-      if (categoriesRes.isSuccess) {
-        setCategories(categoriesRes.payload || [])
-      }
-      if (tagsRes.isSuccess) {
-        setTags(tagsRes.payload || [])
-      }
-      if (productRes.isSuccess && productRes.payload) {
-        const p = productRes.payload
-        setProduct(p)
-        setName(p.name)
-        setDescription(p.description || '')
-        setSelectedCategories(p.categories.map(c => c.id))
-        // Set primary category from response if available
-        const primaryCat = p.primaryCategory || p.categories[0]
-        setPrimaryCategoryId(primaryCat?.id || null)
-        setSelectedTags(p.tags.map(t => t.id))
-        setExistingImages(p.gallery || [])
-      } else {
-        setError(t('product.notFound'))
-      }
-    } catch (err) {
-      setError(t('common.error'))
-    } finally {
-      setLoading(false)
-    }
-  }, [productId, t])
+    setProduct(p)
+    setName(p.name)
+    setDescription(p.description || '')
+    setSelectedCategories(p.categories.map(c => c.id))
+    const primaryCat = p.primaryCategory || p.categories[0]
+    setPrimaryCategoryId(primaryCat?.id || null)
+    setSelectedTags(p.tags.map(tag => tag.id))
+    setExistingImages(p.gallery || [])
+  }, [productQuery.data])
 
   useEffect(() => {
-    fetchData()
-  }, [fetchData])
+    const queryError =
+      (categoriesQuery.error instanceof Error ? categoriesQuery.error.message : null) ||
+      (tagsQuery.error instanceof Error ? tagsQuery.error.message : null) ||
+      (productQuery.error instanceof Error ? productQuery.error.message : null)
+
+    if (queryError) {
+      setError(queryError)
+    }
+  }, [categoriesQuery.error, productQuery.error, tagsQuery.error])
 
   const validateForm = (): boolean => {
     const errors: FormErrors = {}
@@ -155,17 +139,13 @@ export default function ProductEdit() {
         deletedGalleryIds
       })
       
-      const result = await productsApi.update(productId, request, filesToUpload.length > 0 ? filesToUpload : undefined)
-      console.log('Update response:', result)
-      
-      if (result.isSuccess) {
-        // Cleanup preview URLs before navigating
-        newImages.forEach(img => URL.revokeObjectURL(img.preview))
-        navigate('/cabinet/products')
-      } else {
-        console.error('Update failed:', result)
-        setError(result.message || t('common.error'))
-      }
+      await updateProductMutation.mutateAsync({
+        productId,
+        data: request,
+        newImages: filesToUpload.length > 0 ? filesToUpload : undefined,
+      })
+      newImages.forEach(img => URL.revokeObjectURL(img.preview))
+      navigate('/cabinet/products')
     } catch (err: any) {
       console.error('Update error:', err)
       console.error('Response data:', err.response?.data)
@@ -229,17 +209,13 @@ export default function ProductEdit() {
     if (!productId) return
 
     try {
-      const result = await productsApi.setBaseImage(productId, imageUrl)
-      if (result.isSuccess) {
-        // Update product data locally
-        if (product) {
-          setProduct({ ...product, baseImageUrl: imageUrl })
-        }
-      } else {
-        setError(result.message || t('errors.update_failed'))
+      setError(null)
+      await setProductBaseImageMutation.mutateAsync({ productId, baseImageUrl: imageUrl })
+      if (product) {
+        setProduct({ ...product, baseImageUrl: imageUrl })
       }
     } catch (err) {
-      setError(t('errors.update_failed'))
+      setError(err instanceof Error ? err.message : t('errors.update_failed'))
     }
   }
 

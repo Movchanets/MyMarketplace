@@ -1,41 +1,26 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { myStoreApi, type MyStoreDto } from '../../api/storeApi'
 import { ErrorAlert } from '../../components/ui/ErrorAlert'
 import { WarningAlert } from '../../components/ui/WarningAlert'
+import { useMyStore } from '../../hooks/queries/useStores'
 
 export default function MyStore() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const [store, setStore] = useState<MyStoreDto | null>(null)
-  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const { data: store, isPending: loading, error: storeError } = useMyStore()
 
   useEffect(() => {
-    const fetchStore = async () => {
-      setLoading(true)
-      try {
-        const response = await myStoreApi.get()
-        if (response.isSuccess) {
-          if (response.payload) {
-            setStore(response.payload)
-          } else {
-            // No store - redirect to create
-            navigate('/cabinet/create-store')
-          }
-        } else {
-          setError(response.message || t('errors.fetch_failed'))
-        }
-      } catch {
-        setError(t('errors.fetch_failed'))
-      } finally {
-        setLoading(false)
-      }
+    if (storeError) {
+      setError(storeError.message || t('errors.fetch_failed'))
+      return
     }
 
-    fetchStore()
-  }, [navigate, t])
+    if (!loading && !store) {
+      navigate('/cabinet/create-store')
+    }
+  }, [loading, navigate, store, storeError, t])
 
   if (loading) {
     return (

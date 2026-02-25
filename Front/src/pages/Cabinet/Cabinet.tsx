@@ -3,6 +3,7 @@ import { useAuthStore } from '../../store/authStore'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import LanguageSelector from '../../components/ui/LanguageSelector'
+import { useMyStore } from '../../hooks/queries/useStores'
 
 const linkClass = ({ isActive }: { isActive: boolean }) =>
   `flex items-center gap-3 px-4 py-3 text-sm rounded-md transition-colors ${
@@ -14,6 +15,8 @@ export default function Cabinet() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const [confirmOpen, setConfirmOpen] = useState(false)
+  const { data: myStore } = useMyStore()
+  const hasStore = !!myStore
   return (
   <div className="min-h-screen bg-bg dark:bg-[#071428]">
       <div className="max-w-7xl mx-auto p-6">
@@ -50,10 +53,12 @@ export default function Cabinet() {
                   <span>🏪</span>
                   {t('menu.myStore')}
                 </NavLink>
-                <NavLink to="/cabinet/products" className={linkClass}>
-                  <span>📦</span>
-                  {t('myProducts.title')}
-                </NavLink>
+                {hasStore && (
+                  <NavLink to="/cabinet/products" className={linkClass}>
+                    <span>📦</span>
+                    {t('myProducts.title')}
+                  </NavLink>
+                )}
                 <NavLink to="/cabinet/user/settings?tab=profile" className={linkClass}>
                   <span>⚙️</span>
                   {t('menu.settings')}

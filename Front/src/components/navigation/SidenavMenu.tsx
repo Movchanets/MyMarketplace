@@ -33,7 +33,7 @@ export function SidenavMenu({ isOpen, onClose, user }: SidenavMenuProps) {
       }, 220)
       return () => clearTimeout(t)
     }
-  }, [isOpen])
+  }, [isOpen, mounted])
 
   useEffect(() => {
     if (!mounted) return

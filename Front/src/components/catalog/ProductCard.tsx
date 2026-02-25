@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
-import { useFavoritesStore, useIsFavorited } from '../../store/favoritesStore'
 import type { ProductSummaryDto } from '../../api/catalogApi'
+import { useFavorites } from '../../hooks/queries/useFavorites'
 
 interface ProductCardProps {
   product: ProductSummaryDto
@@ -10,8 +10,7 @@ interface ProductCardProps {
 
 export default function ProductCard({ product, onAddToCart, onClick }: ProductCardProps) {
   const { t } = useTranslation()
-  const { toggleFavorite, isToggling } = useFavoritesStore()
-  const isFavorited = useIsFavorited(product.id)
+  const { toggleFavorite, isToggling, isFavorited } = useFavorites()
 
   const handleCardClick = () => {
     onClick?.(product.slug)
@@ -66,19 +65,19 @@ export default function ProductCard({ product, onAddToCart, onClick }: ProductCa
           onClick={handleToggleFavorite}
           disabled={isToggling.has(product.id)}
            className={`absolute top-3 right-3 p-2 rounded-full shadow-sm backdrop-blur-sm transition-all opacity-0 group-hover:opacity-100 ${
-             isFavorited
+             isFavorited(product.id)
                ? 'bg-error hover:bg-error-dark'
                : 'bg-white/80 dark:bg-surface-hover/80 hover:bg-white dark:hover:bg-surface'
            }`}
-          title={isFavorited ? t('productCard.removeFromFavorites') : t('productCard.addToFavorites')}
+          title={isFavorited(product.id) ? t('productCard.removeFromFavorites') : t('productCard.addToFavorites')}
         >
           <svg
              className={`w-5 h-5 transition-colors ${
-               isFavorited
+               isFavorited(product.id)
                  ? 'text-white'
                  : 'text-foreground-muted dark:text-foreground-muted hover:text-error dark:hover:text-error'
              }`}
-            fill={isFavorited ? 'currentColor' : 'none'}
+            fill={isFavorited(product.id) ? 'currentColor' : 'none'}
             stroke="currentColor"
             viewBox="0 0 24 24"
           >

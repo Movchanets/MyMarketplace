@@ -1,28 +1,10 @@
-import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { categoriesApi, type CategoryDto } from '../../api/catalogApi'
+import { useCategories } from '../../hooks/queries/useCategories'
 
 export function CatalogSection() {
   const { t } = useTranslation()
-  const [categories, setCategories] = useState<CategoryDto[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const response = await categoriesApi.getAll(undefined, true)
-        if (response.isSuccess && response.payload) {
-          setCategories(response.payload)
-        }
-      } catch (error) {
-        console.error('Failed to load categories:', error)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-    fetchCategories()
-  }, [])
+  const { data: categories = [], isPending: isLoading } = useCategories({ topLevel: true })
 
   if (isLoading) {
     return (

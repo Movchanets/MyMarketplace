@@ -1,9 +1,9 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
-import { useCartStore } from '../../store/cartStore'
 import { useAuthStore } from '../../store/authStore'
 import { productsApi } from '../../api/catalogApi'
+import { useCart } from '../../hooks/queries/useCart'
 
 // Icons using simple SVG components instead of lucide-react
 const Minus = ({ className }: { className?: string }) => <svg className={className} xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/></svg>
@@ -40,15 +40,14 @@ export default function Cart() {
     guestCart,
     isLoading,
     isUpdating,
-    error: cartError,
+    error,
     getTotalItems,
     loadCart,
     updateQuantityBySku,
     removeFromCartBySku,
     clearCart,
-    clearError,
     clearGuestCart,
-  } = useCartStore()
+  } = useCart()
 
   const [promoCode, setPromoCode] = useState('')
   const [savedForLater, setSavedForLater] = useState<string[]>([])
@@ -59,7 +58,7 @@ export default function Cart() {
   // Load cart and stock info
   useEffect(() => {
     loadCart()
-  }, [loadCart, isAuthenticated])
+  }, [isAuthenticated, loadCart])
 
   // Fetch stock information for cart items
   const fetchStockInfo = useCallback(async () => {
@@ -303,18 +302,12 @@ export default function Cart() {
         {t('cart.title', 'Shopping Cart')}
       </h1>
 
-      {(cartError || Object.keys(stockErrors).length > 0) && (
+      {(error || Object.keys(stockErrors).length > 0) && (
         <div className="mb-6 p-4 bg-error/10 border border-error/20 rounded-md">
-          {cartError && <p className="text-error">{cartError}</p>}
+          {error && <p className="text-error">{error.message}</p>}
           {Object.entries(stockErrors).map(([skuId, errorMsg]) => (
             <p key={skuId} className="text-error text-sm mt-1">{errorMsg}</p>
           ))}
-          <button
-            onClick={clearError}
-            className="text-sm text-error/80 underline mt-2"
-          >
-            {t('common.dismiss', 'Dismiss')}
-          </button>
         </div>
       )}
 

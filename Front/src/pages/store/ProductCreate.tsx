@@ -1,19 +1,13 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
-  categoriesApi,
-  tagsApi,
-  productsApi,
-  type CategoryDto,
-  type TagDto,
   type CreateProductRequest,
   type SkuRequest
 } from '../../api/catalogApi'
-import {
-  attributeDefinitionsApi,
-  type AttributeDefinitionDto,
-} from '../../api/attributeDefinitionsApi'
+import { useCategories } from '../../hooks/queries/useCategories'
+import { useAdminAttributeDefinitions, useAdminTags } from '../../hooks/queries/useAdminCatalog'
+import { useCreateProduct, useUploadProductGalleryImage } from '../../hooks/queries/useProducts'
 import AttributeSelector from '../../components/catalog/AttributeSelector'
 import { ErrorAlert } from '../../components/ui/ErrorAlert'
 
@@ -47,11 +41,15 @@ export default function ProductCreate() {
   const { t } = useTranslation()
   const navigate = useNavigate()
 
-  // Data loading state
-  const [categories, setCategories] = useState<CategoryDto[]>([])
-  const [tags, setTags] = useState<TagDto[]>([])
-  const [attributeDefinitions, setAttributeDefinitions] = useState<AttributeDefinitionDto[]>([])
-  const [loading, setLoading] = useState(true)
+  const categoriesQuery = useCategories()
+  const tagsQuery = useAdminTags()
+  const attributesQuery = useAdminAttributeDefinitions()
+  const createProductMutation = useCreateProduct()
+  const uploadProductGalleryImageMutation = useUploadProductGalleryImage()
+  const categories = categoriesQuery.data ?? []
+  const tags = tagsQuery.data ?? []
+  const attributeDefinitions = attributesQuery.data ?? []
+  const loading = categoriesQuery.isLoading || tagsQuery.isLoading || attributesQuery.isLoading
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [formErrors, setFormErrors] = useState<FormErrors>({})
@@ -72,35 +70,16 @@ export default function ProductCreate() {
   const [categorySearch, setCategorySearch] = useState('')
   const [tagSearch, setTagSearch] = useState('')
 
-  const fetchData = useCallback(async () => {
-    setLoading(true)
-    setError(null)
-    try {
-      const [categoriesRes, tagsRes, attributesRes] = await Promise.all([
-        categoriesApi.getAll(),
-        tagsApi.getAll(),
-        attributeDefinitionsApi.getAll()
-      ])
-
-      if (categoriesRes.isSuccess) {
-        setCategories(categoriesRes.payload || [])
-      }
-      if (tagsRes.isSuccess) {
-        setTags(tagsRes.payload || [])
-      }
-      if (attributesRes.isSuccess) {
-        setAttributeDefinitions(attributesRes.payload || [])
-      }
-    } catch {
-      setError(t('errors.fetch_failed'))
-    } finally {
-      setLoading(false)
-    }
-  }, [t])
-
   useEffect(() => {
-    fetchData()
-  }, [fetchData])
+    const queryError =
+      (categoriesQuery.error instanceof Error ? categoriesQuery.error.message : null) ||
+      (tagsQuery.error instanceof Error ? tagsQuery.error.message : null) ||
+      (attributesQuery.error instanceof Error ? attributesQuery.error.message : null)
+
+    if (queryError) {
+      setError(queryError)
+    }
+  }, [attributesQuery.error, categoriesQuery.error, tagsQuery.error])
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -280,21 +259,17 @@ export default function ProductCreate() {
         skus: skuRequests.length > 0 ? skuRequests : undefined
       }
 
-      const response = await productsApi.create(request)
-
-      if (!response.isSuccess || !response.payload) {
-        setError(response.message || t('errors.save_failed'))
-        setSubmitting(false)
-        return
-      }
-
-      const productId = response.payload
+      const productId = await createProductMutation.mutateAsync(request)
 
       // Upload gallery images
       if (galleryImages.length > 0) {
         for (let i = 0; i < galleryImages.length; i++) {
           try {
-            await productsApi.uploadGalleryImage(productId, galleryImages[i].file, i)
+            await uploadProductGalleryImageMutation.mutateAsync({
+              productId,
+              file: galleryImages[i].file,
+              displayOrder: i,
+            })
           } catch {
             console.error('Failed to upload image:', galleryImages[i].file.name)
           }
@@ -302,8 +277,8 @@ export default function ProductCreate() {
       }
 
       navigate('/cabinet/my-store')
-    } catch {
-      setError(t('errors.save_failed'))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('errors.save_failed'))
     } finally {
       setSubmitting(false)
     }

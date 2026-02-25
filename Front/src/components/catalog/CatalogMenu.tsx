@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { categoriesApi, type CategoryDto } from '../../api/catalogApi'
+import { useCategories } from '../../hooks/queries/useCategories'
 
 interface CatalogMenuProps {
   onClose: () => void
@@ -9,57 +9,17 @@ interface CatalogMenuProps {
 
 export function CatalogMenu({ onClose }: CatalogMenuProps) {
   const { t } = useTranslation()
-  const [topCategories, setTopCategories] = useState<CategoryDto[]>([])
-  const [subCategories, setSubCategories] = useState<CategoryDto[]>([])
   const [hoveredCategoryId, setHoveredCategoryId] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [isLoadingSub, setIsLoadingSub] = useState(false)
+  const { data: topCategories = [], isPending: isLoading } = useCategories({ topLevel: true })
+  const { data: subCategories = [], isPending: isLoadingSub } = useCategories({
+    parentId: hoveredCategoryId ?? undefined,
+  })
 
-  // Fetch top-level categories
   useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const response = await categoriesApi.getAll(undefined, true)
-        if (response.isSuccess && response.payload) {
-          setTopCategories(response.payload)
-          // Auto-select first category
-          if (response.payload.length > 0) {
-            setHoveredCategoryId(response.payload[0].id)
-          }
-        }
-      } catch (error) {
-        console.error('Failed to load categories:', error)
-      } finally {
-        setIsLoading(false)
-      }
+    if (!hoveredCategoryId && topCategories.length > 0) {
+      setHoveredCategoryId(topCategories[0].id)
     }
-    fetchCategories()
-  }, [])
-
-  // Fetch subcategories when hovering
-  useEffect(() => {
-    if (!hoveredCategoryId) {
-      setSubCategories([])
-      return
-    }
-
-    const fetchSubCategories = async () => {
-      setIsLoadingSub(true)
-      try {
-        const response = await categoriesApi.getAll(hoveredCategoryId)
-        if (response.isSuccess && response.payload) {
-          setSubCategories(response.payload)
-        }
-      } catch (error) {
-        console.error('Failed to load subcategories:', error)
-        setSubCategories([])
-      } finally {
-        setIsLoadingSub(false)
-      }
-    }
-
-    fetchSubCategories()
-  }, [hoveredCategoryId])
+  }, [hoveredCategoryId, topCategories])
 
   const hoveredCategory = topCategories.find((c) => c.id === hoveredCategoryId)
 

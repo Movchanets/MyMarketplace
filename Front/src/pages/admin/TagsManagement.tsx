@@ -1,6 +1,7 @@
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { tagsApi, type TagDto, type CreateTagRequest, type UpdateTagRequest } from '../../api/catalogApi'
+import { type TagDto, type CreateTagRequest, type UpdateTagRequest } from '../../api/catalogApi'
+import { useAdminTags, useCreateTag, useDeleteTag, useUpdateTag } from '../../hooks/queries/useAdminCatalog'
 
 const ITEMS_PER_PAGE = 10
 
@@ -11,13 +12,18 @@ interface FormErrors {
 
 export default function TagsManagement() {
   const { t } = useTranslation()
-  const [tags, setTags] = useState<TagDto[]>([])
-  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const [formErrors, setFormErrors] = useState<FormErrors>({})
+  const tagsQuery = useAdminTags()
+  const createTagMutation = useCreateTag()
+  const updateTagMutation = useUpdateTag()
+  const deleteTagMutation = useDeleteTag()
+  const tags = tagsQuery.data ?? []
+  const loading = tagsQuery.isLoading
+  const queryError = tagsQuery.error instanceof Error ? tagsQuery.error.message : null
 
   // Form state
   const [formData, setFormData] = useState<CreateTagRequest>({
@@ -31,28 +37,6 @@ export default function TagsManagement() {
     const start = (currentPage - 1) * ITEMS_PER_PAGE
     return tags.slice(start, start + ITEMS_PER_PAGE)
   }, [tags, currentPage])
-
-  const fetchTags = useCallback(async () => {
-    setLoading(true)
-    setError(null)
-    try {
-      const response = await tagsApi.getAll()
-      if (response.isSuccess) {
-        setTags(response.payload || [])
-        setCurrentPage(1)
-      } else {
-        setError(response.message || t('errors.fetch_failed'))
-      }
-    } catch {
-      setError(t('errors.fetch_failed'))
-    } finally {
-      setLoading(false)
-    }
-  }, [t])
-
-  useEffect(() => {
-    fetchTags()
-  }, [fetchTags])
 
   const resetForm = () => {
     setFormData({ name: '', description: '' })
@@ -84,15 +68,12 @@ export default function TagsManagement() {
     e.preventDefault()
     if (!validateForm()) return
     try {
-      const response = await tagsApi.create(formData)
-      if (response.isSuccess) {
-        await fetchTags()
-        resetForm()
-      } else {
-        setError(response.message || t('errors.save_failed'))
-      }
-    } catch {
-      setError(t('errors.save_failed'))
+      setError(null)
+      await createTagMutation.mutateAsync(formData)
+      setCurrentPage(1)
+      resetForm()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('errors.save_failed'))
     }
   }
 
@@ -101,33 +82,25 @@ export default function TagsManagement() {
     if (!editingId) return
     if (!validateForm()) return
     try {
+      setError(null)
       const updateData: UpdateTagRequest = {
         name: formData.name,
         description: formData.description
       }
-      const response = await tagsApi.update(editingId, updateData)
-      if (response.isSuccess) {
-        await fetchTags()
-        resetForm()
-      } else {
-        setError(response.message || t('errors.save_failed'))
-      }
-    } catch {
-      setError(t('errors.save_failed'))
+      await updateTagMutation.mutateAsync({ id: editingId, data: updateData })
+      resetForm()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('errors.save_failed'))
     }
   }
 
   const handleDelete = async (id: string) => {
     if (!window.confirm(t('admin.catalog.confirm_delete'))) return
     try {
-      const response = await tagsApi.delete(id)
-      if (response.isSuccess) {
-        await fetchTags()
-      } else {
-        setError(response.message || t('errors.save_failed'))
-      }
-    } catch {
-      setError(t('errors.save_failed'))
+      setError(null)
+      await deleteTagMutation.mutateAsync(id)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('errors.save_failed'))
     }
   }
 
@@ -160,9 +133,9 @@ export default function TagsManagement() {
         </button>
       </div>
 
-      {error && (
+      {(error || queryError) && (
         <div className="bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-300 px-4 py-3 rounded">
-          {error}
+          {error || queryError}
         </div>
       )}
 

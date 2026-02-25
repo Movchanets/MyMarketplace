@@ -1,14 +1,9 @@
-import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useFavoritesStore } from '../../store/favoritesStore'
+import { useFavorites } from '../../hooks/queries/useFavorites'
 
 export default function Favorites() {
   const { t } = useTranslation()
-  const { favorites, isLoading, loadFavorites } = useFavoritesStore()
-
-  useEffect(() => {
-    loadFavorites()
-  }, [loadFavorites])
+  const { favorites, isLoading } = useFavorites()
 
   if (isLoading) {
     return (

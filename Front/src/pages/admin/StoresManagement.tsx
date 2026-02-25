@@ -1,16 +1,26 @@
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { storesAdminApi, type StoreAdminDto } from '../../api/storeApi'
+import {
+  useAdminStores,
+  useSuspendStore,
+  useUnsuspendStore,
+  useVerifyStore,
+} from '../../hooks/queries/useAdminManagement'
 
 const ITEMS_PER_PAGE = 10
 
 export default function StoresManagement() {
   const { t } = useTranslation()
-  const [stores, setStores] = useState<StoreAdminDto[]>([])
-  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
+  const storesQuery = useAdminStores(true)
+  const verifyStoreMutation = useVerifyStore()
+  const suspendStoreMutation = useSuspendStore()
+  const unsuspendStoreMutation = useUnsuspendStore()
+  const stores = storesQuery.data ?? []
+  const loading = storesQuery.isLoading
+  const queryError = storesQuery.error instanceof Error ? storesQuery.error.message : null
 
   // Pagination
   const totalPages = Math.ceil(stores.length / ITEMS_PER_PAGE)
@@ -19,39 +29,13 @@ export default function StoresManagement() {
     return stores.slice(start, start + ITEMS_PER_PAGE)
   }, [stores, currentPage])
 
-  const fetchStores = useCallback(async () => {
-    setLoading(true)
-    setError(null)
-    try {
-      const response = await storesAdminApi.getAll(true)
-      if (response.isSuccess) {
-        setStores(response.payload || [])
-        setCurrentPage(1)
-      } else {
-        setError(response.message || t('errors.fetch_failed'))
-      }
-    } catch {
-      setError(t('errors.fetch_failed'))
-    } finally {
-      setLoading(false)
-    }
-  }, [t])
-
-  useEffect(() => {
-    fetchStores()
-  }, [fetchStores])
-
   const handleVerify = async (id: string) => {
     setActionLoading(id)
     try {
-      const response = await storesAdminApi.verify(id)
-      if (response.isSuccess) {
-        await fetchStores()
-      } else {
-        setError(response.message || t('errors.save_failed'))
-      }
-    } catch {
-      setError(t('errors.save_failed'))
+      setError(null)
+      await verifyStoreMutation.mutateAsync(id)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('errors.save_failed'))
     } finally {
       setActionLoading(null)
     }
@@ -61,14 +45,10 @@ export default function StoresManagement() {
     if (!window.confirm(t('admin.stores.confirm_suspend'))) return
     setActionLoading(id)
     try {
-      const response = await storesAdminApi.suspend(id)
-      if (response.isSuccess) {
-        await fetchStores()
-      } else {
-        setError(response.message || t('errors.save_failed'))
-      }
-    } catch {
-      setError(t('errors.save_failed'))
+      setError(null)
+      await suspendStoreMutation.mutateAsync(id)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('errors.save_failed'))
     } finally {
       setActionLoading(null)
     }
@@ -77,14 +57,10 @@ export default function StoresManagement() {
   const handleUnsuspend = async (id: string) => {
     setActionLoading(id)
     try {
-      const response = await storesAdminApi.unsuspend(id)
-      if (response.isSuccess) {
-        await fetchStores()
-      } else {
-        setError(response.message || t('errors.save_failed'))
-      }
-    } catch {
-      setError(t('errors.save_failed'))
+      setError(null)
+      await unsuspendStoreMutation.mutateAsync(id)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('errors.save_failed'))
     } finally {
       setActionLoading(null)
     }
@@ -108,9 +84,9 @@ export default function StoresManagement() {
         <h2 className="text-2xl font-bold text-foreground">{t('admin.stores.title')}</h2>
       </div>
 
-      {error && (
+      {(error || queryError) && (
         <div className="bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-300 px-4 py-3 rounded">
-          {error}
+          {error || queryError}
         </div>
       )}
 

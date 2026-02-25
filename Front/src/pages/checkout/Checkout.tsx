@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
-import { useCartStore } from '../../store/cartStore'
 import { useAuthStore } from '../../store/authStore'
-import { ordersApi, type ShippingAddressRequest } from '../../api/ordersApi'
+import { type ShippingAddressRequest } from '../../api/ordersApi'
 import { unwrapServiceResponse } from '../../api/types'
+import { useCart } from '../../hooks/queries/useCart'
+import { useCreateOrder } from '../../hooks/queries/useOrders'
 
 // Icons
 const Check = ({ className }: { className?: string }) => <svg className={className} xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
@@ -34,7 +35,8 @@ export default function Checkout() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
-  const { cart, getTotalPrice, loadCart } = useCartStore()
+  const { cart, getTotalPrice, loadCart, resetLocalCart } = useCart()
+  const createOrderMutation = useCreateOrder()
 
   const [currentStep, setCurrentStep] = useState<CheckoutStep>('shipping')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -114,7 +116,7 @@ export default function Checkout() {
       const deliveryMethod = deliveryMethods.find(d => d.id === selectedDelivery)?.name || 'Standard Shipping'
       const paymentMethod = paymentMethods.find(p => p.id === selectedPayment)?.name || 'Credit Card'
 
-      const response = await ordersApi.createOrder({
+      const response = await createOrderMutation.mutateAsync({
         shippingAddress,
         deliveryMethod,
         paymentMethod,
@@ -126,11 +128,7 @@ export default function Checkout() {
       const order = unwrapServiceResponse(response)
       setOrderNumber(order.orderNumber)
       setOrderComplete(true)
-      // FIX: Don't call clearCart() — backend already clears the cart atomically
-      // during order creation. Calling it again would make a redundant DELETE /api/cart
-      // that may fail on an already-empty cart.
-      // Instead, just reset local cart state:
-      useCartStore.setState({ cart: null })
+      resetLocalCart()
     } catch (err) {
       setError(err instanceof Error ? err.message : t('checkout.errors.submit', 'Failed to create order'))
     } finally {

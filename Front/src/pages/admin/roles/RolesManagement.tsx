@@ -1,20 +1,28 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { 
-  getRoles, 
-  getAllPermissions,
-  createRole, 
-  updateRole, 
-  deleteRole
-} from '../../../api/adminApi'
 import type { RoleDto, PermissionDto, CreateRoleDto, UpdateRoleDto } from '../../../api/adminApi'
+import {
+  useAdminPermissions,
+  useAdminRoles,
+  useCreateRole,
+  useDeleteRole,
+  useUpdateRole,
+} from '../../../hooks/queries/useAdminManagement'
 
 export default function RolesManagement() {
   const { t } = useTranslation()
-  const [roles, setRoles] = useState<RoleDto[]>([])
-  const [permissions, setPermissions] = useState<Record<string, PermissionDto[]>>({})
-  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const rolesQuery = useAdminRoles()
+  const permissionsQuery = useAdminPermissions()
+  const createRoleMutation = useCreateRole()
+  const updateRoleMutation = useUpdateRole()
+  const deleteRoleMutation = useDeleteRole()
+  const roles = rolesQuery.data ?? []
+  const permissions = permissionsQuery.data ?? ({} as Record<string, PermissionDto[]>)
+  const loading = rolesQuery.isLoading || permissionsQuery.isLoading
+  const queryError =
+    (rolesQuery.error instanceof Error ? rolesQuery.error.message : null) ||
+    (permissionsQuery.error instanceof Error ? permissionsQuery.error.message : null)
   
   // Modal state
   const [showModal, setShowModal] = useState(false)
@@ -30,32 +38,6 @@ export default function RolesManagement() {
 
   // Built-in roles that cannot be deleted
   const builtInRoles = ['Admin', 'User', 'Seller']
-
-  const loadData = useCallback(async () => {
-    try {
-      setLoading(true)
-      const [rolesRes, permissionsRes] = await Promise.all([
-        getRoles(),
-        getAllPermissions()
-      ])
-      
-      if (rolesRes.isSuccess && rolesRes.payload) {
-        setRoles(rolesRes.payload)
-      }
-      if (permissionsRes.isSuccess && permissionsRes.payload) {
-        setPermissions(permissionsRes.payload)
-      }
-    } catch (err) {
-      setError(t('admin.roles.load_error'))
-      console.error(err)
-    } finally {
-      setLoading(false)
-    }
-  }, [t])
-
-  useEffect(() => {
-    loadData()
-  }, [loadData])
 
   const handleOpenCreateModal = () => {
     setEditingRole(null)
@@ -81,6 +63,7 @@ export default function RolesManagement() {
 
   const handleSave = async () => {
     try {
+      setError(null)
       setSaving(true)
       
       if (editingRole) {
@@ -88,26 +71,15 @@ export default function RolesManagement() {
         if (formData.name !== editingRole.name) updateData.name = formData.name
         if (formData.description !== editingRole.description) updateData.description = formData.description
         updateData.permissions = formData.permissions
-        
-        const res = await updateRole(editingRole.id, updateData)
-        if (res.isSuccess && res.payload) {
-          setRoles(prev => prev.map(r => r.id === editingRole.id ? res.payload! : r))
-          setShowModal(false)
-        } else {
-          setError(res.message)
-        }
+
+        await updateRoleMutation.mutateAsync({ id: editingRole.id, data: updateData })
+        setShowModal(false)
       } else {
-        const res = await createRole(formData)
-        if (res.isSuccess && res.payload) {
-          setRoles(prev => [...prev, res.payload!])
-          setShowModal(false)
-        } else {
-          setError(res.message)
-        }
+        await createRoleMutation.mutateAsync(formData)
+        setShowModal(false)
       }
     } catch (err) {
-      setError(t('admin.roles.save_error'))
-      console.error(err)
+      setError(err instanceof Error ? err.message : t('admin.roles.save_error'))
     } finally {
       setSaving(false)
     }
@@ -115,16 +87,11 @@ export default function RolesManagement() {
 
   const handleDelete = async (roleId: string) => {
     try {
-      const res = await deleteRole(roleId)
-      if (res.isSuccess) {
-        setRoles(prev => prev.filter(r => r.id !== roleId))
-        setDeleteConfirm(null)
-      } else {
-        setError(res.message)
-      }
+      setError(null)
+      await deleteRoleMutation.mutateAsync(roleId)
+      setDeleteConfirm(null)
     } catch (err) {
-      setError(t('admin.roles.delete_error'))
-      console.error(err)
+      setError(err instanceof Error ? err.message : t('admin.roles.delete_error'))
     }
   }
 
@@ -177,9 +144,9 @@ export default function RolesManagement() {
         </button>
       </div>
 
-      {error && (
+      {(error || queryError) && (
         <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-4 rounded-lg">
-          {error}
+          {error || queryError}
           <button onClick={() => setError(null)} className="ml-4 underline">{t('common.dismiss')}</button>
         </div>
       )}

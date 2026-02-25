@@ -1,26 +1,22 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import {
-  categoriesApi,
   productsApi,
-  type CategoryDto,
-  type CategoryAvailableFiltersDto,
-  type ProductSummaryDto,
   type ProductFilterRequest,
   type AttributeFilterValue,
   ProductSort,
 } from '../../api/catalogApi';
 import ProductCard from '../../components/catalog/ProductCard';
 import { DynamicAttributeFilters } from '../../components/catalog/DynamicAttributeFilters';
+import { useCategoryBySlug, useCategoryFilters } from '../../hooks/queries/useCategories';
+import { useFilterProducts } from '../../hooks/queries/useProducts';
+import { useCart } from '../../hooks/queries/useCart';
 
 export const CategoryProductsPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const [, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  const [category, setCategory] = useState<CategoryDto | null>(null);
-  const [availableFilters, setAvailableFilters] = useState<CategoryAvailableFiltersDto | null>(null);
-  const [products, setProducts] = useState<ProductSummaryDto[]>([]);
   const [selectedFilters, setSelectedFilters] = useState<Record<string, AttributeFilterValue>>({});
   const [priceRange, setPriceRange] = useState<{ min: number | null; max: number | null }>({
     min: null,
@@ -29,78 +25,32 @@ export const CategoryProductsPage: React.FC = () => {
   const [inStockOnly, setInStockOnly] = useState(false);
   const [sort, setSort] = useState<ProductSort>(ProductSort.Newest);
   const [page, setPage] = useState(1);
-  const [totalProducts, setTotalProducts] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   const pageSize = 24;
+  const { data: category, isPending: isLoadingCategory, error: categoryError } = useCategoryBySlug(slug);
+  const { data: availableFilters, isPending: isLoadingFilters } = useCategoryFilters(category?.id);
+  const { addToCart } = useCart();
 
-  // Load category and available filters
-  useEffect(() => {
-    if (!slug) return;
+  const filterRequest: ProductFilterRequest = {
+    categoryId: category?.id,
+    minPrice: priceRange.min,
+    maxPrice: priceRange.max,
+    inStock: inStockOnly || null,
+    attributes: Object.keys(selectedFilters).length > 0 ? selectedFilters : null,
+    sort,
+    page,
+    pageSize,
+  };
 
-    const loadCategoryAndFilters = async () => {
-      try {
-        setLoading(true);
-        setError(null);
+  const {
+    data: filteredProducts,
+    isPending: isLoadingProducts,
+  } = useFilterProducts(filterRequest, !!category?.id);
 
-        const categoryResponse = await categoriesApi.getBySlug(slug);
-        if (!categoryResponse.isSuccess || !categoryResponse.payload) {
-          setError('Категорію не знайдено');
-          return;
-        }
-
-        setCategory(categoryResponse.payload);
-
-        const filtersResponse = await categoriesApi.getAvailableFilters(categoryResponse.payload.id);
-        if (filtersResponse.isSuccess && filtersResponse.payload) {
-          setAvailableFilters(filtersResponse.payload);
-        }
-      } catch (err) {
-        setError('Помилка завантаження категорії');
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadCategoryAndFilters();
-  }, [slug]);
-
-  // Load products when filters change
-  useEffect(() => {
-    if (!category) return;
-
-    const loadProducts = async () => {
-      try {
-        const filterRequest: ProductFilterRequest = {
-          categoryId: category.id,
-          minPrice: priceRange.min,
-          maxPrice: priceRange.max,
-          inStock: inStockOnly || null,
-          attributes: Object.keys(selectedFilters).length > 0 ? selectedFilters : null,
-          sort,
-          page,
-          pageSize,
-        };
-
-        const response = await productsApi.filter(filterRequest);
-        
-        if (response.isSuccess && response.payload) {
-          setProducts(response.payload.items);
-          setTotalProducts(response.payload.total);
-        } else {
-          setProducts([]);
-          setTotalProducts(0);
-        }
-      } catch (err) {
-        console.error('Помилка фільтрації товарів:', err);
-        setProducts([]);
-      }
-    };
-
-    loadProducts();
-  }, [category, selectedFilters, priceRange, inStockOnly, sort, page]);
+  const products = filteredProducts?.items ?? [];
+  const totalProducts = filteredProducts?.total ?? 0;
+  const loading = isLoadingCategory || isLoadingFilters || (isLoadingProducts && !filteredProducts);
+  const error = categoryError ? 'Помилка завантаження категорії' : null;
 
   // Update URL params when filters change
   useEffect(() => {
@@ -119,7 +69,7 @@ export const CategoryProductsPage: React.FC = () => {
     });
 
     setSearchParams(params, { replace: true });
-  }, [selectedFilters, priceRange, inStockOnly, sort, page]);
+  }, [selectedFilters, priceRange, inStockOnly, sort, page, setSearchParams]);
 
   const handleFilterChange = (code: string, value: AttributeFilterValue | null) => {
     setSelectedFilters((prev) => {
@@ -266,22 +216,17 @@ export const CategoryProductsPage: React.FC = () => {
                   product={product} 
                   onClick={(productSlug) => navigate(`/product/${productSlug}`)}
                   onAddToCart={async (productId) => {
-                    // Fetch product details to get the default SKU
                     try {
                       const result = await productsApi.getById(productId)
                       if (result.isSuccess && result.payload) {
                         const productDetails = result.payload
-                        // Use the first SKU as default
                         const defaultSku = productDetails.skus[0]
                         if (defaultSku) {
-                          const { useCartStore } = await import('../../store/cartStore')
-                          const { addToCart } = useCartStore.getState()
                           const added = await addToCart(productId, defaultSku.id, 1)
                           if (added) {
                             console.log('Added to cart successfully')
                           } else {
-                            const { lastError } = useCartStore.getState()
-                            console.error('Failed to add to cart:', lastError || 'Unknown error')
+                            console.error('Failed to add to cart')
                           }
                         }
                       }

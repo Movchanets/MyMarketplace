@@ -1,6 +1,8 @@
 import { Routes, Route } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { QueryClientProvider } from '@tanstack/react-query'
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
+import { queryClient } from './queryClient'
 import { Layout } from './components/layout/Layout'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { ThemeProvider } from './contexts/ThemeContext'
@@ -33,14 +35,6 @@ import Checkout from './pages/checkout/Checkout'
 import Orders from './pages/orders/Orders'
 import NotFound from './pages/NotFound'
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
-      retry: 1,
-    },
-  },
-})
 // no top-level Fragment needed here
 
 export default function App() {
@@ -79,7 +73,7 @@ export default function App() {
             <Route path="products/create" element={<ProductCreate />} />
             <Route path="products/:productId/edit" element={<ProductEdit />} />
             <Route path="products/:productId/skus" element={<SkuManagement />} />
-            <Route path="orders" element={<div className="p-6">{t('menu.orders')} ({t('common.empty')})</div>} />
+            <Route path="orders" element={<Orders />} />
             <Route path="tracking" element={<div className="p-6">{t('menu.tracking')} ({t('common.empty')})</div>} />
             <Route path="favorites" element={<Favorites />} />
             <Route path="wallet" element={<div className="p-6">{t('menu.wallet')} ({t('common.empty')})</div>} />
@@ -118,6 +112,7 @@ export function AppWithProviders() {
   return (
     <QueryClientProvider client={queryClient}>
       <App />
+      {import.meta.env.DEV ? <ReactQueryDevtools initialIsOpen={false} /> : null}
     </QueryClientProvider>
   )
 }

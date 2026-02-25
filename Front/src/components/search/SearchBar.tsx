@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useSearchStore } from '../../store/searchStore'
 import { SearchDropdown } from './SearchDropdown'
+import { useSearchResults } from '../../hooks/queries/useSearch'
 
 export function SearchBar() {
   const { t } = useTranslation()
@@ -14,15 +15,9 @@ export function SearchBar() {
   const { 
     query, 
     setQuery, 
-    search, 
-    fetchPopularQueries,
-    isSearching 
+    addToHistory,
   } = useSearchStore()
-
-  // Fetch popular queries on mount
-  useEffect(() => {
-    fetchPopularQueries()
-  }, [fetchPopularQueries])
+  const searchMutation = useSearchResults()
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -38,12 +33,13 @@ export function SearchBar() {
 
   const handleSearch = useCallback(async () => {
     if (!query.trim()) return
-    
-    await search(query)
+
+    await searchMutation.mutateAsync({ query: query.trim() })
+    addToHistory(query.trim())
     setIsDropdownOpen(false)
     // Navigate to search results page
     navigate(`/search?q=${encodeURIComponent(query.trim())}`)
-  }, [query, search, navigate])
+  }, [query, searchMutation, addToHistory, navigate])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
@@ -60,7 +56,8 @@ export function SearchBar() {
   const handleSelectQuery = (selectedQuery: string) => {
     setQuery(selectedQuery)
     // Auto-search when selecting from dropdown
-    search(selectedQuery).then(() => {
+    searchMutation.mutateAsync({ query: selectedQuery }).then(() => {
+      addToHistory(selectedQuery)
       navigate(`/search?q=${encodeURIComponent(selectedQuery)}`)
     })
   }
@@ -87,10 +84,10 @@ export function SearchBar() {
         <button
           type="button"
           onClick={handleSearch}
-          disabled={isSearching || !query.trim()}
+          disabled={searchMutation.isPending || !query.trim()}
           className="h-10 rounded-r-lg bg-brand px-4 text-sm font-medium text-white transition-colors hover:bg-brand/90 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isSearching ? (
+          {searchMutation.isPending ? (
             <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
           ) : (
             t('search.button')

@@ -1,12 +1,17 @@
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
-  attributeDefinitionsApi,
   type AttributeDefinitionDto,
   type CreateAttributeDefinitionRequest,
   type UpdateAttributeDefinitionRequest,
   type AttributeDataType,
 } from '../../api/attributeDefinitionsApi'
+import {
+  useAdminAttributeDefinitions,
+  useCreateAttributeDefinition,
+  useDeleteAttributeDefinition,
+  useUpdateAttributeDefinition,
+} from '../../hooks/queries/useAdminCatalog'
 
 const ITEMS_PER_PAGE = 10
 
@@ -21,13 +26,18 @@ const DATA_TYPES: AttributeDataType[] = ['string', 'number', 'boolean', 'array']
 
 export default function AttributeDefinitionsManagement() {
   const { t } = useTranslation()
-  const [attributes, setAttributes] = useState<AttributeDefinitionDto[]>([])
-  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const [formErrors, setFormErrors] = useState<FormErrors>({})
+  const attributesQuery = useAdminAttributeDefinitions()
+  const createAttributeMutation = useCreateAttributeDefinition()
+  const updateAttributeMutation = useUpdateAttributeDefinition()
+  const deleteAttributeMutation = useDeleteAttributeDefinition()
+  const attributes = attributesQuery.data ?? []
+  const loading = attributesQuery.isLoading
+  const queryError = attributesQuery.error instanceof Error ? attributesQuery.error.message : null
 
   // Form state
   const [formData, setFormData] = useState<CreateAttributeDefinitionRequest>({
@@ -51,28 +61,6 @@ export default function AttributeDefinitionsManagement() {
     const start = (currentPage - 1) * ITEMS_PER_PAGE
     return attributes.slice(start, start + ITEMS_PER_PAGE)
   }, [attributes, currentPage])
-
-  const fetchAttributes = useCallback(async () => {
-    setLoading(true)
-    setError(null)
-    try {
-      const response = await attributeDefinitionsApi.getAll()
-      if (response.isSuccess) {
-        setAttributes(response.payload || [])
-        setCurrentPage(1)
-      } else {
-        setError(response.message || t('errors.fetch_failed'))
-      }
-    } catch {
-      setError(t('errors.fetch_failed'))
-    } finally {
-      setLoading(false)
-    }
-  }, [t])
-
-  useEffect(() => {
-    fetchAttributes()
-  }, [fetchAttributes])
 
   const resetForm = () => {
     setFormData({
@@ -132,21 +120,18 @@ export default function AttributeDefinitionsManagement() {
     e.preventDefault()
     if (!validateForm()) return
     try {
+      setError(null)
       const request: CreateAttributeDefinitionRequest = {
         ...formData,
         allowedValues: parseAllowedValues(),
         unit: formData.unit || undefined,
         description: formData.description || undefined,
       }
-      const response = await attributeDefinitionsApi.create(request)
-      if (response.isSuccess) {
-        await fetchAttributes()
-        resetForm()
-      } else {
-        setError(response.message || t('errors.save_failed'))
-      }
-    } catch {
-      setError(t('errors.save_failed'))
+      await createAttributeMutation.mutateAsync(request)
+      setCurrentPage(1)
+      resetForm()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('errors.save_failed'))
     }
   }
 
@@ -155,6 +140,7 @@ export default function AttributeDefinitionsManagement() {
     if (!editingId) return
     if (!validateForm()) return
     try {
+      setError(null)
       const request: UpdateAttributeDefinitionRequest = {
         name: formData.name,
         dataType: formData.dataType,
@@ -165,29 +151,20 @@ export default function AttributeDefinitionsManagement() {
         unit: formData.unit || undefined,
         description: formData.description || undefined,
       }
-      const response = await attributeDefinitionsApi.update(editingId, request)
-      if (response.isSuccess) {
-        await fetchAttributes()
-        resetForm()
-      } else {
-        setError(response.message || t('errors.save_failed'))
-      }
-    } catch {
-      setError(t('errors.save_failed'))
+      await updateAttributeMutation.mutateAsync({ id: editingId, data: request })
+      resetForm()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('errors.save_failed'))
     }
   }
 
   const handleDelete = async (id: string) => {
     if (!window.confirm(t('admin.catalog.confirm_delete'))) return
     try {
-      const response = await attributeDefinitionsApi.delete(id)
-      if (response.isSuccess) {
-        await fetchAttributes()
-      } else {
-        setError(response.message || t('errors.save_failed'))
-      }
-    } catch {
-      setError(t('errors.save_failed'))
+      setError(null)
+      await deleteAttributeMutation.mutateAsync(id)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('errors.save_failed'))
     }
   }
 
@@ -245,9 +222,9 @@ export default function AttributeDefinitionsManagement() {
         </button>
       </div>
 
-      {error && (
+      {(error || queryError) && (
         <div className="bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-300 px-4 py-3 rounded">
-          {error}
+          {error || queryError}
         </div>
       )}
 

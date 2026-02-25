@@ -1,7 +1,13 @@
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { categoriesApi, type CategoryDto, type CreateCategoryRequest, type UpdateCategoryRequest } from '../../api/catalogApi'
+import { type CategoryDto, type CreateCategoryRequest, type UpdateCategoryRequest } from '../../api/catalogApi'
 import EmojiPicker from '../../components/common/EmojiPicker'
+import {
+  useAdminCategories,
+  useCreateCategory,
+  useDeleteCategory,
+  useUpdateCategory,
+} from '../../hooks/queries/useAdminCatalog'
 
 const ITEMS_PER_PAGE = 10
 
@@ -12,13 +18,18 @@ interface FormErrors {
 
 export default function CategoriesManagement() {
   const { t } = useTranslation()
-  const [categories, setCategories] = useState<CategoryDto[]>([])
-  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const [formErrors, setFormErrors] = useState<FormErrors>({})
+  const categoriesQuery = useAdminCategories()
+  const createCategoryMutation = useCreateCategory()
+  const updateCategoryMutation = useUpdateCategory()
+  const deleteCategoryMutation = useDeleteCategory()
+  const categories = categoriesQuery.data ?? []
+  const loading = categoriesQuery.isLoading
+  const queryError = categoriesQuery.error instanceof Error ? categoriesQuery.error.message : null
 
   // Form state
   const [formData, setFormData] = useState<CreateCategoryRequest>({
@@ -41,28 +52,6 @@ export default function CategoriesManagement() {
     const start = (currentPage - 1) * ITEMS_PER_PAGE
     return categories.slice(start, start + ITEMS_PER_PAGE)
   }, [categories, currentPage])
-
-  const fetchCategories = useCallback(async () => {
-    setLoading(true)
-    setError(null)
-    try {
-      const response = await categoriesApi.getAll()
-      if (response.isSuccess) {
-        setCategories(response.payload || [])
-        setCurrentPage(1)
-      } else {
-        setError(response.message || t('errors.fetch_failed'))
-      }
-    } catch {
-      setError(t('errors.fetch_failed'))
-    } finally {
-      setLoading(false)
-    }
-  }, [t])
-
-  useEffect(() => {
-    fetchCategories()
-  }, [fetchCategories])
 
   const resetForm = () => {
     setFormData({ name: '', description: '', parentCategoryId: null, emoji: null })
@@ -94,15 +83,12 @@ export default function CategoriesManagement() {
     e.preventDefault()
     if (!validateForm()) return
     try {
-      const response = await categoriesApi.create(formData)
-      if (response.isSuccess) {
-        await fetchCategories()
-        resetForm()
-      } else {
-        setError(response.message || t('errors.save_failed'))
-      }
-    } catch {
-      setError(t('errors.save_failed'))
+      setError(null)
+      await createCategoryMutation.mutateAsync(formData)
+      setCurrentPage(1)
+      resetForm()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('errors.save_failed'))
     }
   }
 
@@ -111,35 +97,27 @@ export default function CategoriesManagement() {
     if (!editingId) return
     if (!validateForm()) return
     try {
+      setError(null)
       const updateData: UpdateCategoryRequest = {
         name: formData.name,
         description: formData.description,
         parentCategoryId: formData.parentCategoryId,
         emoji: formData.emoji
       }
-      const response = await categoriesApi.update(editingId, updateData)
-      if (response.isSuccess) {
-        await fetchCategories()
-        resetForm()
-      } else {
-        setError(response.message || t('errors.save_failed'))
-      }
-    } catch {
-      setError(t('errors.save_failed'))
+      await updateCategoryMutation.mutateAsync({ id: editingId, data: updateData })
+      resetForm()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('errors.save_failed'))
     }
   }
 
   const handleDelete = async (id: string) => {
     if (!window.confirm(t('admin.catalog.confirm_delete'))) return
     try {
-      const response = await categoriesApi.delete(id)
-      if (response.isSuccess) {
-        await fetchCategories()
-      } else {
-        setError(response.message || t('errors.save_failed'))
-      }
-    } catch {
-      setError(t('errors.save_failed'))
+      setError(null)
+      await deleteCategoryMutation.mutateAsync(id)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('errors.save_failed'))
     }
   }
 
@@ -183,9 +161,9 @@ export default function CategoriesManagement() {
         </button>
       </div>
 
-      {error && (
+      {(error || queryError) && (
         <div className="bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-300 px-4 py-3 rounded">
-          {error}
+          {error || queryError}
         </div>
       )}
 

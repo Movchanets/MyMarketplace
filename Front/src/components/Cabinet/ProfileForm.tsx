@@ -1,12 +1,18 @@
 import { useEffect, useState, useRef } from 'react'
 import type { Resolver } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
-import { useProfileStore } from '../../store/profileStore'
-import { userApi } from '../../api/userApi'
 import ImageCropper from '../ImageCropper'
 import { useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
+import {
+  useDeleteAvatar,
+  useProfile,
+  useUpdateProfileEmail,
+  useUpdateProfileInfo,
+  useUpdateProfilePhone,
+  useUploadAvatar,
+} from '../../hooks/queries/useProfile'
 
 type InfoFormValues = { name: string; surname: string; username: string }
 type PhoneFormValues = { phone: string }
@@ -14,12 +20,15 @@ type EmailFormValues = { email: string }
 
 export default function ProfileForm() {
   const { t } = useTranslation()
-  const { profile, fetchProfile, updateInfo, updatePhone, updateEmail } = useProfileStore()
+  const { data: profile, isPending: isProfileLoading } = useProfile()
+  const updateInfoMutation = useUpdateProfileInfo()
+  const updatePhoneMutation = useUpdateProfilePhone()
+  const updateEmailMutation = useUpdateProfileEmail()
+  const uploadAvatarMutation = useUploadAvatar()
+  const deleteAvatarMutation = useDeleteAvatar()
   const [success, setSuccess] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [imageSrc, setImageSrc] = useState<string | null>(null)
-  const [isUploading, setIsUploading] = useState(false)
-  const [isDeleting, setIsDeleting] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // build validation schema using localized messages
@@ -69,12 +78,6 @@ export default function ProfileForm() {
     formState: { errors: emailErrors, isSubmitting: emailSubmitting },
   } = useForm<EmailFormValues>({ resolver: yupResolver(emailSchema) as unknown as Resolver<EmailFormValues>, defaultValues: emailDefaults })
 
-  // Always fetch fresh profile when component mounts
-  useEffect(() => {
-    fetchProfile().catch(() => setError(t('errors.fetch_failed')))
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
   // When profile becomes available (or changes), ensure form values are in sync.
   // We'll call reset as a fallback for already-mounted forms, but also
   // force a remount via formKey so defaultValues are applied on mount.
@@ -90,7 +93,7 @@ export default function ProfileForm() {
     setError(null)
     setSuccess(null)
     try {
-      const updated = await updateInfo({ name: data.name, surname: data.surname, username: data.username })
+      const updated = await updateInfoMutation.mutateAsync({ name: data.name, surname: data.surname, username: data.username })
       if (updated) resetInfo({ ...data })
       setSuccess(t('settings.profile.save_success'))
       setTimeout(() => setSuccess(null), 3000)
@@ -106,7 +109,7 @@ export default function ProfileForm() {
     setError(null)
     setSuccess(null)
     try {
-      const updated = await updatePhone(data.phone)
+      const updated = await updatePhoneMutation.mutateAsync(data.phone)
       if (updated) resetPhone({ ...data })
       setSuccess(t('settings.profile.save_success'))
       setTimeout(() => setSuccess(null), 3000)
@@ -122,7 +125,7 @@ export default function ProfileForm() {
     setError(null)
     setSuccess(null)
     try {
-      const updated = await updateEmail(data.email)
+      const updated = await updateEmailMutation.mutateAsync(data.email)
       if (updated) resetEmail({ ...data })
       setSuccess(t('settings.profile.save_success'))
       setTimeout(() => setSuccess(null), 3000)
@@ -155,28 +158,11 @@ export default function ProfileForm() {
   const handleCropComplete = async (croppedBlob: Blob) => {
     setError(null)
     setSuccess(null)
-    setIsUploading(true)
 
     try {
       // Convert blob to file
       const file = new File([croppedBlob], 'profile-picture.jpg', { type: 'image/jpeg' })
-      
-      // Upload
-      await userApi.uploadProfilePicture(file)
-      
-      // Refresh profile to get new avatar URL
-      await fetchProfile()
-      
-      // Refresh auth token to update avatarUrl in header
-      try {
-        const { authApi } = await import('../../api/authApi')
-        const { useAuthStore } = await import('../../store/authStore')
-        const tokens = await authApi.refreshTokens()
-        const setAuth = useAuthStore.getState().setAuth
-        if (setAuth) setAuth(tokens.accessToken || '', tokens.refreshToken || '')
-      } catch {
-        // token refresh optional; ignore
-      }
+      await uploadAvatarMutation.mutateAsync(file)
       
       setSuccess(t('profile.picture_updated'))
       setTimeout(() => setSuccess(null), 3000)
@@ -186,7 +172,6 @@ export default function ProfileForm() {
       else if (typeof err === 'string') msg = err
       setError(msg)
     } finally {
-      setIsUploading(false)
       setImageSrc(null)
       if (fileInputRef.current) fileInputRef.current.value = ''
     }
@@ -197,22 +182,9 @@ export default function ProfileForm() {
 
     setError(null)
     setSuccess(null)
-    setIsDeleting(true)
 
     try {
-      await userApi.deleteProfilePicture()
-      await fetchProfile()
-      
-      // Refresh auth token to update avatarUrl in header
-      try {
-        const { authApi } = await import('../../api/authApi')
-        const { useAuthStore } = await import('../../store/authStore')
-        const tokens = await authApi.refreshTokens()
-        const setAuth = useAuthStore.getState().setAuth
-        if (setAuth) setAuth(tokens.accessToken || '', tokens.refreshToken || '')
-      } catch {
-        // token refresh optional; ignore
-      }
+      await deleteAvatarMutation.mutateAsync()
       
       setSuccess(t('profile.picture_deleted'))
       setTimeout(() => setSuccess(null), 3000)
@@ -221,12 +193,13 @@ export default function ProfileForm() {
       if (err instanceof Error) msg = err.message
       else if (typeof err === 'string') msg = err
       setError(msg)
-    } finally {
-      setIsDeleting(false)
     }
   }
 
-  if (!profile && !error) return <div className="text-sm text-foreground-muted">{t('auth.loading')}</div>
+  if (isProfileLoading && !profile && !error) return <div className="text-sm text-foreground-muted">{t('auth.loading')}</div>
+
+  const isUploading = uploadAvatarMutation.isPending
+  const isDeleting = deleteAvatarMutation.isPending
 
   const profileIdOrEmail = profile ? ((profile as { id?: string; email?: string }).id ?? (profile as { id?: string; email?: string }).email ?? 'me') : 'empty'
   const infoFormKey = `profile-info-${profileIdOrEmail}`

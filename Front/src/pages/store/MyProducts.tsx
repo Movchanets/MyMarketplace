@@ -1,8 +1,10 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { productsApi, type ProductSummaryDto } from '../../api/catalogApi'
+import { type ProductSummaryDto } from '../../api/catalogApi'
 import { ErrorAlert } from '../../components/ui/ErrorAlert'
+import { useDeleteProduct, useMyProducts, useToggleProductActive } from '../../hooks/queries/useProducts'
+import { useMyStore } from '../../hooks/queries/useStores'
 
 const ITEMS_PER_PAGE = 8
 
@@ -10,33 +12,28 @@ export default function MyProducts() {
   const { t } = useTranslation()
   const navigate = useNavigate()
 
-  const [products, setProducts] = useState<ProductSummaryDto[]>([])
-  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
-
-  const fetchProducts = useCallback(async () => {
-    setLoading(true)
-    setError(null)
-    try {
-      const response = await productsApi.getMy()
-      if (response.isSuccess) {
-        setProducts(response.payload || [])
-      } else {
-        setError(response.message || t('errors.fetch_failed'))
-      }
-    } catch {
-      setError(t('errors.fetch_failed'))
-    } finally {
-      setLoading(false)
-    }
-  }, [t])
+  const { data: myStore, isPending: isStoreLoading, error: storeError } = useMyStore()
+  const hasStore = !!myStore
+  const { data: myProducts, isPending: isProductsLoading, error: productsError } = useMyProducts(hasStore)
+  const products = useMemo<ProductSummaryDto[]>(() => myProducts ?? [], [myProducts])
+  const loading = isStoreLoading || (hasStore && isProductsLoading)
+  const deleteProductMutation = useDeleteProduct()
+  const toggleProductActiveMutation = useToggleProductActive()
 
   useEffect(() => {
-    fetchProducts()
-  }, [fetchProducts])
+    if (storeError) {
+      setError(storeError.message || t('errors.fetch_failed'))
+      return
+    }
+
+    if (productsError) {
+      setError(productsError.message || t('errors.fetch_failed'))
+    }
+  }, [storeError, productsError, t])
 
   // Pagination calculations
   const totalPages = Math.ceil(products.length / ITEMS_PER_PAGE)
@@ -55,15 +52,11 @@ export default function MyProducts() {
   const handleDelete = async (productId: string) => {
     setDeleting(true)
     try {
-      const response = await productsApi.delete(productId)
-      if (response.isSuccess) {
-        setProducts(products.filter(p => p.id !== productId))
-        setDeleteId(null)
-      } else {
-        setError(response.message || t('errors.delete_failed'))
-      }
-    } catch {
-      setError(t('errors.delete_failed'))
+      setError(null)
+      await deleteProductMutation.mutateAsync(productId)
+      setDeleteId(null)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('errors.delete_failed'))
     } finally {
       setDeleting(false)
     }
@@ -71,16 +64,10 @@ export default function MyProducts() {
 
   const handleToggleActive = async (productId: string, currentActive: boolean) => {
     try {
-      const response = await productsApi.toggleActive(productId, !currentActive)
-      if (response.isSuccess) {
-        setProducts(products.map(p => 
-          p.id === productId ? { ...p, isActive: !currentActive } : p
-        ))
-      } else {
-        setError(response.message || t('errors.update_failed'))
-      }
-    } catch {
-      setError(t('errors.update_failed'))
+      setError(null)
+      await toggleProductActiveMutation.mutateAsync({ productId, isActive: !currentActive })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('errors.update_failed'))
     }
   }
 
@@ -98,6 +85,10 @@ export default function MyProducts() {
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand"></div>
       </div>
     )
+  }
+
+  if (!hasStore) {
+    return null
   }
 
   return (

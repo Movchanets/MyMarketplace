@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
 import { parseJwt, toArray } from '../utils/jwt'
+import { queryClient } from '../queryClient'
 
 export interface User {
   id: string
@@ -104,15 +105,9 @@ export const useAuthStore = create<AuthState>()(devtools((set) => {
     },
   
   logout: () => {
-    // Clear profile store when logging out
-    import('./profileStore').then(({ useProfileStore }) => {
-      useProfileStore.getState().clearProfile()
-    }).catch(() => {
-      // ignore if profileStore is not available
-    })
-    
     localStorage.removeItem('accessToken')
     localStorage.removeItem('refreshToken')
+    queryClient.clear()
     set({ token: null, refreshToken: null, user: null, isAuthenticated: false })
   }
 }

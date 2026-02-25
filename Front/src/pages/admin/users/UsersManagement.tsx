@@ -1,53 +1,36 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { 
-  getAdminUsers, 
-  getRoles, 
-  assignUserRoles, 
-  lockUser, 
-  unlockUser
-} from '../../../api/adminApi'
-import type { AdminUserDto, RoleDto } from '../../../api/adminApi'
+import type { AdminUserDto } from '../../../api/adminApi'
+import {
+  useAdminRoles,
+  useAdminUsers,
+  useAssignUserRoles,
+  useLockUser,
+  useUnlockUser,
+} from '../../../hooks/queries/useAdminManagement'
 
 export default function UsersManagement() {
   const { t } = useTranslation()
-  const [users, setUsers] = useState<AdminUserDto[]>([])
-  const [roles, setRoles] = useState<RoleDto[]>([])
-  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const [actionLoadingUserId, setActionLoadingUserId] = useState<string | null>(null)
+  const usersQuery = useAdminUsers()
+  const rolesQuery = useAdminRoles()
+  const assignUserRolesMutation = useAssignUserRoles()
+  const lockUserMutation = useLockUser()
+  const unlockUserMutation = useUnlockUser()
+  const users = usersQuery.data ?? []
+  const roles = rolesQuery.data ?? []
+  const loading = usersQuery.isLoading || rolesQuery.isLoading
+  const queryError =
+    (usersQuery.error instanceof Error ? usersQuery.error.message : null) ||
+    (rolesQuery.error instanceof Error ? rolesQuery.error.message : null)
   
   // Role assignment modal
   const [selectedUser, setSelectedUser] = useState<AdminUserDto | null>(null)
   const [selectedRoles, setSelectedRoles] = useState<string[]>([])
   const [showRoleModal, setShowRoleModal] = useState(false)
   const [saving, setSaving] = useState(false)
-
-  const loadData = useCallback(async () => {
-    try {
-      setLoading(true)
-      const [usersRes, rolesRes] = await Promise.all([
-        getAdminUsers(),
-        getRoles()
-      ])
-      
-      if (usersRes.isSuccess && usersRes.payload) {
-        setUsers(usersRes.payload)
-      }
-      if (rolesRes.isSuccess && rolesRes.payload) {
-        setRoles(rolesRes.payload)
-      }
-    } catch (err) {
-      setError(t('admin.users.load_error'))
-      console.error(err)
-    } finally {
-      setLoading(false)
-    }
-  }, [t])
-
-  useEffect(() => {
-    loadData()
-  }, [loadData])
 
   const handleOpenRoleModal = (user: AdminUserDto) => {
     setSelectedUser(user)
@@ -59,18 +42,12 @@ export default function UsersManagement() {
     if (!selectedUser) return
     
     try {
+      setError(null)
       setSaving(true)
-      const res = await assignUserRoles(selectedUser.id, { roles: selectedRoles })
-      
-      if (res.isSuccess && res.payload) {
-        setUsers(prev => prev.map(u => u.id === selectedUser.id ? res.payload! : u))
-        setShowRoleModal(false)
-      } else {
-        setError(res.message)
-      }
+      await assignUserRolesMutation.mutateAsync({ userId: selectedUser.id, data: { roles: selectedRoles } })
+      setShowRoleModal(false)
     } catch (err) {
-      setError(t('admin.users.save_error'))
-      console.error(err)
+      setError(err instanceof Error ? err.message : t('admin.users.save_error'))
     } finally {
       setSaving(false)
     }
@@ -78,20 +55,17 @@ export default function UsersManagement() {
 
   const handleToggleLock = async (user: AdminUserDto) => {
     try {
+      setError(null)
+      setActionLoadingUserId(user.id)
       if (user.isLocked) {
-        const res = await unlockUser(user.id)
-        if (res.isSuccess) {
-          setUsers(prev => prev.map(u => u.id === user.id ? { ...u, isLocked: false, lockoutEnd: undefined } : u))
-        }
+        await unlockUserMutation.mutateAsync(user.id)
       } else {
-        const res = await lockUser(user.id)
-        if (res.isSuccess) {
-          setUsers(prev => prev.map(u => u.id === user.id ? { ...u, isLocked: true } : u))
-        }
+        await lockUserMutation.mutateAsync(user.id)
       }
     } catch (err) {
-      setError(t('admin.users.lock_error'))
-      console.error(err)
+      setError(err instanceof Error ? err.message : t('admin.users.lock_error'))
+    } finally {
+      setActionLoadingUserId(null)
     }
   }
 
@@ -103,15 +77,15 @@ export default function UsersManagement() {
     )
   }
 
-  const filteredUsers = users.filter(user => {
+  const filteredUsers = useMemo(() => {
     const query = searchQuery.toLowerCase()
-    return (
+    return users.filter(user => (
       user.username.toLowerCase().includes(query) ||
       user.email.toLowerCase().includes(query) ||
       user.name.toLowerCase().includes(query) ||
       user.surname.toLowerCase().includes(query)
-    )
-  })
+    ))
+  }, [users, searchQuery])
 
   if (loading) {
     return (
@@ -128,9 +102,9 @@ export default function UsersManagement() {
         <span className="text-foreground-muted">{t('admin.users.total', { count: users.length })}</span>
       </div>
 
-      {error && (
+      {(error || queryError) && (
         <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-4 rounded-lg">
-          {error}
+          {error || queryError}
           <button onClick={() => setError(null)} className="ml-4 underline">{t('common.dismiss')}</button>
         </div>
       )}
@@ -241,6 +215,7 @@ export default function UsersManagement() {
                       </button>
                       <button
                         onClick={() => handleToggleLock(user)}
+                        disabled={actionLoadingUserId === user.id}
                         className={`p-2 rounded-lg transition-colors ${
                           user.isLocked 
                             ? 'text-green-600 hover:bg-green-100 dark:hover:bg-green-900/30'

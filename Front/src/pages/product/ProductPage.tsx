@@ -1,62 +1,46 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
-  productsApi,
-  type ProductDetailsDto,
   type SkuDto,
   type MediaImageDto
 } from '../../api/catalogApi'
-import { useFavoritesStore, useIsFavorited } from '../../store/favoritesStore'
+import { useProductBySlug } from '../../hooks/queries/useProducts'
+import { useFavorites } from '../../hooks/queries/useFavorites'
+import { useCart } from '../../hooks/queries/useCart'
 
 export default function ProductPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { productSlug, skuCode } = useParams<{ productSlug: string; skuCode?: string }>()
 
-  const [product, setProduct] = useState<ProductDetailsDto | null>(null)
   const [selectedSku, setSelectedSku] = useState<SkuDto | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
   const [quantity, setQuantity] = useState(1)
+  const { data: product, isPending: loading, error: productError } = useProductBySlug(productSlug, skuCode)
+  const error = productError?.message || null
 
-  // Favorites functionality
-  const { toggleFavorite, isToggling } = useFavoritesStore()
-  const isFavorited = useIsFavorited(product?.id || '')
-
-  // Fetch product data by slug
-  const fetchProduct = useCallback(async () => {
-    if (!productSlug) return
-
-    setLoading(true)
-    setError(null)
-    try {
-      const result = await productsApi.getBySlug(productSlug, skuCode)
-      if (result.isSuccess && result.payload) {
-        setProduct(result.payload)
-        
-        // Select SKU based on URL or default to first
-        const skus = result.payload.skus
-        if (skus.length > 0) {
-          const targetSku = skuCode 
-            ? skus.find(s => s.skuCode === skuCode) || skus[0]
-            : skus[0]
-          setSelectedSku(targetSku)
-        }
-      } else {
-        setError(result.message || t('product.notFound'))
-      }
-    } catch {
-      setError(t('common.error'))
-    } finally {
-      setLoading(false)
-    }
-  }, [productSlug, skuCode, t])
+  const { toggleFavorite, isToggling, isFavorited } = useFavorites()
+  const { addToCart } = useCart()
 
   useEffect(() => {
-    fetchProduct()
-  }, [fetchProduct])
+    if (!product) {
+      setSelectedSku(null)
+      return
+    }
+
+    const skus = product.skus
+    if (skus.length === 0) {
+      setSelectedSku(null)
+      return
+    }
+
+    const targetSku = skuCode
+      ? skus.find((sku) => sku.skuCode === skuCode) || skus[0]
+      : skus[0]
+
+    setSelectedSku(targetSku)
+  }, [product, skuCode])
 
   // Update URL when SKU changes
   useEffect(() => {
@@ -184,18 +168,13 @@ export default function ProductPage() {
 
   const handleAddToCart = async () => {
     if (!product || !selectedSku) return
-    
-    const { useCartStore } = await import('../../store/cartStore')
-    const { addToCart } = useCartStore.getState()
-    
+
     try {
       const added = await addToCart(product.id, selectedSku.id, quantity)
       if (added) {
-        // Show success feedback (could be a toast notification)
         console.log('Added to cart successfully')
       } else {
-        const { lastError } = useCartStore.getState()
-        console.error('Failed to add to cart:', lastError || 'Unknown error')
+        console.error('Failed to add to cart')
       }
     } catch (error) {
       console.error('Failed to add to cart (unexpected):', error)
@@ -352,17 +331,17 @@ export default function ProductPage() {
                   onClick={handleToggleFavorite}
                   disabled={isToggling.has(product.id)}
                   className={`p-2 rounded-full transition-all duration-200 ${
-                    isFavorited
+                    isFavorited(product.id)
                       ? 'bg-error hover:bg-error-dark text-white'
                       : 'bg-surface-hover dark:bg-background hover:bg-surface-hover dark:hover:bg-background text-foreground-muted dark:text-foreground-muted'
                   }`}
-                 title={isFavorited ? t('productPage.removeFromFavorites') : t('productPage.addToFavorites')}
+                 title={isFavorited(product.id) ? t('productPage.removeFromFavorites') : t('productPage.addToFavorites')}
                >
                  <svg
                     className={`w-6 h-6 transition-colors ${
-                      isFavorited ? 'text-white' : 'text-foreground-muted dark:text-foreground-muted'
+                      isFavorited(product.id) ? 'text-white' : 'text-foreground-muted dark:text-foreground-muted'
                     }`}
-                   fill={isFavorited ? 'currentColor' : 'none'}
+                   fill={isFavorited(product.id) ? 'currentColor' : 'none'}
                    stroke="currentColor"
                    viewBox="0 0 24 24"
                  >

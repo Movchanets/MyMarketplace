@@ -1,4 +1,4 @@
-import axiosClient from './axiousClient'
+import axiosClient from './axiosClient'
 import type { ServiceResponse } from './types'
 
 export type AttributeDataType = 'string' | 'number' | 'boolean' | 'array'

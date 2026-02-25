@@ -1,8 +1,10 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { storesApi, type PublicStoreDto } from '../../api/storesApi'
 import ProductCard from '../../components/catalog/ProductCard'
+import { useStoreBySlug } from '../../hooks/queries/useStores'
+import { useCart } from '../../hooks/queries/useCart'
+import { productsApi } from '../../api/catalogApi'
 
 const ITEMS_PER_PAGE = 12
 
@@ -11,33 +13,10 @@ export default function StorePage() {
   const { slug } = useParams<{ slug: string }>()
   const navigate = useNavigate()
 
-  const [store, setStore] = useState<PublicStoreDto | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const { data: store, isPending: loading, error: storeError } = useStoreBySlug(slug)
+  const { addToCart } = useCart()
+  const error = storeError?.message || null
   const [currentPage, setCurrentPage] = useState(1)
-
-  useEffect(() => {
-    const fetchStore = async () => {
-      if (!slug) return
-
-      setLoading(true)
-      setError(null)
-      try {
-        const response = await storesApi.getBySlug(slug)
-        if (response.isSuccess && response.payload) {
-          setStore(response.payload)
-        } else {
-          setError(response.message || t('storePage.notFound'))
-        }
-      } catch {
-        setError(t('errors.fetch_failed'))
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchStore()
-  }, [slug, t])
 
   // Pagination
   const totalPages = store ? Math.ceil(store.products.length / ITEMS_PER_PAGE) : 0
@@ -62,24 +41,17 @@ export default function StorePage() {
   }
 
   const handleAddToCart = async (productId: string) => {
-    // Fetch product details to get the default SKU
     try {
-      const { productsApi } = await import('../../api/catalogApi')
-      const { useCartStore } = await import('../../store/cartStore')
-      
       const result = await productsApi.getById(productId)
       if (result.isSuccess && result.payload) {
         const product = result.payload
-        // Use the first SKU as default
         const defaultSku = product.skus[0]
         if (defaultSku) {
-          const { addToCart } = useCartStore.getState()
           const added = await addToCart(productId, defaultSku.id, 1)
           if (added) {
             console.log('Added to cart successfully')
           } else {
-            const { lastError } = useCartStore.getState()
-            console.error('Failed to add to cart:', lastError || 'Unknown error')
+            console.error('Failed to add to cart')
           }
         }
       }

@@ -2,17 +2,22 @@ import { useState, useEffect, useCallback } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
-  productsApi,
   type ProductDetailsDto,
   type SkuDto,
   type AddSkuRequest,
   type UpdateSkuRequest,
   type MediaImageDto
 } from '../../api/catalogApi'
+import { type AttributeDefinitionDto } from '../../api/attributeDefinitionsApi'
+import { useAdminAttributeDefinitions } from '../../hooks/queries/useAdminCatalog'
 import {
-  attributeDefinitionsApi,
-  type AttributeDefinitionDto,
-} from '../../api/attributeDefinitionsApi'
+  useAddSku,
+  useDeleteSku,
+  useDeleteSkuGalleryImage,
+  useProductById,
+  useUpdateSku,
+  useUploadSkuGalleryImage,
+} from '../../hooks/queries/useProducts'
 import AttributeSelector from '../../components/catalog/AttributeSelector'
 import { ErrorAlert } from '../../components/ui/ErrorAlert'
 import { SuccessAlert } from '../../components/ui/SuccessAlert'
@@ -72,11 +77,18 @@ export default function SkuManagement() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { productId } = useParams<{ productId: string }>()
+  const productQuery = useProductById(productId)
+  const attributesQuery = useAdminAttributeDefinitions()
+  const addSkuMutation = useAddSku()
+  const updateSkuMutation = useUpdateSku()
+  const deleteSkuMutation = useDeleteSku()
+  const uploadSkuGalleryImageMutation = useUploadSkuGalleryImage()
+  const deleteSkuGalleryImageMutation = useDeleteSkuGalleryImage()
 
   const [product, setProduct] = useState<ProductDetailsDto | null>(null)
   const [skus, setSkus] = useState<SkuFormData[]>([])
   const [attributeDefinitions, setAttributeDefinitions] = useState<AttributeDefinitionDto[]>([])
-  const [loading, setLoading] = useState(true)
+  const loading = productQuery.isLoading || attributesQuery.isLoading
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
@@ -98,35 +110,31 @@ export default function SkuManagement() {
 
   const fetchData = useCallback(async () => {
     if (!productId) return
-    
-    setLoading(true)
-    setError(null)
-    try {
-      const [productResult, attributesResult] = await Promise.all([
-        productsApi.getById(productId),
-        attributeDefinitionsApi.getAll()
-      ])
-      
-      if (productResult.isSuccess && productResult.payload) {
-        setProduct(productResult.payload)
-        setSkus(productResult.payload.skus.map(mapSkuToForm))
-      } else {
-        setError(t('product.notFound'))
-      }
-      
-      if (attributesResult.isSuccess && attributesResult.payload) {
-        setAttributeDefinitions(attributesResult.payload)
-      }
-    } catch {
-      setError(t('common.error'))
-    } finally {
-      setLoading(false)
-    }
-  }, [productId, t])
+    await Promise.all([productQuery.refetch(), attributesQuery.refetch()])
+  }, [attributesQuery, productId, productQuery])
 
   useEffect(() => {
-    fetchData()
-  }, [fetchData])
+    if (productQuery.data) {
+      setProduct(productQuery.data)
+      setSkus(productQuery.data.skus.map(mapSkuToForm))
+    }
+  }, [productQuery.data])
+
+  useEffect(() => {
+    if (attributesQuery.data) {
+      setAttributeDefinitions(attributesQuery.data)
+    }
+  }, [attributesQuery.data])
+
+  useEffect(() => {
+    const queryError =
+      (productQuery.error instanceof Error ? productQuery.error.message : null) ||
+      (attributesQuery.error instanceof Error ? attributesQuery.error.message : null)
+
+    if (queryError) {
+      setError(queryError)
+    }
+  }, [attributesQuery.error, productQuery.error])
 
   const validateForm = (): boolean => {
     const errors: FormErrors = {}
@@ -195,16 +203,12 @@ export default function SkuManagement() {
     // Delete from API
     setSaving(true)
     try {
-      const result = await productsApi.deleteSku(productId, skuId)
-      if (result.isSuccess) {
-        setSkus(skus.filter(s => s.id !== skuId))
-        setSuccessMessage(t('sku.deleted_success'))
-        setTimeout(() => setSuccessMessage(null), 3000)
-      } else {
-        setError(result.message || t('errors.delete_failed'))
-      }
-    } catch {
-      setError(t('errors.delete_failed'))
+      await deleteSkuMutation.mutateAsync({ productId, skuId })
+      setSkus(skus.filter(s => s.id !== skuId))
+      setSuccessMessage(t('sku.deleted_success'))
+      setTimeout(() => setSuccessMessage(null), 3000)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('errors.delete_failed'))
     } finally {
       setSaving(false)
       setDeleteConfirm(null)
@@ -246,20 +250,13 @@ export default function SkuManagement() {
           stockQuantity,
           attributes
         }
-        const result = await productsApi.addSku(productId, request)
-        
-        if (result.isSuccess && result.payload) {
-          // Update the SKU with the new ID from the server
-          setSkus(skus.map(s => s.id === skuId
-            ? { ...s, id: result.payload!, isNew: false, isModified: false }
-            : s
-          ))
-          setSuccessMessage(t('sku.created_success'))
-          // Refresh to get the new SKU code
-          await fetchData()
-        } else {
-          setError(result.message || t('errors.save_failed'))
-        }
+        const createdSkuId = await addSkuMutation.mutateAsync({ productId, data: request })
+        setSkus(skus.map(s => s.id === skuId
+          ? { ...s, id: createdSkuId, isNew: false, isModified: false }
+          : s
+        ))
+        setSuccessMessage(t('sku.created_success'))
+        await fetchData()
       } else {
         // Update existing SKU
         const request: UpdateSkuRequest = {
@@ -267,24 +264,18 @@ export default function SkuManagement() {
           stockQuantity,
           attributes
         }
-        const result = await productsApi.updateSku(productId, skuId, request)
-        
-        if (result.isSuccess) {
-          setSkus(skus.map(s => s.id === skuId
-            ? { ...s, isModified: false }
-            : s
-          ))
-          setSuccessMessage(t('sku.updated_success'))
-          // Refresh to get updated data
-          await fetchData()
-        } else {
-          setError(result.message || t('errors.update_failed'))
-        }
+        await updateSkuMutation.mutateAsync({ productId, skuId, data: request })
+        setSkus(skus.map(s => s.id === skuId
+          ? { ...s, isModified: false }
+          : s
+        ))
+        setSuccessMessage(t('sku.updated_success'))
+        await fetchData()
       }
       
       setTimeout(() => setSuccessMessage(null), 3000)
-    } catch {
-      setError(t('errors.save_failed'))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('errors.save_failed'))
     } finally {
       setSaving(false)
     }
@@ -311,18 +302,18 @@ export default function SkuManagement() {
 
         if (sku.isNew) {
           const request: AddSkuRequest = { price, stockQuantity, attributes }
-          await productsApi.addSku(productId, request)
+          await addSkuMutation.mutateAsync({ productId, data: request })
         } else {
           const request: UpdateSkuRequest = { price, stockQuantity, attributes }
-          await productsApi.updateSku(productId, sku.id, request)
+          await updateSkuMutation.mutateAsync({ productId, skuId: sku.id, data: request })
         }
       }
 
       setSuccessMessage(t('sku.all_saved_success'))
       await fetchData()
       setTimeout(() => setSuccessMessage(null), 3000)
-    } catch {
-      setError(t('errors.save_failed'))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('errors.save_failed'))
     } finally {
       setSaving(false)
     }
@@ -341,19 +332,14 @@ export default function SkuManagement() {
     try {
       for (const file of Array.from(e.target.files)) {
         const displayOrder = sku.gallery.length
-        const result = await productsApi.uploadSkuGalleryImage(productId, skuId, file, displayOrder)
-        
-        if (!result.isSuccess) {
-          setError(result.message || t('errors.upload_failed'))
-          break
-        }
+        await uploadSkuGalleryImageMutation.mutateAsync({ productId, skuId, file, displayOrder })
       }
       
       setSuccessMessage(t('sku.image_uploaded'))
       await fetchData()
       setTimeout(() => setSuccessMessage(null), 3000)
-    } catch {
-      setError(t('errors.upload_failed'))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('errors.upload_failed'))
     } finally {
       setUploadingGallery(prev => {
         const next = new Set(prev)
@@ -371,20 +357,15 @@ export default function SkuManagement() {
     setError(null)
 
     try {
-      const result = await productsApi.deleteSkuGalleryImage(productId, skuId, galleryId)
-      
-      if (result.isSuccess) {
-        setSkus(skus.map(s => s.id === skuId
-          ? { ...s, gallery: s.gallery.filter(img => img.id !== galleryId) }
-          : s
-        ))
-        setSuccessMessage(t('sku.image_deleted'))
-        setTimeout(() => setSuccessMessage(null), 3000)
-      } else {
-        setError(result.message || t('errors.delete_failed'))
-      }
-    } catch {
-      setError(t('errors.delete_failed'))
+      await deleteSkuGalleryImageMutation.mutateAsync({ productId, skuId, galleryId })
+      setSkus(skus.map(s => s.id === skuId
+        ? { ...s, gallery: s.gallery.filter(img => img.id !== galleryId) }
+        : s
+      ))
+      setSuccessMessage(t('sku.image_deleted'))
+      setTimeout(() => setSuccessMessage(null), 3000)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('errors.delete_failed'))
     } finally {
       setDeletingGalleryImages(prev => {
         const next = new Set(prev)
