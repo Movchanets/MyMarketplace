@@ -118,7 +118,16 @@ jobs:
           IMAGE_NAME="ghcr.io/$OWNER_LC/mymarketplace/app-api:latest"
           docker build -t "$IMAGE_NAME" -f API/Dockerfile .
           docker push "$IMAGE_NAME"
-
+          
+      - name: Update Container App Registry Credentials
+        run: |
+            ACTOR_LC=$(echo "${{ github.actor }}" | tr '[:upper:]' '[:lower:]')
+            az containerapp registry set \
+              --name ${{ secrets.AZURE_CONTAINERAPP_API_NAME }} \
+              --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
+              --server ghcr.io \
+              --username "$ACTOR_LC" \
+              --password ${{ secrets.GHCR_PAT }}
       - name: Deploy API to Azure Container Apps
         run: |
           OWNER_LC=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
