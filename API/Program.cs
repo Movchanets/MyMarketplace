@@ -291,7 +291,19 @@ try
     // Skip seeding in Testing environment (handled by TestWebApplicationFactory)
     if (!app.Environment.IsEnvironment("Testing"))
     {
-        await app.SeedDataAsync();
+        // Seeding runs BEFORE app.Run(), so any exception here used to kill the
+        // process before it ever listened on a port. Azure Container Apps then
+        // reported "Container crashing" / CrashLoopBackOff with no usable logs.
+        // Migrations and seeding are best-effort: log the failure and keep the
+        // app serving so the error is visible instead of crash-looping.
+        try
+        {
+            await app.SeedDataAsync();
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Database migration/seeding failed. The application will start anyway.");
+        }
     }
 
     Log.Information("Application started successfully");

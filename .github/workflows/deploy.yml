@@ -18,6 +18,8 @@ permissions:
 env:
   DOTNET_VERSION: '10.0.x'
   NODE_VERSION: '20.x'
+  # ghcr.io repository (owner is always lowercase in image references)
+  IMAGE_REPO: ghcr.io/${{ github.repository_owner }}/mymarketplace/app-api
 
 jobs:
   # ============================================
@@ -32,6 +34,11 @@ jobs:
     env:
       AZURE_STORAGE_CONTAINER_NAME: ${{ secrets.AZURE_STORAGE_CONTAINER_NAME }}
       AZURE_LOCATION: ${{ secrets.AZURE_LOCATION || 'westeurope' }}
+      # Immutable tag per commit. Azure Container Apps caches the image-pull
+      # validation result per image REFERENCE, so reusing a moving tag like
+      # :latest can replay a stale 403 forever. A unique tag forces a real
+      # validation on every deploy.
+      IMAGE_TAG: ${{ github.sha }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -55,10 +62,11 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+      # Push uses the ephemeral GITHUB_TOKEN (it dies with the job, which is fine
+      # because it is only needed here, never stored in Azure).
       - name: Login to GitHub Container Registry
         run: |
-          ACTOR_LC=$(echo "${{ github.actor }}" | tr '[:upper:]' '[:lower:]')
-          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "$ACTOR_LC" --password-stdin
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password-stdin
 
       - name: Ensure Container Apps Environment exists
         run: |
@@ -72,11 +80,12 @@ jobs:
             echo "Container Apps Environment already exists."
           fi
 
+      # The container app needs a credential that OUTLIVES the job, because Azure
+      # pulls the image later (scale-from-zero, restarts, new revisions). GITHUB_TOKEN
+      # expires when the workflow ends, so a long-lived PAT must be used here.
       - name: Ensure API Container App exists
         run: |
-          OWNER_LC=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
-          ACTOR_LC=$(echo "${{ github.actor }}" | tr '[:upper:]' '[:lower:]')
-          IMAGE_NAME="ghcr.io/$OWNER_LC/mymarketplace/app-api:latest"
+          IMAGE_NAME="$IMAGE_REPO:$IMAGE_TAG"
           if ! az containerapp show --name ${{ secrets.AZURE_CONTAINERAPP_API_NAME }} --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} >/dev/null 2>&1; then
             echo "Creating API Container App..."
             az containerapp create \
@@ -87,8 +96,8 @@ jobs:
               --target-port 80 \
               --ingress external \
               --registry-server ghcr.io \
-              --registry-username "$ACTOR_LC" \
-              --registry-password ${{ secrets.GITHUB_TOKEN }} \
+              --registry-username ${{ secrets.GHCR_USERNAME }} \
+              --registry-password ${{ secrets.GHCR_PAT }} \
               --min-replicas 0 --max-replicas 1 \
               --env-vars \
                 "ASPNETCORE_ENVIRONMENT=Production" \
@@ -114,27 +123,25 @@ jobs:
 
       - name: Build & Push API Image
         run: |
-          OWNER_LC=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
-          IMAGE_NAME="ghcr.io/$OWNER_LC/mymarketplace/app-api:latest"
-          docker build -t "$IMAGE_NAME" -f API/Dockerfile .
-          docker push "$IMAGE_NAME"
-          
+          docker build -t "$IMAGE_REPO:$IMAGE_TAG" -t "$IMAGE_REPO:latest" -f API/Dockerfile .
+          docker push "$IMAGE_REPO:$IMAGE_TAG"
+          docker push "$IMAGE_REPO:latest"
+
       - name: Update Container App Registry Credentials
         run: |
-            ACTOR_LC=$(echo "${{ github.actor }}" | tr '[:upper:]' '[:lower:]')
-            az containerapp registry set \
-              --name ${{ secrets.AZURE_CONTAINERAPP_API_NAME }} \
-              --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
-              --server ghcr.io \
-              --username "$ACTOR_LC" \
-              --password ${{ secrets.GHCR_PAT }}
+          az containerapp registry set \
+            --name ${{ secrets.AZURE_CONTAINERAPP_API_NAME }} \
+            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
+            --server ghcr.io \
+            --username ${{ secrets.GHCR_USERNAME }} \
+            --password ${{ secrets.GHCR_PAT }}
+
       - name: Deploy API to Azure Container Apps
         run: |
-          OWNER_LC=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
           az containerapp update \
             --name ${{ secrets.AZURE_CONTAINERAPP_API_NAME }} \
             --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
-            --image ghcr.io/$OWNER_LC/mymarketplace/app-api:latest \
+            --image "$IMAGE_REPO:$IMAGE_TAG" \
             --set-env-vars \
               "ASPNETCORE_ENVIRONMENT=Production" \
               "JwtSettings__AccessTokenSecret=${{ secrets.JWT_ACCESS_TOKEN_SECRET }}" \
